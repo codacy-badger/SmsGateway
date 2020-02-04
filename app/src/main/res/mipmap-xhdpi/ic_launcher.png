@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AndroidLayouts">
+    <shared>
+      <config>
+        <device id="Nexus 5X" />
+        <device id="pixel_2" />
+        <device id="pixel_xl" />
+        <device id="pixel_3a_xl" />
+        <device id="pixel_3a" />
+        <device id="Nexus 10" />
+        <device id="Nexus 6P" />
+        <device id="Nexus 9" />
+        <device id="Nexus 7" />
+        <device id="pixel_3_xl" />
+      </config>
+    </shared>
+  </component>
+  <component name="AndroidLogFilters">
+    <option name="TOOL_WINDOW_LOG_LEVEL" value="error" />
+    <option name="TOOL_WINDOW_CONFIGURED_FILTER" value="No Filters" />
+  </component>
+  <component name="BookmarkManager">
+    <bookmark url="file://$PROJECT_DIR$/app/src/main/res/layout/activity_view_product.xml" description="&lt;ScrollView xmlns:android=&quot;http://schemas.android...." line="1" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="617554f0-197d-4193-990d-c1d60ce49567" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/d/buyke254/BuyProductActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/d/buyke254/BuyProductActivity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/d/buyke254/BuyerMainActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/d/buyke254/BuyerMainActivity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/d/buyke254/MainActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/d/buyke254/MainActivity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/d/buyke254/OrderDetailsActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/d/buyke254/OrderDetailsActivity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/d/buyke254/OrdersToDeliverActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/d/buyke254/OrdersToDeliverActivity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/d/buyke254/ProductListActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/d/buyke254/ProductListActivity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/d/buyke254/UserAccounts/Login.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/d/buyke254/UserAccounts/Login.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/d/buyke254/UserAccounts/Register.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/d/buyke254/UserAccounts/Register.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/d/buyke254/ViewProductActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/d/buyke254/ViewProductActivity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/buttonbackground.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/drawable/buttonbackground.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_buy_product.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_buy_product.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_buyer_main.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_buyer_main.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_forget_password.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_forget_password.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_order_details.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_order_details.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_view_p

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <item name="androidx.appcompat.app.ActionBar int getDisplayOptions()">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="flag" val="true" />
+      <val name="value" val="{androidx.appcompat.app.ActionBar.DISPLAY_USE_LOGO, androidx.appcompat.app.ActionBar.DISPLAY_SHOW_HOME, androidx.appcompat.app.ActionBar.DISPLAY_HOME_AS_UP, androidx.appcompat.app.ActionBar.DISPLAY_SHOW_TITLE, androidx.appcompat.app.ActionBar.DISPLAY_SHOW_CUSTOM}" />
+    </annotation>
+  </item>
+  <item name="androidx.appcompat.app.ActionBar int getNavigationMode()">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.appcompat.app.ActionBar.NAVIGATION_MODE_STANDARD, androidx.appcompat.app.ActionBar.NAVIGATION_MODE_LIST, androidx.appcompat.app.ActionBar.NAVIGATION_MODE_TABS}" />
+    </annotation>
+  </item>
+  <item name="androidx.appcompat.app.ActionBar void setDisplayOptions(int) 0">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="flag" val="true" />
+      <val name="value" val="{androidx.appcompat.app.ActionBar.DISPLAY_USE_LOGO, androidx.appcompat.app.ActionBar.DISPLAY_SHOW_HOME, androidx.appcompat.app.ActionBar.DISPLAY_HOME_AS_UP, androidx.appcompat.app.ActionBar.DISPLAY_SHOW_TITLE, androidx.appcompat.app.ActionBar.DISPLAY_SHOW_CUSTOM}" />
+    </annotation>
+  </item>
+  <item name="androidx.appcompat.app.ActionBar void setDisplayOptions(int, int) 0">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="flag" val="true" />
+      <val name="value" val="{androidx.appcompat.app.ActionBar.DISPLAY_USE_LOGO, androidx.appcompat.app.ActionBar.DISPLAY_SHOW_HOME, androidx.appcompat.app.ActionBar.DISPLAY_HOME_AS_UP, androidx.appcompat.app.ActionBar.DISPLAY_SHOW_TITLE, androidx.appcompat.app.ActionBar.DISPLAY_SHOW_CUSTOM}" />
+    </annotation>
+  </item>
+  <item name="androidx.appcompat.app.ActionBar void setDisplayOptions(int, int) 1">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="flag" val="true" />
+      <val name="value" val="{androidx.appcompat.app.ActionBar.DISPLAY_USE_LOGO, androidx.appcompat.app.ActionBar.DISPLAY_SHOW_HOME, androidx.appcompat.app.ActionBar.DISPLAY_HOME_AS_UP, androidx.appcompat.app.ActionBar.DISPLAY_SHOW_TITLE, androidx.appcompat.app.ActionBar.DISPLAY_SHOW_CUSTOM}" />
+    </annotation>
+  </item>
+  <item name="androidx.appcompat.app.ActionBar void setNavigationMode(int) 0">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.appcompat.app.ActionBar.NAVIGATION_MODE_STANDARD, androidx.appcompat.app.ActionBar.NAVIGATION_MODE_LIST, androidx.appcompat.app.ActionBar.NAVIGATION_MODE_TABS}" />
+    </annotation>
+  </item>
+  <item name="androidx.appcompat.app.ActionBar.DisplayOptions">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="flag" val="true" />
+      <val name="value" val="{androidx.appcompat.app.ActionBar.DISPLAY_USE_LOGO, androidx.appcompat.app.ActionBar.DISPLAY_SHOW_HOME, androidx.appcompat.app.ActionBar.DISPLAY_HOME_AS_UP, androidx.appcompat.app.ActionBar.DISPLAY_SHOW_TITLE, androidx.appcompat.app.ActionBar.DISPLAY_SHOW_CUSTOM}" />
+    </annotation>
+  </item>
+  <item name="androidx.appcompat.app.ActionBar.NavigationMode">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.appcompat.app.ActionBar.NAVIGATION_MODE_STANDARD, androidx.appcompat.app.ActionBar.NAVIGATION_MODE_LIST, androidx.appcompat.app.ActionBar.NAVIGATION_MODE_TABS}" />
+    </annotation>
+  </item>
+  <item name="androidx.appcompat.app.AppCompatDelegate int getDefaultNightMode()">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_AUTO, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_UNSPECIFIED}" />
+    </annotation>
+  </item>
+  <item name="androidx.appcompat.app.AppCompatDelegate sDefaultNightMode">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_AUTO, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_UNSPECIFIED}" />
+    </annotation>
+  </item>
+  <item name="androidx.appcompat.app.AppCompatDelegate void setDefaultNightMode(int) 0">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_AUTO, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_UNSPECIFIED}" />
+    </annotation>
+  </item>
+  <item name="androidx.appcompat.app.AppCompatDelegate void setLocalNightMode(int) 0">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_AUTO, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_UNSPECIFIED}" />
+    </annotation>
+  </item>
+  <item name="androidx.appcompat.app.AppCompatDelegate.NightMode">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_AUTO, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_UNSPECIFIED}" />
+    </annotation>
+  </item>
+  <item name="androidx.appcompat.app.AppCompatDelegateImpl boolean updateForNightMode(int) 0">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM}" />
+    </annotation>
+  </item>
+  <item name="androidx.appcompat.app.AppCompatDelegateImpl int getNightMode()">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_AUTO, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_UNSPECIFIED}" />
+    </annotation>
+  </item>
+  <item name="androidx.appcompat.app.AppCompatDelegateImpl int mapNightMode(int)">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM}" />
+    </annotation>
+  </item>
+  <item name="androidx.appcompat.app.AppCompatDelegateImpl int mapNightMode(int) 0">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_AUTO, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_UNSPECIFIED}" />
+    </annotation>
+  </item>
+  <item name="androidx.appcompat.app.AppCompatDelegateImpl mLocalNightMode">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_AUTO, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_UNSPECIFIED}" />
+    </annotation>
+  </item>
+  <item name="androidx.appcompat.app.AppCompatDelegateImpl void setLocalNightMode(int) 0">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_AUTO, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_UNSPECIFIED}" />
+    </annotation>
+  </item>
+  <item name="androidx.appcompat.app.AppCompatDelegateImpl.AutoNightModeManager int getApplyableNightMode()">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES, androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM}" />
+    </annotation>
+  </item>
+  <item name="androidx.appcompat.app.ToolbarActionBar void setDisplayOptions(int) 0">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="flag" val="true" />
+      <val name="value" val="{androidx.appcompat.app.ActionBar.DISPLAY_USE_LOGO, androidx.appcompat.app.ActionBar.DISPLAY_SHOW_HOME, androidx.appcompat.app.ActionBar.DISPLAY_HOME_AS_UP, androidx.appcompat.app.ActionBar.DISPLAY_SHOW_TITLE, androidx.appcompat.app.ActionBar.DISPLAY_SHOW_CUSTOM}" />
+    </annotation>
+  </item>
+  <item name="androidx.appcompat.app.ToolbarActionBar void setDisplayOptions(int, int) 0">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="flag" val="true" />
+      <val name="value" val="{androidx.appcompat.app.ActionBar.DISPLAY_USE_LOGO, androidx.appcompat.app.ActionBar.DISPLAY_SHOW_HOME, androidx.appcompat.app.ActionBar.DISPLAY_HOME_AS_UP, androidx.appcompat.app.ActionBar.DISPLAY_SHOW_TITLE, androidx.appcompat.app.ActionBar.DISPLAY_SHOW_CUSTOM}" />
+    </annotation>
+  </item>
+  <item name="androidx.appcompat.app.ToolbarActionBar void setDisplayOptions(int, int) 1">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="flag" val="true" />
+      <val name="value" val="

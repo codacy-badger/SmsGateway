@@ -1,0 +1,111 @@
+package com.d.buyke254;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.widget.Toast;
+
+import com.d.buyke254.Adapters.OrdersRecycleViewAdapter;
+import com.d.buyke254.Models.OrderInfo;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+
+import static com.d.buyke254.confirmPageActivity.ORDER_UID;
+import static com.d.buyke254.confirmPageActivity.USER_TYPE;
+
+public class OrdersToDeliverActivity extends AppCompatActivity {
+
+    RecyclerView recyclerView;
+    GridLayoutManager gridLayoutManager;
+    OrdersRecycleViewAdapter ordersRecycleViewAdapter;
+    ArrayList<OrderInfo> orderInfos = new ArrayList<OrderInfo>();
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_orders_to_deliver);
+
+        gridLayoutManager = new GridLayoutManager(this, 1);
+        recyclerView = findViewById(R.id.recycle_view_to_deliver);
+
+    }
+
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        getData();
+    }
+
+    private void getData() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            DatabaseReference reference = FirebaseDatabase.getInstance()
+                    .getReference().child("ConfirmedOrders");
+
+            Toast.makeText(this, user.getUid(), Toast.LENGTH_SHORT).show();
+
+            Query OrdersQuery = reference.orderByChild("uid").equalTo(user.getUid());
+
+            OrdersQuery.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    if (orderInfos != null) {
+                        orderInfos.clear();
+                    }
+
+                    for (DataSnapshot checkSnapshot : dataSnapshot.getChildren()) {
+                        String buyerId = checkSnapshot.child("buyerId").getValue(String.class);
+                        String buyerName = checkSnapshot.child("buyerName").getValue(String.class);
+                        String buyerPhoneNumber = checkSnapshot.child("buyerPhoneNumber").getValue(String.class);
+                        String category = checkSnapshot.child("category").getValue(String.class);
+                        String desc = checkSnapshot.child("desc").getValue(String.class);
+                        String mainImage = checkSnapshot.child("mainImage").getValue(String.class);
+                        String name = checkSnapshot.child("name").getValue(String.class);
+                        String orderUid = checkSnapshot.child("orderUid").getValue(String.class);
+                        String price = checkSnapshot.child("price").getValue(String.class);
+                        String productUid = checkSnapshot.child("productUid").getValue(String.class);
+                        String quantity = checkSnapshot.child("quantity").getValue(String.class);
+                        String uid = checkSnapshot.child("uid").getValue(String.class);
+
+
+                        OrderInfo infos = new OrderInfo(desc,name,price,mainImage,uid,productUid,buyerId
+                        ,quantity,category,buyerName,buyerPhoneNumber,orderUid);
+                        orderInfos.add(infos);
+                    }
+                    setupAdapter();
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                }
+            });
+        }
+    }
+
+    public void setupAdapter() {
+        ordersRecycleViewAdapter = new OrdersRecycleViewAdapter(orderInfos, gridLayoutManager);
+        recyclerView.setLayoutManager(gridLayoutManager);
+        recyclerView.setAdapter(ordersRecycleViewAdapter);
+
+        ordersRecycleViewAdapter.setOnItemClickListener(new OrdersRecycleViewAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(int position) {
+                OrderInfo orderInfo = orderInfos.get(position);
+                Intent intent = new Intent(getApplicationContext(), OrderDetailsActivity.class);
+                intent.putExtra(ORDER_UID, orderInfo.getOrderUid());
+                intent.putExtra(USER_TYPE, "seller");
+                sta

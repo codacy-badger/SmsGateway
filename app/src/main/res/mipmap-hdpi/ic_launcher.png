@@ -1,0 +1,74 @@
+package com.d.buyke254;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import android.content.Intent;
+import android.os.Bundle;
+
+import com.d.buyke254.Adapters.OrdersRecycleViewAdapter;
+import com.d.buyke254.Models.OrderInfo;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+
+import static com.d.buyke254.confirmPageActivity.ORDER_UID;
+import static com.d.buyke254.confirmPageActivity.USER_TYPE;
+
+public class OrdersToDeliverActivity extends AppCompatActivity {
+
+    RecyclerView recyclerView;
+    GridLayoutManager gridLayoutManager;
+    OrdersRecycleViewAdapter ordersRecycleViewAdapter;
+    ArrayList<OrderInfo> orderInfos = new ArrayList<OrderInfo>();
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_orders_to_deliver);
+
+        gridLayoutManager = new GridLayoutManager(this, 1);
+        recyclerView = findViewById(R.id.recycle_view_to_deliver);
+
+    }
+
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        getData();
+    }
+
+    private void getData() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            DatabaseReference reference = FirebaseDatabase.getInstance()
+                    .getReference().child("ConfirmedOrders");
+
+            Toa
+
+            Query OrdersQuery = reference.orderByChild("uid").equalTo(user.getUid());
+
+            OrdersQuery.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    if (orderInfos != null) {
+                        orderInfos.clear();
+                    }
+
+                    for (DataSnapshot checkSnapshot : dataSnapshot.getChildren()) {
+                        String buyerId = checkSnapshot.child("buyerId").getValue(String.class);
+                        String buyerName = checkSnapshot.child("buyerName").getValue(String.class);
+                        String buyerPhoneNumber = checkSnapshot.child("buyerPhoneNumber").getValue(String.class);
+                        String category = checkSnapshot.child("category").getValue(String.class);
+                        String desc = checkSnapshot.child("desc").getValue(String.class);
+                        String mainImage = checkSnapsho

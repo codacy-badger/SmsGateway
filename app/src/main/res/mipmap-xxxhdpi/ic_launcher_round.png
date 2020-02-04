@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <item name="androidx.core.view.NestedScrollingChild boolean startNestedScroll(int) 0">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.SCROLL_AXIS_NONE, androidx.core.view.ViewCompat.SCROLL_AXIS_HORIZONTAL, androidx.core.view.ViewCompat.SCROLL_AXIS_VERTICAL}" />
+      <val name="flag" val="true" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingChild2 boolean dispatchNestedPreScroll(int, int, int[], int[], int) 4">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.TYPE_TOUCH, androidx.core.view.ViewCompat.TYPE_NON_TOUCH}" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingChild2 boolean dispatchNestedScroll(int, int, int, int, int[], int) 5">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.TYPE_TOUCH, androidx.core.view.ViewCompat.TYPE_NON_TOUCH}" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingChild2 boolean hasNestedScrollingParent(int) 0">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.TYPE_TOUCH, androidx.core.view.ViewCompat.TYPE_NON_TOUCH}" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingChild2 boolean startNestedScroll(int, int) 0">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.SCROLL_AXIS_NONE, androidx.core.view.ViewCompat.SCROLL_AXIS_HORIZONTAL, androidx.core.view.ViewCompat.SCROLL_AXIS_VERTICAL}" />
+      <val name="flag" val="true" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingChild2 boolean startNestedScroll(int, int) 1">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.TYPE_TOUCH, androidx.core.view.ViewCompat.TYPE_NON_TOUCH}" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingChild2 void stopNestedScroll(int) 0">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.TYPE_TOUCH, androidx.core.view.ViewCompat.TYPE_NON_TOUCH}" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingChildHelper android.view.ViewParent getNestedScrollingParentForType(int) 0">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.TYPE_TOUCH, androidx.core.view.ViewCompat.TYPE_NON_TOUCH}" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingChildHelper boolean dispatchNestedPreScroll(int, int, int[], int[], int) 4">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.TYPE_TOUCH, androidx.core.view.ViewCompat.TYPE_NON_TOUCH}" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingChildHelper boolean dispatchNestedScroll(int, int, int, int, int[], int) 5">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.TYPE_TOUCH, androidx.core.view.ViewCompat.TYPE_NON_TOUCH}" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingChildHelper boolean hasNestedScrollingParent(int) 0">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.TYPE_TOUCH, androidx.core.view.ViewCompat.TYPE_NON_TOUCH}" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingChildHelper boolean startNestedScroll(int) 0">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.SCROLL_AXIS_NONE, androidx.core.view.ViewCompat.SCROLL_AXIS_HORIZONTAL, androidx.core.view.ViewCompat.SCROLL_AXIS_VERTICAL}" />
+      <val name="flag" val="true" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingChildHelper boolean startNestedScroll(int, int) 0">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.SCROLL_AXIS_NONE, androidx.core.view.ViewCompat.SCROLL_AXIS_HORIZONTAL, androidx.core.view.ViewCompat.SCROLL_AXIS_VERTICAL}" />
+      <val name="flag" val="true" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingChildHelper boolean startNestedScroll(int, int) 1">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.TYPE_TOUCH, androidx.core.view.ViewCompat.TYPE_NON_TOUCH}" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingChildHelper void setNestedScrollingParentForType(int, android.view.ViewParent) 0">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.TYPE_TOUCH, androidx.core.view.ViewCompat.TYPE_NON_TOUCH}" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingChildHelper void stopNestedScroll(int) 0">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.TYPE_TOUCH, androidx.core.view.ViewCompat.TYPE_NON_TOUCH}" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingParent boolean onStartNestedScroll(android.view.View, android.view.View, int) 2">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.SCROLL_AXIS_NONE, androidx.core.view.ViewCompat.SCROLL_AXIS_HORIZONTAL, androidx.core.view.ViewCompat.SCROLL_AXIS_VERTICAL}" />
+      <val name="flag" val="true" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingParent int getNestedScrollAxes()">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.SCROLL_AXIS_NONE, androidx.core.view.ViewCompat.SCROLL_AXIS_HORIZONTAL, androidx.core.view.ViewCompat.SCROLL_AXIS_VERTICAL}" />
+      <val name="flag" val="true" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingParent void onNestedScrollAccepted(android.view.View, android.view.View, int) 2">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.SCROLL_AXIS_NONE, androidx.core.view.ViewCompat.SCROLL_AXIS_HORIZONTAL, androidx.core.view.ViewCompat.SCROLL_AXIS_VERTICAL}" />
+      <val name="flag" val="true" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingParent2 boolean onStartNestedScroll(android.view.View, android.view.View, int, int) 2">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.SCROLL_AXIS_NONE, androidx.core.view.ViewCompat.SCROLL_AXIS_HORIZONTAL, androidx.core.view.ViewCompat.SCROLL_AXIS_VERTICAL}" />
+      <val name="flag" val="true" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingParent2 boolean onStartNestedScroll(android.view.View, android.view.View, int, int) 3">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.TYPE_TOUCH, androidx.core.view.ViewCompat.TYPE_NON_TOUCH}" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingParent2 void onNestedPreScroll(android.view.View, int, int, int[], int) 4">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.TYPE_TOUCH, androidx.core.view.ViewCompat.TYPE_NON_TOUCH}" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingParent2 void onNestedScroll(android.view.View, int, int, int, int, int) 5">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.TYPE_TOUCH, androidx.core.view.ViewCompat.TYPE_NON_TOUCH}" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingParent2 void onNestedScrollAccepted(android.view.View, android.view.View, int, int) 2">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.SCROLL_AXIS_NONE, androidx.core.view.ViewCompat.SCROLL_AXIS_HORIZONTAL, androidx.core.view.ViewCompat.SCROLL_AXIS_VERTICAL}" />
+      <val name="flag" val="true" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingParent2 void onNestedScrollAccepted(android.view.View, android.view.View, int, int) 3">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.TYPE_TOUCH, androidx.core.view.ViewCompat.TYPE_NON_TOUCH}" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingParent2 void onStopNestedScroll(android.view.View, int) 1">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.TYPE_TOUCH, androidx.core.view.ViewCompat.TYPE_NON_TOUCH}" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingParentHelper int getNestedScrollAxes()">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.SCROLL_AXIS_NONE, androidx.core.view.ViewCompat.SCROLL_AXIS_HORIZONTAL, androidx.core.view.ViewCompat.SCROLL_AXIS_VERTICAL}" />
+      <val name="flag" val="true" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingParentHelper void onNestedScrollAccepted(android.view.View, android.view.View, int) 2">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.SCROLL_AXIS_NONE, androidx.core.view.ViewCompat.SCROLL_AXIS_HORIZONTAL, androidx.core.view.ViewCompat.SCROLL_AXIS_VERTICAL}" />
+      <val name="flag" val="true" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingParentHelper void onNestedScrollAccepted(android.view.View, android.view.View, int, int) 2">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.SCROLL_AXIS_NONE, androidx.core.view.ViewCompat.SCROLL_AXIS_HORIZONTAL, androidx.core.view.ViewCompat.SCROLL_AXIS_VERTICAL}" />
+      <val name="flag" val="true" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingParentHelper void onNestedScrollAccepted(android.view.View, android.view.View, int, int) 3">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.TYPE_TOUCH, androidx.core.view.ViewCompat.TYPE_NON_TOUCH}" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.NestedScrollingParentHelper void onStopNestedScroll(android.view.View, int) 1">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.TYPE_TOUCH, androidx.core.view.ViewCompat.TYPE_NON_TOUCH}" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.ViewCompat android.view.View keyboardNavigationClusterSearch(android.view.View, android.view.View, int) 2">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{android.view.View.FOCUS_LEFT, android.view.View.FOCUS_UP, android.view.View.FOCUS_RIGHT, android.view.View.FOCUS_DOWN, android.view.View.FOCUS_FORWARD, android.view.View.FOCUS_BACKWARD}" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.ViewCompat boolean dispatchNestedPreScroll(android.view.View, int, int, int[], int[], int) 5">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.TYPE_TOUCH, androidx.core.view.ViewCompat.TYPE_NON_TOUCH}" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.ViewCompat boolean dispatchNestedScroll(android.view.View, int, int, int, int, int[], int) 6">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.TYPE_TOUCH, androidx.core.view.ViewCompat.TYPE_NON_TOUCH}" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.ViewCompat boolean hasNestedScrollingParent(android.view.View, int) 1">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.TYPE_TOUCH, androidx.core.view.ViewCompat.TYPE_NON_TOUCH}" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.ViewCompat boolean startNestedScroll(android.view.View, int) 1">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.SCROLL_AXIS_NONE, androidx.core.view.ViewCompat.SCROLL_AXIS_HORIZONTAL, androidx.core.view.ViewCompat.SCROLL_AXIS_VERTICAL}" />
+      <val name="flag" val="true" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.ViewCompat boolean startNestedScroll(android.view.View, int, int) 1">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.SCROLL_AXIS_NONE, androidx.core.view.ViewCompat.SCROLL_AXIS_HORIZONTAL, androidx.core.view.ViewCompat.SCROLL_AXIS_VERTICAL}" />
+      <val name="flag" val="true" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.ViewCompat boolean startNestedScroll(android.view.View, int, int) 2">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.TYPE_TOUCH, androidx.core.view.ViewCompat.TYPE_NON_TOUCH}" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.ViewCompat int getAccessibilityLiveRegion(android.view.View)">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.ACCESSIBILITY_LIVE_REGION_NONE, androidx.core.view.ViewCompat.ACCESSIBILITY_LIVE_REGION_POLITE, androidx.core.view.ViewCompat.ACCESSIBILITY_LIVE_REGION_ASSERTIVE}" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.ViewCompat int getImportantForAccessibility(android.view.View)">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{androidx.core.view.ViewCompat.IMPORTANT_FOR_ACCESSIBILITY_AUTO, androidx.core.view.ViewCompat.IMPORTANT_FOR_ACCESSIBILITY_YES, androidx.core.view.ViewCompat.IMPORTANT_FOR_ACCESSIBILITY_NO, androidx.core.view.ViewCompat.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS}" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.ViewCompat int getImportantForAutofill(android.view.View)">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{android.view.View.IMPORTANT_FOR_AUTOFILL_AUTO, android.view.View.IMPORTANT_FOR_AUTOFILL_YES, android.view.View.IMPORTANT_FOR_AUTOFILL_NO, android.view.View.IMPORTANT_FOR_AUTOFILL_YES_EXCLUDE_DESCENDANTS, android.view.View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS}" />
+    </annotation>
+  </item>
+  <item name="androidx.core.view.ViewCompat int getLayerType(android.view.View)">
+    <annotation name="androidx.annotation.IntDef">
+      <val name="value" val="{android.view.View.LAYER_
