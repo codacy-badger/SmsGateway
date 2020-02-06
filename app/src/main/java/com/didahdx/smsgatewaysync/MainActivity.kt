@@ -7,7 +7,8 @@ import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.fragment.app.FragmentTransaction
-import androidx.navigation.ui.AppBarConfiguration
+import com.didahdx.smsgatewaysync.ui.HomeFragment
+import com.didahdx.smsgatewaysync.ui.SettingsFragment
 import com.google.android.material.navigation.NavigationView
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_layout.*

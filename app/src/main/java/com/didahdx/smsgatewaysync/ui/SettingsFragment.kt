@@ -1,4 +1,4 @@
-package com.didahdx.smsgatewaysync
+package com.didahdx.smsgatewaysync.ui
 
 
 import android.os.Bundle
@@ -6,6 +6,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.didahdx.smsgatewaysync.R
 
 /**
  * A simple [Fragment] subclass.
