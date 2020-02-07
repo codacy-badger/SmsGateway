@@ -8,11 +8,40 @@ import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.model.MessageInfo
 import kotlinx.android.synthetic.main.message_container.view.*
 
-class MessageAdapter(val messagelist: ArrayList<MessageInfo>) :
+class MessageAdapter(
+    val messageList: ArrayList<MessageInfo>,
+    var clickListener: OnItemClickListener
+) :
     RecyclerView.Adapter<MessageAdapter.MessageViewHolder>() {
 
+    private var mlistener: MessageAdapter.OnItemClickListener? = null
 
-    class MessageViewHolder(val view: View) : RecyclerView.ViewHolder(view)
+    interface OnItemClickListener {
+        fun onItemClick(position: Int)
+        fun onPrintPdf(position: Int)
+    }
+
+
+    class MessageViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
+
+        fun initialise(item: MessageInfo, action: OnItemClickListener) {
+            itemView.setOnClickListener {
+                val position = adapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    action.onItemClick(position)
+                }
+            }
+
+            itemView.image_view_more.setOnClickListener {
+                val position = adapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    action.onPrintPdf(position)
+                }
+            }
+
+
+        }
+    }
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder {
@@ -22,14 +51,17 @@ class MessageAdapter(val messagelist: ArrayList<MessageInfo>) :
         )
     }
 
-    override fun getItemCount() =  messagelist.size
+    override fun getItemCount() = messageList.size
 
 
     override fun onBindViewHolder(holder: MessageViewHolder, position: Int) {
-        val message=messagelist[position]
-        holder.view.text_view_sender.text=message.sender
-        holder.view.text_view_message_body.text=message.messageBody
-        holder.view.text_view_time.text=message.time
+        val message = messageList[position]
+        holder.view.text_view_sender.text = message.sender
+        holder.view.text_view_message_body.text = message.messageBody
+        holder.view.text_view_time.text = message.time
+        holder.view.text_view_mpesaId.text = message.mpesaId
+
+        holder.initialise(messageList.get(position), clickListener)
     }
 
 }
