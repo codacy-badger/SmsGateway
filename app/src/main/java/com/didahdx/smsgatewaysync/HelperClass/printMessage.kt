@@ -27,8 +27,8 @@ class printMessage {
         val document=Document(PageSize.A4)
         val table= PdfPTable(1)
         table.defaultCell.horizontalAlignment=Element.ALIGN_CENTER
-        table.defaultCell.fixedHeight=50.0f
-        table.totalWidth=PageSize.A4.width
+        table.defaultCell.fixedHeight=250.0f
+        table.totalWidth=PageSize.A4.width/4
         table.widthPercentage=100.0f
         table.defaultCell.verticalAlignment=Element.ALIGN_MIDDLE
 

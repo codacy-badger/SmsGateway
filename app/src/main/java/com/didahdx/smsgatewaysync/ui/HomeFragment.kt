@@ -40,11 +40,8 @@ import kotlin.collections.ArrayList
  */
 class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
 
-
     private var messageList: ArrayList<MessageInfo> = ArrayList<MessageInfo>()
-
     val SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED"
-
     val filter = IntentFilter(SMS_RECEIVED)
     private val PERMISSION_WRITE_EXTERNAL_STORAGE_CODE = 500
 
@@ -53,7 +50,6 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-
 
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_home, container, false)
@@ -77,7 +73,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
     }
 
 
-    //broadcast receiver
+    //broadcast sms receiver
     private val mReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent?) {
 
