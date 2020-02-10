@@ -14,8 +14,10 @@ import androidx.fragment.app.FragmentTransaction
 import com.didahdx.smsgatewaysync.ui.HomeFragment
 import com.didahdx.smsgatewaysync.ui.SettingsFragment
 import com.google.android.material.navigation.NavigationView
+import com.google.firebase.analytics.FirebaseAnalytics
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_layout.*
+
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
@@ -24,12 +26,15 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private val PERMISSION_RECEIVE_SMS_CODE = 2
     private val PERMISSION_READ_SMS_CODE=100
     private val PERMISSION_WRITE_EXTERNAL_STORAGE_CODE=500
+    private var mFirebaseAnalytics: FirebaseAnalytics? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // Obtain the FirebaseAnalytics instance.
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this)
         setSupportActionBar(toolbar)
 
         val drawerToggle: ActionBarDrawerToggle = object : ActionBarDrawerToggle(
