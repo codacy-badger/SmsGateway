@@ -191,24 +191,17 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
             )
             == PackageManager.PERMISSION_GRANTED
         ) {
-           val file= printMessage().createPdf(messageInfo.messageBody)
-            val packageManager = activity?.packageManager
-            val testIntent = Intent(Intent.ACTION_VIEW)
-            testIntent.type = "application/pdf"
+            val file = printMessage().createPdf(messageInfo.messageBody)
 
-            val list =packageManager?.queryIntentActivities(testIntent,PackageManager.MATCH_DEFAULT_ONLY)
-            if(list?.size!! > 0){
-                Toast.makeText(activity,"Printing",Toast.LENGTH_LONG).show()
-                val intent=Intent(Intent.ACTION_VIEW)
-                val uri=Uri.fromFile(file)
-                intent.setDataAndType(uri,"application/pdf")
-                activity?.startActivity(intent)
-            }else{
-                Toast.makeText(activity,"Download a pdf viewer to see this file",Toast.LENGTH_LONG).show()
-            }
+            Toast.makeText(activity, "Printing", Toast.LENGTH_LONG).show()
+            val intent = Intent(Intent.ACTION_VIEW)
+            val uri = Uri.fromFile(file)
+            intent.setDataAndType(uri, "application/pdf")
+            activity?.startActivity(intent)
+
+
+//    Toast.makeText(activity,"Download a pdf viewer to see this file",Toast.LENGTH_LONG).show()
         }
-
-
     }
 
 
