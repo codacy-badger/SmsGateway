@@ -58,9 +58,9 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        LocalBroadcastManager
-            .getInstance(requireContext())
-            .registerReceiver(mReceiver, filter)
+//        LocalBroadcastManager
+//            .getInstance(requireContext())
+//            .registerReceiver(mReceiver, filter)
 
         messageList = ArrayList<MessageInfo>()
         recycler_view_message_list.layoutManager = LinearLayoutManager(activity)
@@ -98,7 +98,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
 
 
     override fun onDestroyView() {
-        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(mReceiver)
+//        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(mReceiver)
         super.onDestroyView()
     }
 
