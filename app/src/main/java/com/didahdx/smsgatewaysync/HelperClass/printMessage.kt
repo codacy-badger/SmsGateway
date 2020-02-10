@@ -15,13 +15,14 @@ class printMessage {
     lateinit var pdfFile: File
 
     fun createPdf(message:String): File{
-        val directoryFolder=File("${Environment.getExternalStorageDirectory()}/SmsGatewaySync}")
+        val directoryFolder=File("${Environment.getDataDirectory()}/SmsGatewaySync")
 
         if (!directoryFolder.exists()){
             directoryFolder.mkdirs()
         }
 
-        val pdfName= Date().toString()
+        val pattern = "\\s+".toRegex()
+        val pdfName= "${Date().toString().replace(pattern,"_")}.pdf"
         pdfFile=File(directoryFolder.absolutePath,pdfName)
         val outputStream=FileOutputStream(pdfFile)
         val document=Document(PageSize.A4)

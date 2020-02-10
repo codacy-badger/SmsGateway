@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "309399925746",
+    "firebase_url": "https://smsgateway-9dbad.firebaseio.com",
+    "project_id": "smsgateway-9dbad",
+    "storage_bucket": "smsgateway-9dbad.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:309399925746:android:fa7b1e56e135c53d27b16b",
+        "android_client_info": {
+          "package_name": "com.didahdx.smsgatewaysync"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "309399925746-90fo9a0pp91m4ucn4o5fg47khd2nmk3k.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.didahdx.smsgatewaysync",
+            "certificate_hash": "1d5f1eb3bda7a26f703ec7f2a1489ea26daad2e6"
+          }
+        },
+        {
+          "client_id": "309399925746-dh8h8jcftd6iejdutnuj691p8d3mp184.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXyi1Oc4hH8WHQwBwFGQddp6biPv8TM54"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "309399925746-dh8h8jcftd6iejdutnuj691p8d3mp184.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
