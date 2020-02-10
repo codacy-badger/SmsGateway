@@ -24,7 +24,7 @@ class MessageAdapter(
 
     class MessageViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
 
-        fun initialise(action: OnItemClickListener) {
+        fun initialise(item:MessageInfo,action: OnItemClickListener) {
             itemView.setOnClickListener {
                 val position = adapterPosition
                 if (position != RecyclerView.NO_POSITION) {
@@ -61,7 +61,7 @@ class MessageAdapter(
         holder.view.text_view_time.text = message.time
         holder.view.text_view_mpesaId.text = message.mpesaId
 
-        holder.initialise(clickListener)
+        holder.initialise(message,clickListener)
     }
 
 }

@@ -2,6 +2,7 @@ package com.didahdx.smsgatewaysync
 
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.MenuItem
@@ -9,6 +10,7 @@ import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.fragment.app.FragmentTransaction
 import com.didahdx.smsgatewaysync.ui.HomeFragment
@@ -27,6 +29,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private val PERMISSION_READ_SMS_CODE=100
     private val PERMISSION_WRITE_EXTERNAL_STORAGE_CODE=500
     private var mFirebaseAnalytics: FirebaseAnalytics? = null
+    val INPUT_EXTRAS="inputExtras"
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,9 +53,18 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         navigation_view.setNavigationItemSelectedListener(this)
         checkPermission()
-
         settingUpDefaultFragment()
+
+//        startServices()
+
     }
+
+    private fun startServices() {
+        val serviceIntent=Intent(this,SmsService::class.java)
+        serviceIntent.putExtra(INPUT_EXTRAS,"SMS")
+        ContextCompat.startForegroundService(this,serviceIntent)
+    }
+
 
     private fun checkPermission(){
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS)
@@ -121,7 +133,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                    settingUpDefaultFragment()
                 }else{
                     Toast.makeText(this,"Permission denied",Toast.LENGTH_SHORT).show()
-                    finish()
                 }
             }
             PERMISSION_READ_SMS_CODE->{
@@ -129,7 +140,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                     settingUpDefaultFragment()
                 }else{
                     Toast.makeText(this,"Permission denied",Toast.LENGTH_SHORT).show()
-                    finish()
                 }
             }
 

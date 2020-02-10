@@ -15,7 +15,7 @@ class printMessage {
     lateinit var pdfFile: File
 
     fun createPdf(message:String): File{
-        val directoryFolder=File("${Environment.getDataDirectory()}/SmsGatewaySync")
+        val directoryFolder=File("${Environment.getExternalStorageDirectory()}/SmsGatewaySync")
 
         if (!directoryFolder.exists()){
             directoryFolder.mkdirs()

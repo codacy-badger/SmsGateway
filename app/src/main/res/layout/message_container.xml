@@ -4,12 +4,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="3dp"
     android:background="@color/white"
     android:clickable="true"
+    android:layout_margin="8dp"
+    app:contentPadding="5dp"
     android:focusable="true"
     android:orientation="vertical"
-    android:padding="12dp"
     app:cardCornerRadius="10dp">
 
     <RelativeLayout

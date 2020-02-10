@@ -24,6 +24,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.core.app.ActivityCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.recyclerview.widget.GridLayoutManager
 import com.didahdx.smsgatewaysync.HelperClass.printMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
@@ -51,6 +52,8 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
         savedInstanceState: Bundle?
     ): View? {
 
+        messageList = ArrayList<MessageInfo>()
+        recycler_view_message_list.layoutManager = GridLayoutManager(activity,1)
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_home, container, false)
     }
@@ -62,8 +65,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
 //            .getInstance(requireContext())
 //            .registerReceiver(mReceiver, filter)
 
-        messageList = ArrayList<MessageInfo>()
-        recycler_view_message_list.layoutManager = LinearLayoutManager(activity)
+
 
         refresh_layout_home.setOnRefreshListener {
             backgroundCoroutineCall()
@@ -191,17 +193,18 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
             )
             == PackageManager.PERMISSION_GRANTED
         ) {
-            val file = printMessage().createPdf(messageInfo.messageBody)
+            val file= printMessage().createPdf(messageInfo.messageBody)
 
-            Toast.makeText(activity, "Printing", Toast.LENGTH_LONG).show()
-            val intent = Intent(Intent.ACTION_VIEW)
-            val uri = Uri.fromFile(file)
-            intent.setDataAndType(uri, "application/pdf")
-            activity?.startActivity(intent)
-
-
-//    Toast.makeText(activity,"Download a pdf viewer to see this file",Toast.LENGTH_LONG).show()
-        }
+                try {
+                    Toast.makeText(activity, "Printing", Toast.LENGTH_LONG).show()
+                    val intent = Intent(Intent.ACTION_VIEW)
+                    val uri = Uri.fromFile(file)
+                    intent.setDataAndType(uri, "application/pdf")
+                    activity?.startActivity(intent)
+                }catch (e:Exception){
+                    Toast.makeText(activity,"Download a pdf viewer to see this file",Toast.LENGTH_LONG).show()
+                }
+            }
     }
 
 
