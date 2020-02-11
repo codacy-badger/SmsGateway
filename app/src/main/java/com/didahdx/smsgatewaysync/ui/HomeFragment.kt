@@ -53,7 +53,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view=inflater.inflate(R.layout.fragment_home, container, false)
+        val view = inflater.inflate(R.layout.fragment_home, container, false)
         view.recycler_view_message_list.layoutManager = LinearLayoutManager(activity)
 
         view.refresh_layout_home.setOnRefreshListener {
@@ -67,7 +67,6 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-
 
 
     }
@@ -196,14 +195,17 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
             )
             == PackageManager.PERMISSION_GRANTED
         ) {
-            val file = printMessage().createPdf(messageInfo.messageBody)
+            try {
+                val file = printMessage().createPdf(messageInfo.messageBody)
 
-            Toast.makeText(activity, "Printing", Toast.LENGTH_LONG).show()
-            val intent = Intent(Intent.ACTION_VIEW)
-            val uri = Uri.fromFile(file)
-            intent.setDataAndType(uri, "application/pdf")
-            activity?.startActivity(intent)
-
+                Toast.makeText(activity, "Printing", Toast.LENGTH_LONG).show()
+                val intent = Intent(Intent.ACTION_VIEW)
+                val uri = Uri.fromFile(file)
+                intent.setDataAndType(uri, "application/pdf")
+                activity?.startActivity(intent)
+            } catch (e: Exception) {
+                Toast.makeText(activity, "Printing failed", Toast.LENGTH_LONG).show()
+            }
         }
     }
 
@@ -216,7 +218,8 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
             )
             != PackageManager.PERMISSION_GRANTED
         ) {
-            ActivityCompat.requestPermissions(activity as Activity,
+            ActivityCompat.requestPermissions(
+                activity as Activity,
                 arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
                 PERMISSION_WRITE_EXTERNAL_STORAGE_CODE
             )
@@ -224,7 +227,10 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
     }
 
     private fun checkSmsPermission() {
-        if (ActivityCompat.checkSelfPermission(activity as Activity, Manifest.permission.RECEIVE_SMS)
+        if (ActivityCompat.checkSelfPermission(
+                activity as Activity,
+                Manifest.permission.RECEIVE_SMS
+            )
             != PackageManager.PERMISSION_GRANTED
         ) {
             ActivityCompat.requestPermissions(
@@ -242,7 +248,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
                 arrayOf(Manifest.permission.READ_SMS),
                 PERMISSION_READ_SMS_CODE
             )
-        }else{
+        } else {
 
         }
     }
