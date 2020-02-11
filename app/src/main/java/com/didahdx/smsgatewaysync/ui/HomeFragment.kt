@@ -26,6 +26,7 @@ import androidx.core.app.ActivityCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.GridLayoutManager
 import com.didahdx.smsgatewaysync.HelperClass.printMessage
+import kotlinx.android.synthetic.main.fragment_home.view.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
@@ -44,6 +45,8 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
     private var messageList: ArrayList<MessageInfo> = ArrayList<MessageInfo>()
     val SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED"
     val filter = IntentFilter(SMS_RECEIVED)
+    private val PERMISSION_RECEIVE_SMS_CODE = 2
+    private val PERMISSION_READ_SMS_CODE = 100
     private val PERMISSION_WRITE_EXTERNAL_STORAGE_CODE = 500
 
 
@@ -51,11 +54,17 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        val view = inflater.inflate(R.layout.fragment_home, container, false)
+        view.recycler_view_message_list.layoutManager = LinearLayoutManager(activity)
 
-        messageList = ArrayList<MessageInfo>()
-        recycler_view_message_list.layoutManager = GridLayoutManager(activity,1)
+        view.refresh_layout_home.setOnRefreshListener {
+            backgroundCoroutineCall()
+        }
+
+        backgroundCoroutineCall()
+
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_home, container, false)
+        return view
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -65,13 +74,6 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
 //            .getInstance(requireContext())
 //            .registerReceiver(mReceiver, filter)
 
-
-
-        refresh_layout_home.setOnRefreshListener {
-            backgroundCoroutineCall()
-        }
-
-        backgroundCoroutineCall()
     }
 
 
@@ -111,10 +113,15 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
 
 
     private fun backgroundCoroutineCall() {
-        refresh_layout_home.isRefreshing = true
-        //coroutine background job
-        CoroutineScope(IO).launch {
-            getDbMessages()
+        checkSmsPermission()
+        if (ActivityCompat.checkSelfPermission(activity as Activity, Manifest.permission.READ_SMS)
+            == PackageManager.PERMISSION_GRANTED
+        ) {
+            view?.refresh_layout_home?.isRefreshing = true
+            //coroutine background job
+            CoroutineScope(IO).launch {
+                getDbMessages()
+            }
         }
     }
 
@@ -193,20 +200,33 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
             )
             == PackageManager.PERMISSION_GRANTED
         ) {
-            val file= printMessage().createPdf(messageInfo.messageBody)
+            try {
+                val file = printMessage().createPdf(messageInfo.messageBody)
+                val packageManager = activity?.packageManager
+                val testIntent = Intent(Intent.ACTION_VIEW)
+                testIntent.type = "application/pdf"
 
-                try {
+                val list = packageManager?.queryIntentActivities(
+                    testIntent,
+                    PackageManager.MATCH_DEFAULT_ONLY
+                )
+                if (list?.size!! > 0) {
                     Toast.makeText(activity, "Printing", Toast.LENGTH_LONG).show()
                     val intent = Intent(Intent.ACTION_VIEW)
                     val uri = Uri.fromFile(file)
                     intent.setDataAndType(uri, "application/pdf")
                     activity?.startActivity(intent)
-                }catch (e:Exception){
-                    Toast.makeText(activity,"Download a pdf viewer to see this file",Toast.LENGTH_LONG).show()
                 }
-            }
-    }
 
+            } catch (e: Exception) {
+                Toast.makeText(
+                    activity,
+                    "Printing failed  ${e.localizedMessage}",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
 
     //used to check for write to external storage permission
     private fun checkWriteExternalStoragePermission() {
@@ -217,11 +237,67 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
             != PackageManager.PERMISSION_GRANTED
         ) {
             ActivityCompat.requestPermissions(
-                context as Activity,
+                activity as Activity,
                 arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
                 PERMISSION_WRITE_EXTERNAL_STORAGE_CODE
             )
         }
     }
 
+    private fun checkSmsPermission() {
+        if (ActivityCompat.checkSelfPermission(
+                activity as Activity,
+                Manifest.permission.RECEIVE_SMS
+            )
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                activity as Activity,
+                arrayOf(Manifest.permission.RECEIVE_SMS),
+                PERMISSION_RECEIVE_SMS_CODE
+            )
+        }
+
+        if (ActivityCompat.checkSelfPermission(activity as Activity, Manifest.permission.READ_SMS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                activity as Activity,
+                arrayOf(Manifest.permission.READ_SMS),
+                PERMISSION_READ_SMS_CODE
+            )
+        }
+    }
+
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+
+        when (requestCode) {
+            PERMISSION_RECEIVE_SMS_CODE -> {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                } else {
+                    Toast.makeText(activity, "Permission denied", Toast.LENGTH_SHORT).show()
+                }
+            }
+            PERMISSION_READ_SMS_CODE -> {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                } else {
+                    Toast.makeText(activity, "Permission denied", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            PERMISSION_WRITE_EXTERNAL_STORAGE_CODE -> {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(activity, "Permission granted", Toast.LENGTH_LONG).show()
+                }
+
+            }
+        }
+    }
 }
