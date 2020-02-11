@@ -197,12 +197,19 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
         ) {
             try {
                 val file = printMessage().createPdf(messageInfo.messageBody)
+                val packageManager = activity?.packageManager
+                val testIntent = Intent(Intent.ACTION_VIEW)
+                testIntent.type = "application/pdf"
 
-                Toast.makeText(activity, "Printing", Toast.LENGTH_LONG).show()
-                val intent = Intent(Intent.ACTION_VIEW)
-                val uri = Uri.fromFile(file)
-                intent.setDataAndType(uri, "application/pdf")
-                activity?.startActivity(intent)
+                val list =packageManager?.queryIntentActivities(testIntent,PackageManager.MATCH_DEFAULT_ONLY)
+                if(list?.size!! > 0){
+                    Toast.makeText(activity, "Printing", Toast.LENGTH_LONG).show()
+                    val intent = Intent(Intent.ACTION_VIEW)
+                    val uri = Uri.fromFile(file)
+                    intent.setDataAndType(uri, "application/pdf")
+                    activity?.startActivity(intent)
+                }
+
             } catch (e: Exception) {
                 Toast.makeText(activity, "Printing failed  ${e.localizedMessage}", Toast.LENGTH_LONG).show()
             }
