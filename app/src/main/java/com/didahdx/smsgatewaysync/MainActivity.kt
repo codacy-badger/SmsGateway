@@ -23,9 +23,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     lateinit var homeFragment: HomeFragment
     lateinit var settingsFragment: SettingsFragment
-    private val PERMISSION_RECEIVE_SMS_CODE = 2
-    private val PERMISSION_READ_SMS_CODE=100
-    private val PERMISSION_WRITE_EXTERNAL_STORAGE_CODE=500
     private var mFirebaseAnalytics: FirebaseAnalytics? = null
 
 
@@ -49,32 +46,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         drawerToggle.syncState()
 
         navigation_view.setNavigationItemSelectedListener(this)
-        checkPermission()
-
         settingUpDefaultFragment()
+
     }
 
-    private fun checkPermission(){
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.RECEIVE_SMS),
-                PERMISSION_RECEIVE_SMS_CODE
-            )
-        }
-
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_SMS)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.READ_SMS),
-                PERMISSION_READ_SMS_CODE
-            )
-        }
-    }
 
 
     private fun settingUpDefaultFragment() {
@@ -112,35 +87,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         return true
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
-    ) {
-        when (requestCode) {
-            PERMISSION_RECEIVE_SMS_CODE -> {
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                   settingUpDefaultFragment()
-                }else{
-                    Toast.makeText(this,"Permission denied",Toast.LENGTH_SHORT).show()
-                    finish()
-                }
-            }
-            PERMISSION_READ_SMS_CODE->{
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    settingUpDefaultFragment()
-                }else{
-                    Toast.makeText(this,"Permission denied",Toast.LENGTH_SHORT).show()
-                    finish()
-                }
-            }
-
-            PERMISSION_WRITE_EXTERNAL_STORAGE_CODE->{
-                if (grantResults[0]==PackageManager.PERMISSION_GRANTED){
-                    Toast.makeText(this,"Permission granted",Toast.LENGTH_LONG).show()
-                }
-
-            }
-        }
-    }
 
     override fun onBackPressed() {
         if (drawer_layout.isDrawerOpen(GravityCompat.START)) {

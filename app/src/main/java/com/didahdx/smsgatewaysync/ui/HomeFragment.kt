@@ -25,6 +25,7 @@ import android.net.Uri
 import androidx.core.app.ActivityCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.didahdx.smsgatewaysync.HelperClass.printMessage
+import kotlinx.android.synthetic.main.fragment_home.view.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
@@ -43,6 +44,8 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
     private var messageList: ArrayList<MessageInfo> = ArrayList<MessageInfo>()
     val SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED"
     val filter = IntentFilter(SMS_RECEIVED)
+    private val PERMISSION_RECEIVE_SMS_CODE = 2
+    private val PERMISSION_READ_SMS_CODE = 100
     private val PERMISSION_WRITE_EXTERNAL_STORAGE_CODE = 500
 
 
@@ -50,26 +53,23 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        val view=inflater.inflate(R.layout.fragment_home, container, false)
+        view.recycler_view_message_list.layoutManager = LinearLayoutManager(activity)
 
+        view.refresh_layout_home.setOnRefreshListener {
+            backgroundCoroutineCall()
+        }
+
+        backgroundCoroutineCall()
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_home, container, false)
+        return view
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-//        LocalBroadcastManager
-//            .getInstance(requireContext())
-//            .registerReceiver(mReceiver, filter)
 
-        messageList = ArrayList<MessageInfo>()
-        recycler_view_message_list.layoutManager = LinearLayoutManager(activity)
 
-        refresh_layout_home.setOnRefreshListener {
-            backgroundCoroutineCall()
-        }
-
-        backgroundCoroutineCall()
     }
 
 
@@ -109,10 +109,15 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
 
 
     private fun backgroundCoroutineCall() {
-        refresh_layout_home.isRefreshing = true
-        //coroutine background job
-        CoroutineScope(IO).launch {
-            getDbMessages()
+        checkSmsPermission()
+        if (ActivityCompat.checkSelfPermission(activity as Activity, Manifest.permission.READ_SMS)
+            == PackageManager.PERMISSION_GRANTED
+        ) {
+            view?.refresh_layout_home?.isRefreshing = true
+            //coroutine background job
+            CoroutineScope(IO).launch {
+                getDbMessages()
+            }
         }
     }
 
@@ -199,8 +204,6 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
             intent.setDataAndType(uri, "application/pdf")
             activity?.startActivity(intent)
 
-
-//    Toast.makeText(activity,"Download a pdf viewer to see this file",Toast.LENGTH_LONG).show()
         }
     }
 
@@ -213,12 +216,66 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
             )
             != PackageManager.PERMISSION_GRANTED
         ) {
-            ActivityCompat.requestPermissions(
-                context as Activity,
+            ActivityCompat.requestPermissions(activity as Activity,
                 arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
                 PERMISSION_WRITE_EXTERNAL_STORAGE_CODE
             )
         }
     }
 
+    private fun checkSmsPermission() {
+        if (ActivityCompat.checkSelfPermission(activity as Activity, Manifest.permission.RECEIVE_SMS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                activity as Activity,
+                arrayOf(Manifest.permission.RECEIVE_SMS),
+                PERMISSION_RECEIVE_SMS_CODE
+            )
+        }
+
+        if (ActivityCompat.checkSelfPermission(activity as Activity, Manifest.permission.READ_SMS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                activity as Activity,
+                arrayOf(Manifest.permission.READ_SMS),
+                PERMISSION_READ_SMS_CODE
+            )
+        }else{
+
+        }
+    }
+
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+
+        when (requestCode) {
+            PERMISSION_RECEIVE_SMS_CODE -> {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                } else {
+                    Toast.makeText(activity, "Permission denied", Toast.LENGTH_SHORT).show()
+                }
+            }
+            PERMISSION_READ_SMS_CODE -> {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                } else {
+                    Toast.makeText(activity, "Permission denied", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            PERMISSION_WRITE_EXTERNAL_STORAGE_CODE -> {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(activity, "Permission granted", Toast.LENGTH_LONG).show()
+                }
+
+            }
+        }
+    }
 }
