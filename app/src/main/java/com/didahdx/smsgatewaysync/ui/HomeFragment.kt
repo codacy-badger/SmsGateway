@@ -204,7 +204,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
                 intent.setDataAndType(uri, "application/pdf")
                 activity?.startActivity(intent)
             } catch (e: Exception) {
-                Toast.makeText(activity, "Printing failed", Toast.LENGTH_LONG).show()
+                Toast.makeText(activity, "Printing failed  ${e.localizedMessage}", Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -248,8 +248,6 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
                 arrayOf(Manifest.permission.READ_SMS),
                 PERMISSION_READ_SMS_CODE
             )
-        } else {
-
         }
     }
 
