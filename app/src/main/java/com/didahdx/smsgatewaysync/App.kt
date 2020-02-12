@@ -1,14 +1,12 @@
 package com.didahdx.smsgatewaysync
 
-import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
-import androidx.multidex.MultiDexApplication
 import androidx.multidex.MultiDex
-import androidx.core.content.ContextCompat.getSystemService
-
+import androidx.multidex.MultiDexApplication
+import com.didahdx.smsgatewaysync.receiver.ConnectionReceiver
 
 
 class App : MultiDexApplication() {
@@ -22,7 +20,18 @@ class App : MultiDexApplication() {
 
     override fun onCreate() {
         super.onCreate()
+        instance=this
         createNotificationChannel()
+    }
+
+
+    fun setConnectionListener(listener: ConnectionReceiver.ConnectionReceiverListener){
+        ConnectionReceiver.connectionReceiverListener=listener
+    }
+
+    companion object{
+        @get:Synchronized
+        lateinit var instance:App
     }
 
     private fun createNotificationChannel() {

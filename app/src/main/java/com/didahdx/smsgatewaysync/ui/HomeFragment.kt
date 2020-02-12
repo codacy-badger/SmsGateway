@@ -3,7 +3,6 @@ package com.didahdx.smsgatewaysync.ui
 
 import android.Manifest
 import android.content.*
-import android.net.ConnectivityManager
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -14,20 +13,15 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.didahdx.smsgatewaysync.adapters.MessageAdapter
 import com.didahdx.smsgatewaysync.model.MessageInfo
 import com.didahdx.smsgatewaysync.R
-import com.didahdx.smsgatewaysync.receiver.SmsReceiver
 import kotlinx.android.synthetic.main.fragment_home.*
 import android.widget.Toast
-import android.content.ContentResolver
-import android.R.attr.name
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import androidx.recyclerview.widget.GridLayoutManager
 import com.didahdx.smsgatewaysync.HelperClass.printMessage
-import com.didahdx.smsgatewaysync.SmsService
+import com.didahdx.smsgatewaysync.services.SmsService
 import kotlinx.android.synthetic.main.fragment_home.view.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO

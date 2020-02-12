@@ -2,8 +2,11 @@ package com.didahdx.smsgatewaysync
 
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.net.ConnectivityManager
 import android.os.Bundle
 import android.view.MenuItem
 import android.widget.Toast
@@ -13,6 +16,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.fragment.app.FragmentTransaction
+import com.didahdx.smsgatewaysync.receiver.ConnectionReceiver
+import com.didahdx.smsgatewaysync.services.SmsService
 import com.didahdx.smsgatewaysync.ui.HomeFragment
 import com.didahdx.smsgatewaysync.ui.SettingsFragment
 import com.google.android.material.navigation.NavigationView
@@ -21,7 +26,16 @@ import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_layout.*
 
 
-class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
+class MainActivity : AppCompatActivity(),
+    NavigationView.OnNavigationItemSelectedListener, ConnectionReceiver.ConnectionReceiverListener {
+
+    override fun onNetworkConnectionChanged(isConnected: Boolean) {
+        if(!isConnected){
+            startServices("No internet connection")
+        }else{
+            startServices("${getString(R.string.app_name)} is Running")
+        }
+    }
 
     lateinit var homeFragment: HomeFragment
     lateinit var settingsFragment: SettingsFragment
@@ -50,6 +64,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         navigation_view.setNavigationItemSelectedListener(this)
 
         settingUpDefaultFragment()
+
+        //registering the broadcast receiver for network
+        baseContext.registerReceiver(ConnectionReceiver(), IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
+        App.instance.setConnectionListener(this)
 
     }
 
@@ -98,5 +116,12 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         } else {
             super.onBackPressed()
         }
+    }
+
+
+    private fun startServices(input:String) {
+        val serviceIntent = Intent(this, SmsService::class.java)
+        serviceIntent.putExtra(INPUT_EXTRAS, input)
+        ContextCompat.startForegroundService(this as Activity, serviceIntent)
     }
 }

@@ -22,7 +22,7 @@ class printMessage {
         }
 
         val pattern = "\\s+".toRegex()
-        val pdfName= "${Date().toString().replace(pattern,"_")}.pdf"
+        val pdfName= "${Date().toString().replace(":","_").replace(pattern,"_")}.pdf"
         pdfFile=File(directoryFolder.absolutePath,pdfName)
         val outputStream=FileOutputStream(pdfFile)
         val document=Document(PageSize.A4)
