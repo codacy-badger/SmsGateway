@@ -11,7 +11,7 @@ import androidx.core.content.ContextCompat.getSystemService
 
 
 
-class App :  Application() {
+class App : MultiDexApplication() {
     val channel_id="SmsServiceChannel"
 
      override fun attachBaseContext(context: Context) {

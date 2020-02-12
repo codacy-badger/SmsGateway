@@ -21,7 +21,7 @@ class SmsService :Service(){
         var notification=NotificationCompat.Builder(this,channel_id)
             .setContentTitle("SmsGatewaySync")
             .setContentText(input)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.ic_home)
             .setContentIntent(pendingIntent)
             .build()
 
@@ -33,4 +33,12 @@ class SmsService :Service(){
         return null
     }
 
+    override fun onCreate() {
+        super.onCreate()
+    }
+
+
+    override fun onDestroy() {
+        super.onDestroy()
+    }
 }

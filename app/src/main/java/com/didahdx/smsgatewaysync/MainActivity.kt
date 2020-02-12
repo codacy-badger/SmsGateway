@@ -28,7 +28,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private var mFirebaseAnalytics: FirebaseAnalytics? = null
     val INPUT_EXTRAS="inputExtras"
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -52,15 +51,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         settingUpDefaultFragment()
 
-//        startServices()
-
     }
 
-    private fun startServices() {
-        val serviceIntent=Intent(this,SmsService::class.java)
-        serviceIntent.putExtra(INPUT_EXTRAS,"SMS")
-        ContextCompat.startForegroundService(this,serviceIntent)
-    }
+
 
 
     private fun settingUpDefaultFragment() {

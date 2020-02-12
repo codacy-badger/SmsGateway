@@ -23,9 +23,11 @@ import android.app.Activity
 import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.GridLayoutManager
 import com.didahdx.smsgatewaysync.HelperClass.printMessage
+import com.didahdx.smsgatewaysync.SmsService
 import kotlinx.android.synthetic.main.fragment_home.view.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
@@ -48,6 +50,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
     private val PERMISSION_RECEIVE_SMS_CODE = 2
     private val PERMISSION_READ_SMS_CODE = 100
     private val PERMISSION_WRITE_EXTERNAL_STORAGE_CODE = 500
+    val INPUT_EXTRAS = "inputExtras"
 
 
     override fun onCreateView(
@@ -65,6 +68,18 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
 
         // Inflate the layout for this fragment
         return view
+    }
+
+
+    private fun startServices() {
+        val serviceIntent = Intent(activity, SmsService::class.java)
+        serviceIntent.putExtra(INPUT_EXTRAS, "SMS")
+        ContextCompat.startForegroundService(activity as Activity, serviceIntent)
+    }
+
+    private fun stopServices(){
+        val serviceIntent = Intent(activity, SmsService::class.java)
+//       stopService(serviceIntent)
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -122,6 +137,15 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
             CoroutineScope(IO).launch {
                 getDbMessages()
             }
+        }
+
+        if (ActivityCompat.checkSelfPermission(
+                activity as Activity,
+                Manifest.permission.RECEIVE_SMS
+            )
+            == PackageManager.PERMISSION_GRANTED
+        ) {
+            startServices()
         }
     }
 
@@ -279,7 +303,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
         when (requestCode) {
             PERMISSION_RECEIVE_SMS_CODE -> {
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
+                    startServices()
                 } else {
                     Toast.makeText(activity, "Permission denied", Toast.LENGTH_SHORT).show()
                 }
