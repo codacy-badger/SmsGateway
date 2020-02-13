@@ -155,6 +155,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
     }
 
     private fun getMessages() {
+        progress_bar?.visibility=View.GONE
         recycler_view_message_list?.adapter = MessageAdapter(messageList, this)
         refresh_layout_home?.isRefreshing = false
     }
@@ -335,25 +336,11 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
     }
 
 
-    //bluetooth printer
-    fun bluetoothprint() {
 
-
-            if (Printooth.hasPairedPrinter()) {
-                Printooth.removeCurrentPrinter()
-            } else {
-                startActivityForResult(
-                    Intent(activity, ScanningActivity::class.java)
-                    , ScanningActivity.SCANNING_FOR_PRINTER
-                )
-                changePairAndUnpair()
-            }
-
-    }
 
 
     private fun changePairAndUnpair() {
-        if (Printooth.hasPairedPrinter()) {
+        if (!Printooth.hasPairedPrinter()) {
             Toast
                 .makeText(
                     activity,
@@ -370,7 +357,6 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
                 )
                 .show()
         }
-
     }
 
 
