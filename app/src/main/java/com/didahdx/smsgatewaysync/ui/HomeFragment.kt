@@ -21,7 +21,15 @@ import android.net.Uri
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.didahdx.smsgatewaysync.HelperClass.printMessage
-import com.didahdx.smsgatewaysync.services.SmsService
+import com.didahdx.smsgatewaysync.services.AppServices
+import com.mazenrashed.printooth.Printooth
+import com.mazenrashed.printooth.data.printable.Printable
+import com.mazenrashed.printooth.data.printable.RawPrintable
+import com.mazenrashed.printooth.data.printable.TextPrintable
+import com.mazenrashed.printooth.data.printer.DefaultPrinter
+import com.mazenrashed.printooth.ui.ScanningActivity
+import com.mazenrashed.printooth.utilities.Printing
+import com.mazenrashed.printooth.utilities.PrintingCallback
 import kotlinx.android.synthetic.main.fragment_home.view.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
@@ -36,7 +44,33 @@ import kotlin.collections.ArrayList
 /**
  * A simple [Fragment] subclass.
  */
-class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
+class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCallback {
+
+    /*********************************************************************************************************
+     ********************* BLUETOOTH PRINTER CALLBACK METHODS ************************************************
+     **********************************************************************************************************/
+
+    override fun connectingWithPrinter() {
+       Toast.makeText(activity,"Connecting to printer",Toast.LENGTH_SHORT).show()
+    }
+
+    override fun connectionFailed(error: String) {
+        Toast.makeText(activity,"Connecting to printer failed $error",Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onError(error: String) {
+        Toast.makeText(activity,"Error $error",Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onMessage(message: String) {
+        Toast.makeText(activity,"Message $message",Toast.LENGTH_SHORT).show()
+    }
+
+    override fun printingOrderSentSuccessfully() {
+        Toast.makeText(activity,"Order sent to printer",Toast.LENGTH_SHORT).show()
+    }
+
+    /***************************************************************************************************************************/
 
     private var messageList: ArrayList<MessageInfo> = ArrayList<MessageInfo>()
     val SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED"
@@ -45,6 +79,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
     private val PERMISSION_READ_SMS_CODE = 100
     private val PERMISSION_WRITE_EXTERNAL_STORAGE_CODE = 500
     val INPUT_EXTRAS = "inputExtras"
+    var printing: Printing? = null
 
 
     override fun onCreateView(
@@ -53,6 +88,10 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_home, container, false)
         view.recycler_view_message_list.layoutManager = LinearLayoutManager(activity)
+
+        if (printing != null) {
+            printing?.printingCallback = this
+        }
 
         view.refresh_layout_home.setOnRefreshListener {
             backgroundCoroutineCall()
@@ -64,15 +103,15 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
         return view
     }
 
-
+    //appServices for showing notification bar
     private fun startServices() {
-        val serviceIntent = Intent(activity, SmsService::class.java)
-        serviceIntent.putExtra(INPUT_EXTRAS, "SMS")
+        val serviceIntent = Intent(activity, AppServices::class.java)
+        serviceIntent.putExtra(INPUT_EXTRAS, "SmsGateway is running")
         ContextCompat.startForegroundService(activity as Activity, serviceIntent)
     }
 
-    private fun stopServices(){
-        val serviceIntent = Intent(activity, SmsService::class.java)
+    private fun stopServices() {
+        val serviceIntent = Intent(activity, AppServices::class.java)
 //       stopService(serviceIntent)
     }
 
@@ -210,40 +249,16 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
     override fun onPrintPdf(position: Int) {
         val messageInfo: MessageInfo = messageList[position]
 
-        checkWriteExternalStoragePermission()
-
-        if (ActivityCompat.checkSelfPermission(
-                context as Activity,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
+        if (!Printooth.hasPairedPrinter()){
+            startActivityForResult(
+                Intent(activity, ScanningActivity::class.java)
+                , ScanningActivity.SCANNING_FOR_PRINTER
             )
-            == PackageManager.PERMISSION_GRANTED
-        ) {
-            try {
-                val file = printMessage().createPdf(messageInfo.messageBody)
-                val packageManager = activity?.packageManager
-                val testIntent = Intent(Intent.ACTION_VIEW)
-                testIntent.type = "application/pdf"
-
-                val list = packageManager?.queryIntentActivities(
-                    testIntent,
-                    PackageManager.MATCH_DEFAULT_ONLY
-                )
-                if (list?.size!! > 0) {
-                    Toast.makeText(activity, "Printing", Toast.LENGTH_LONG).show()
-                    val intent = Intent(Intent.ACTION_VIEW)
-                    val uri = Uri.fromFile(file)
-                    intent.setDataAndType(uri, "application/pdf")
-                    activity?.startActivity(intent)
-                }
-
-            } catch (e: Exception) {
-                Toast.makeText(
-                    activity,
-                    "Printing failed  ${e.localizedMessage}",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
+        }else{
+            printText(messageInfo.messageBody)
         }
+
+
     }
 
     //used to check for write to external storage permission
@@ -316,6 +331,97 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
                 }
 
             }
+        }
+    }
+
+
+    //bluetooth printer
+    fun bluetoothprint() {
+
+
+            if (Printooth.hasPairedPrinter()) {
+                Printooth.removeCurrentPrinter()
+            } else {
+                startActivityForResult(
+                    Intent(activity, ScanningActivity::class.java)
+                    , ScanningActivity.SCANNING_FOR_PRINTER
+                )
+                changePairAndUnpair()
+            }
+
+    }
+
+
+    private fun changePairAndUnpair() {
+        if (Printooth.hasPairedPrinter()) {
+            Toast
+                .makeText(
+                    activity,
+                    "Unpair ${Printooth.getPairedPrinter()?.name}",
+                    Toast.LENGTH_LONG
+                )
+                .show()
+        } else {
+            Toast
+                .makeText(
+                    activity,
+                    "Paired with Printer ${Printooth.getPairedPrinter()?.name}",
+                    Toast.LENGTH_LONG
+                )
+                .show()
+        }
+
+    }
+
+
+    fun printText(message: String) {
+        val printables = ArrayList<Printable>()
+        printables.add(RawPrintable.Builder(byteArrayOf(27, 100, 4)).build())
+
+        //print header
+        printables.add(
+            TextPrintable.Builder()
+                .setText("Test ${getString(R.string.app_name)}")
+                .setCharacterCode(DefaultPrinter.CHARCODE_PC1252)
+                .setAlignment(DefaultPrinter.ALIGNMENT_CENTER)
+                .setEmphasizedMode(DefaultPrinter.EMPHASIZED_MODE_BOLD)
+                .setUnderlined(DefaultPrinter.UNDERLINED_MODE_ON)
+                .setNewLinesAfter(1)
+                .build()
+        )
+
+        //print body
+        printables.add(
+            TextPrintable.Builder()
+                .setText(message)
+                .setLineSpacing(DefaultPrinter.LINE_SPACING_60)
+                .setAlignment(DefaultPrinter.ALIGNMENT_CENTER)
+                .setEmphasizedMode(DefaultPrinter.EMPHASIZED_MODE_BOLD)
+                .setUnderlined(DefaultPrinter.UNDERLINED_MODE_ON)
+                .setNewLinesAfter(2)
+                .build()
+        )
+
+
+        printing?.print(printables)
+    }
+
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode==ScanningActivity.SCANNING_FOR_PRINTER && resultCode==Activity.RESULT_OK){
+            initPrinter()
+            changePairAndUnpair()
+        }
+    }
+
+    private fun initPrinter() {
+       if (Printooth.hasPairedPrinter()){
+           printing=Printooth.printer()
+       }
+
+        if (printing!=null){
+            printing?.printingCallback=this
         }
     }
 }

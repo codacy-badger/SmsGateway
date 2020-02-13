@@ -9,7 +9,7 @@ import com.didahdx.smsgatewaysync.MainActivity
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.receiver.ConnectionReceiver
 
-class SmsService :Service(){
+class AppServices :Service(){
 
     val INPUT_EXTRAS="inputExtras"
     val channel_id="SmsServiceChannel"
@@ -22,7 +22,7 @@ class SmsService :Service(){
             0,notificationIntent,0)
 
         var notification=NotificationCompat.Builder(this,channel_id)
-            .setContentTitle("SmsGatewaySync Running")
+            .setContentTitle("SmsGatewaySync")
             .setContentText(input)
             .setSmallIcon(R.drawable.ic_home)
             .setContentIntent(pendingIntent)

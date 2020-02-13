@@ -1,23 +1,19 @@
 package com.didahdx.smsgatewaysync
 
 
-import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.os.Bundle
 import android.view.MenuItem
-import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.fragment.app.FragmentTransaction
 import com.didahdx.smsgatewaysync.receiver.ConnectionReceiver
-import com.didahdx.smsgatewaysync.services.SmsService
+import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.ui.HomeFragment
 import com.didahdx.smsgatewaysync.ui.SettingsFragment
 import com.google.android.material.navigation.NavigationView
@@ -29,6 +25,7 @@ import kotlinx.android.synthetic.main.app_bar_layout.*
 class MainActivity : AppCompatActivity(),
     NavigationView.OnNavigationItemSelectedListener, ConnectionReceiver.ConnectionReceiverListener {
 
+    //checks on network connectivity to update the notification bar
     override fun onNetworkConnectionChanged(isConnected: Boolean) {
         if(!isConnected){
             startServices("No internet connection")
@@ -120,7 +117,7 @@ class MainActivity : AppCompatActivity(),
 
 
     private fun startServices(input:String) {
-        val serviceIntent = Intent(this, SmsService::class.java)
+        val serviceIntent = Intent(this, AppServices::class.java)
         serviceIntent.putExtra(INPUT_EXTRAS, input)
         ContextCompat.startForegroundService(this as Activity, serviceIntent)
     }

@@ -7,6 +7,7 @@ import android.os.Build
 import androidx.multidex.MultiDex
 import androidx.multidex.MultiDexApplication
 import com.didahdx.smsgatewaysync.receiver.ConnectionReceiver
+import com.mazenrashed.printooth.Printooth
 
 
 class App : MultiDexApplication() {
@@ -22,6 +23,7 @@ class App : MultiDexApplication() {
         super.onCreate()
         instance=this
         createNotificationChannel()
+        Printooth.init(this)
     }
 
 
