@@ -5,8 +5,12 @@
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
         android:name=".App"
@@ -15,13 +19,17 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme.NoActionBar">
+        android:theme="@style/AppTheme">
+        <service
+            android:name=".services.MyIntentService"
+            android:exported="false"></service>
+
         <receiver
             android:name=".receiver.ConnectionReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.net.conn.CONNECTVITY_CHANGE"/>
+                <action android:name="android.net.conn.CONNECTVITY_CHANGE" />
             </intent-filter>
         </receiver>
         <receiver
@@ -44,7 +52,7 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".services.SmsService" />
+        <service android:name=".services.AppServices" />
     </application>
 
 </manifest>

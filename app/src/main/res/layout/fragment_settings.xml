@@ -5,10 +5,33 @@
     android:layout_height="match_parent"
     tools:context=".ui.SettingsFragment">
 
-    <TextView
+    <Button
+        android:id="@+id/btn_add_printer"
         android:layout_width="wrap_content"
+        android:layout_marginTop="12dp"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:text="@string/menu_settings" />
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentTop="true"
+        android:text="Add Printer" />
+
+    <Button
+        android:id="@+id/btn_remove_printer"
+        android:layout_width="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_height="wrap_content"
+       android:layout_centerHorizontal="true"
+        android:layout_below="@id/btn_add_printer"
+        android:text="Remove Printer" />
+
+
+    <Button
+        android:id="@+id/btn_check_balance"
+        android:layout_width="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/btn_remove_printer"
+        android:text="Check balance" />
+
 
 </RelativeLayout>
