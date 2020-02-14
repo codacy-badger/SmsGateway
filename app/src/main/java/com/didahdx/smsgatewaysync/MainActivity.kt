@@ -1,57 +1,127 @@
 package com.didahdx.smsgatewaysync
 
+
+import android.Manifest
+import android.app.Activity
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.PackageManager
+import android.net.ConnectivityManager
 import android.os.Bundle
-import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.android.material.snackbar.Snackbar
-import androidx.navigation.findNavController
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.navigateUp
-import androidx.navigation.ui.setupActionBarWithNavController
-import androidx.navigation.ui.setupWithNavController
-import androidx.drawerlayout.widget.DrawerLayout
-import com.google.android.material.navigation.NavigationView
+import android.view.MenuItem
+import android.widget.Toast
+import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
-import android.view.Menu
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.core.view.GravityCompat
+import androidx.fragment.app.FragmentTransaction
+import com.didahdx.smsgatewaysync.receiver.ConnectionReceiver
+import com.didahdx.smsgatewaysync.services.SmsService
+import com.didahdx.smsgatewaysync.ui.HomeFragment
+import com.didahdx.smsgatewaysync.ui.SettingsFragment
+import com.google.android.material.navigation.NavigationView
+import com.google.firebase.analytics.FirebaseAnalytics
+import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.app_bar_layout.*
 
-class MainActivity : AppCompatActivity() {
 
-    private lateinit var appBarConfiguration: AppBarConfiguration
+class MainActivity : AppCompatActivity(),
+    NavigationView.OnNavigationItemSelectedListener, ConnectionReceiver.ConnectionReceiverListener {
+
+    override fun onNetworkConnectionChanged(isConnected: Boolean) {
+        if(!isConnected){
+            startServices("No internet connection")
+        }else{
+            startServices("${getString(R.string.app_name)} is Running")
+        }
+    }
+
+    lateinit var homeFragment: HomeFragment
+    lateinit var settingsFragment: SettingsFragment
+    private var mFirebaseAnalytics: FirebaseAnalytics? = null
+    val INPUT_EXTRAS="inputExtras"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        val toolbar: Toolbar = findViewById(R.id.toolbar)
+
+        // Obtain the FirebaseAnalytics instance.
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this)
         setSupportActionBar(toolbar)
 
-        val fab: FloatingActionButton = findViewById(R.id.fab)
-        fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show()
+        val drawerToggle: ActionBarDrawerToggle = object : ActionBarDrawerToggle(
+            this,
+            drawer_layout, toolbar, R.string.open, R.string.close
+        ) {
+
         }
-        val drawerLayout: DrawerLayout = findViewById(R.id.drawer_layout)
-        val navView: NavigationView = findViewById(R.id.nav_view)
-        val navController = findNavController(R.id.nav_host_fragment)
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
-        appBarConfiguration = AppBarConfiguration(
-            setOf(
-                R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow,
-                R.id.nav_tools, R.id.nav_share, R.id.nav_send
-            ), drawerLayout
-        )
-        setupActionBarWithNavController(navController, appBarConfiguration)
-        navView.setupWithNavController(navController)
+
+        drawerToggle.isDrawerIndicatorEnabled = true
+        drawer_layout.addDrawerListener(drawerToggle)
+        drawerToggle.syncState()
+
+        navigation_view.setNavigationItemSelectedListener(this)
+
+        settingUpDefaultFragment()
+
+        //registering the broadcast receiver for network
+        baseContext.registerReceiver(ConnectionReceiver(), IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
+        App.instance.setConnectionListener(this)
+
     }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        menuInflater.inflate(R.menu.main, menu)
+
+
+
+    private fun settingUpDefaultFragment() {
+        //setting default fragment
+        homeFragment = HomeFragment()
+        supportFragmentManager
+            .beginTransaction()
+            .replace(R.id.frame_layout, homeFragment)
+            .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+            .commit()
+    }
+
+    //handling navigation drawer events
+    override fun onNavigationItemSelected(menu: MenuItem): Boolean {
+        when (menu.itemId) {
+            R.id.nav_home -> {
+                homeFragment = HomeFragment()
+                supportFragmentManager
+                    .beginTransaction()
+                    .replace(R.id.frame_layout, homeFragment)
+                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                    .commit()
+            }
+            R.id.nav_settings -> {
+                settingsFragment = SettingsFragment()
+                supportFragmentManager
+                    .beginTransaction()
+                    .replace(R.id.frame_layout, settingsFragment)
+                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                    .commit()
+            }
+        }
+
+        drawer_layout.closeDrawer(GravityCompat.START)
         return true
     }
 
-    override fun onSupportNavigateUp(): Boolean {
-        val navController = findNavController(R.id.nav_host_fragment)
-        return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
+
+    override fun onBackPressed() {
+        if (drawer_layout.isDrawerOpen(GravityCompat.START)) {
+            drawer_layout.closeDrawer(GravityCompat.START)
+        } else {
+            super.onBackPressed()
+        }
+    }
+
+
+    private fun startServices(input:String) {
+        val serviceIntent = Intent(this, SmsService::class.java)
+        serviceIntent.putExtra(INPUT_EXTRAS, input)
+        ContextCompat.startForegroundService(this as Activity, serviceIntent)
     }
 }
