@@ -18,10 +18,11 @@ import android.widget.Toast
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.didahdx.smsgatewaysync.HelperClass.printMessage
 import com.didahdx.smsgatewaysync.services.AppServices
+import com.didahdx.smsgatewaysync.utilities.*
 import com.mazenrashed.printooth.Printooth
 import com.mazenrashed.printooth.data.printable.Printable
 import com.mazenrashed.printooth.data.printable.RawPrintable
@@ -73,12 +74,8 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
     /***************************************************************************************************************************/
 
     private var messageList: ArrayList<MessageInfo> = ArrayList<MessageInfo>()
-    val SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED"
+
     val filter = IntentFilter(SMS_RECEIVED)
-    private val PERMISSION_RECEIVE_SMS_CODE = 2
-    private val PERMISSION_READ_SMS_CODE = 100
-    private val PERMISSION_WRITE_EXTERNAL_STORAGE_CODE = 500
-    val INPUT_EXTRAS = "inputExtras"
     var printing: Printing? = null
 
 
@@ -163,6 +160,8 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
 
     private fun backgroundCoroutineCall() {
         checkSmsPermission()
+        startServices()
+
         if (ActivityCompat.checkSelfPermission(activity as Activity, Manifest.permission.READ_SMS)
             == PackageManager.PERMISSION_GRANTED
         ) {
@@ -179,7 +178,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
             )
             == PackageManager.PERMISSION_GRANTED
         ) {
-            startServices()
+
         }
     }
 
@@ -301,6 +300,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
                 PERMISSION_READ_SMS_CODE
             )
         }
+
     }
 
 
@@ -313,7 +313,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
         when (requestCode) {
             PERMISSION_RECEIVE_SMS_CODE -> {
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    startServices()
+
                 } else {
                     Toast.makeText(activity, "Permission denied", Toast.LENGTH_SHORT).show()
                 }

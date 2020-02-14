@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Build
 import android.telephony.SmsMessage
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.didahdx.smsgatewaysync.utilities.SMS_RECEIVED
 
 import java.text.SimpleDateFormat
 import java.util.*
@@ -14,7 +15,6 @@ import java.util.*
 
 class SmsReceiver : BroadcastReceiver() {
 
-    val SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED"
 
     override fun onReceive(context: Context, intent: Intent) {
 
