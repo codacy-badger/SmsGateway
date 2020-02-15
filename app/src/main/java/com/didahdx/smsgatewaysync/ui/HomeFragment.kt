@@ -21,6 +21,7 @@ import android.net.Uri
 import android.os.Build
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.utilities.*
 import com.mazenrashed.printooth.Printooth
@@ -115,10 +116,6 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-//        LocalBroadcastManager
-//            .getInstance(requireContext())
-//            .registerReceiver(mReceiver, filter)
-
     }
 
 
@@ -147,7 +144,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
 
 
     override fun onDestroyView() {
-//        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(mReceiver)
+        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(mReceiver)
         super.onDestroyView()
     }
 
@@ -178,7 +175,9 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
             )
             == PackageManager.PERMISSION_GRANTED
         ) {
-
+                    LocalBroadcastManager
+            .getInstance(requireContext())
+            .registerReceiver(mReceiver, filter)
         }
     }
 
@@ -221,11 +220,11 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
                     messageArrayList.add(
                         MessageInfo(
                             cursor.getString(messageId),
-                            Date(dateString.toLong()).toString(), cursor.getString(nameId), mpesaId
+                            Date(dateString.toLong()).toString(),
+                            cursor.getString(nameId),
+                            mpesaId
                         )
                     )
-
-
                 }
             } while (cursor.moveToNext())
 
@@ -248,6 +247,11 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
     //click Listener for pdf
     override fun onPrintPdf(position: Int) {
         val messageInfo: MessageInfo = messageList[position]
+        val smsFilter=SmsFilter()
+        val smsprint=smsFilter.checkSmsType(messageInfo.messageBody)
+
+//        Toast.makeText(activity, smsprint,
+//            Toast.LENGTH_LONG).show()
 
         if (!Printooth.hasPairedPrinter()){
             startActivityForResult(
@@ -255,7 +259,8 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
                 , ScanningActivity.SCANNING_FOR_PRINTER
             )
         }else{
-            printText(messageInfo.messageBody)
+            printText(smsprint)
+
         }
 
 

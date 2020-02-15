@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.telephony.SmsMessage
+import android.widget.Toast
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.didahdx.smsgatewaysync.utilities.SMS_RECEIVED
 
@@ -42,6 +43,7 @@ class SmsReceiver : BroadcastReceiver() {
                     val newIntent = Intent(SMS_RECEIVED)
                     newIntent.putExtra("phoneNumber", phoneNumber)
                     newIntent.putExtra("messageText", messageText)
+                    Toast.makeText(context,messageText,Toast.LENGTH_LONG).show()
                     LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
 
 

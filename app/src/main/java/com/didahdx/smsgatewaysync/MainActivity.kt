@@ -23,9 +23,11 @@ import com.didahdx.smsgatewaysync.ui.HomeFragment
 import com.didahdx.smsgatewaysync.ui.SettingsFragment
 import com.didahdx.smsgatewaysync.utilities.INPUT_EXTRAS
 import com.didahdx.smsgatewaysync.utilities.PERMISSION_FOREGROUND_SERVICES_CODE
-import com.didahdx.smsgatewaysync.utilities.PERMISSION_RECEIVE_SMS_CODE
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.analytics.FirebaseAnalytics
+import com.microsoft.appcenter.AppCenter
+import com.microsoft.appcenter.analytics.Analytics
+import com.microsoft.appcenter.crashes.Crashes
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_layout.*
 
@@ -52,6 +54,11 @@ class MainActivity : AppCompatActivity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        AppCenter.start(
+            application, "e55e44cf-eac5-49fc-a785-d6956b386176",
+            Analytics::class.java, Crashes::class.java
+        )
 
         checkForegroundPermission()
 
