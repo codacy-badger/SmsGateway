@@ -306,6 +306,19 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
             )
         }
 
+        if (ActivityCompat.checkSelfPermission(activity as Activity, Manifest.permission.FOREGROUND_SERVICE)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                ActivityCompat.requestPermissions(
+                    activity as Activity,
+                    arrayOf(Manifest.permission.FOREGROUND_SERVICE),
+                    PERMISSION_FOREGROUND_SERVICES_CODE
+                )
+
+            }
+        }
+
     }
 
 
@@ -336,6 +349,14 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
                     Toast.makeText(activity, "Permission granted", Toast.LENGTH_LONG).show()
                 }
 
+            }
+
+            PERMISSION_FOREGROUND_SERVICES_CODE -> {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                } else {
+                    Toast.makeText(activity, "Permission denied", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
@@ -376,7 +397,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
                 .setCharacterCode(DefaultPrinter.CHARCODE_PC1252)
                 .setAlignment(DefaultPrinter.ALIGNMENT_CENTER)
                 .setEmphasizedMode(DefaultPrinter.EMPHASIZED_MODE_BOLD)
-                .setUnderlined(DefaultPrinter.UNDERLINED_MODE_ON)
+
                 .setNewLinesAfter(1)
                 .build()
         )

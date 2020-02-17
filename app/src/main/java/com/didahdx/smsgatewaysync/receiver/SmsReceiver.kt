@@ -1,13 +1,25 @@
 package com.didahdx.smsgatewaysync.receiver
 
+import android.app.Activity
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.provider.Settings.Global.getString
 import android.telephony.SmsMessage
 import android.widget.Toast
+import androidx.core.app.ActivityCompat.startActivityForResult
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.utilities.SMS_RECEIVED
+import com.didahdx.smsgatewaysync.utilities.bluetoothPrinter
+import com.didahdx.smsgatewaysync.utilities.printMessage
+import com.mazenrashed.printooth.Printooth
+import com.mazenrashed.printooth.data.printable.Printable
+import com.mazenrashed.printooth.data.printable.RawPrintable
+import com.mazenrashed.printooth.data.printable.TextPrintable
+import com.mazenrashed.printooth.data.printer.DefaultPrinter
+import com.mazenrashed.printooth.ui.ScanningActivity
 
 import java.text.SimpleDateFormat
 import java.util.*
@@ -38,12 +50,22 @@ class SmsReceiver : BroadcastReceiver() {
 
                     val phoneNumber = smsMessage.originatingAddress
                     val messageText = smsMessage.messageBody.toString()
+                    val sms=smsMessage.displayMessageBody
 
 
                     val newIntent = Intent(SMS_RECEIVED)
                     newIntent.putExtra("phoneNumber", phoneNumber)
                     newIntent.putExtra("messageText", messageText)
-                    Toast.makeText(context,messageText,Toast.LENGTH_LONG).show()
+                    Toast.makeText(context,"message $messageText",Toast.LENGTH_LONG).show()
+                    Toast.makeText(context,"display $sms",Toast.LENGTH_LONG).show()
+                    val printer= bluetoothPrinter()
+                    val appName ="SmsGateWaySync"
+
+                    if (Printooth.hasPairedPrinter()){
+                        printer.printText(messageText,context, appName)
+                    }else{
+                        Toast.makeText(context,"Connect a printer",Toast.LENGTH_LONG).show()
+                    }
                     LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
 
 
@@ -51,6 +73,7 @@ class SmsReceiver : BroadcastReceiver() {
             }
         }
     }
+
 
 
 }
