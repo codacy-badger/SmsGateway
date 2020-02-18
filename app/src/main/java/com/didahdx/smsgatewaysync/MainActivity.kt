@@ -19,7 +19,9 @@ import androidx.core.view.GravityCompat
 import androidx.fragment.app.FragmentTransaction
 import com.didahdx.smsgatewaysync.receiver.ConnectionReceiver
 import com.didahdx.smsgatewaysync.services.AppServices
+import com.didahdx.smsgatewaysync.ui.AboutFragment
 import com.didahdx.smsgatewaysync.ui.HomeFragment
+import com.didahdx.smsgatewaysync.ui.LogFragment
 import com.didahdx.smsgatewaysync.ui.SettingsFragment
 import com.didahdx.smsgatewaysync.utilities.INPUT_EXTRAS
 import com.didahdx.smsgatewaysync.utilities.PERMISSION_FOREGROUND_SERVICES_CODE
@@ -48,6 +50,8 @@ class MainActivity : AppCompatActivity(),
 
     lateinit var homeFragment: HomeFragment
     lateinit var settingsFragment: SettingsFragment
+    lateinit var logFragment:LogFragment
+    lateinit var aboutFragment: AboutFragment
     private var mFirebaseAnalytics: FirebaseAnalytics? = null
 
 
@@ -127,6 +131,25 @@ class MainActivity : AppCompatActivity(),
                     .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
                     .commit()
             }
+
+            R.id.nav_about->{
+                aboutFragment= AboutFragment()
+                supportFragmentManager
+                    .beginTransaction()
+                    .replace(R.id.frame_layout,aboutFragment)
+                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                    .commit()
+            }
+
+            R.id.nav_log->{
+                logFragment= LogFragment()
+                supportFragmentManager
+                    .beginTransaction()
+                    .replace(R.id.frame_layout,logFragment)
+                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                    .commit()
+            }
+
             R.id.nav_settings -> {
                 settingsFragment = SettingsFragment()
                 supportFragmentManager
