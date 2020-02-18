@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <EditTextPreference
+        android:key="host_url"
+        android:summary="Add your host url to root to"
+        android:title="Host Url" />
+
+    <ListPreference
+        android:defaultValue="All"
+        android:entries="@array/mpesa_types"
+        android:entryValues="@array/mpesa_types"
+        android:key="mpesa_types"
+        android:summary="Types of mpesa transaction to be used"
+        android:title="Mpesa type" />
+
+    <SwitchPreferenceCompat
+        android:key="auto_print"
+        android:summary="Allow automatic printing on incoming sms"
+        android:title="Auto Printing" />
+
+    <SwitchPreferenceCompat
+        android:summary="Enable automatic upload of sms"
+        android:title="Sms sync"
+        app:key="auto_sms_upload" />
+    <SwitchPreference
+        android:summary="Connect to a printer"
+        android:title="Add Printer" />
+    <Preference
+        android:title="Send feedback"
+        app:key="feedback"
+        app:summary="Report technical issues or suggest new features" />
+
+</PreferenceScreen>

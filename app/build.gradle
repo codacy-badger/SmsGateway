@@ -71,5 +71,9 @@ dependencies {
     implementation "com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}"
 
     implementation 'com.google.firebase:firebase-auth:19.2.0'
+    // Kotlin
+    implementation "androidx.preference:preference-ktx:1.1.0"
+
+
 
 }
