@@ -11,9 +11,7 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat.startActivityForResult
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.didahdx.smsgatewaysync.R
-import com.didahdx.smsgatewaysync.utilities.SMS_RECEIVED
-import com.didahdx.smsgatewaysync.utilities.bluetoothPrinter
-import com.didahdx.smsgatewaysync.utilities.printMessage
+import com.didahdx.smsgatewaysync.utilities.*
 import com.mazenrashed.printooth.Printooth
 import com.mazenrashed.printooth.data.printable.Printable
 import com.mazenrashed.printooth.data.printable.RawPrintable
@@ -59,10 +57,9 @@ class SmsReceiver : BroadcastReceiver() {
                     Toast.makeText(context,"message $messageText",Toast.LENGTH_LONG).show()
                     Toast.makeText(context,"display $sms",Toast.LENGTH_LONG).show()
                     val printer= bluetoothPrinter()
-                    val appName ="SmsGateWaySync"
-
+                    val smsFilter=SmsFilter()
                     if (Printooth.hasPairedPrinter()){
-                        printer.printText(messageText,context, appName)
+                        printer.printText(smsFilter.checkSmsType(messageText),context, APP_NAME)
                     }else{
                         Toast.makeText(context,"Connect a printer",Toast.LENGTH_LONG).show()
                     }

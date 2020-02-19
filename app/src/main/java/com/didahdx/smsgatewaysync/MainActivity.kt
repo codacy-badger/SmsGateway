@@ -17,12 +17,14 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.fragment.app.FragmentTransaction
+import androidx.preference.PreferenceManager
 import com.didahdx.smsgatewaysync.receiver.ConnectionReceiver
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.ui.AboutFragment
 import com.didahdx.smsgatewaysync.ui.HomeFragment
 import com.didahdx.smsgatewaysync.ui.LogFragment
 import com.didahdx.smsgatewaysync.ui.SettingsFragment
+import com.didahdx.smsgatewaysync.utilities.AppLog
 import com.didahdx.smsgatewaysync.utilities.INPUT_EXTRAS
 import com.didahdx.smsgatewaysync.utilities.PERMISSION_FOREGROUND_SERVICES_CODE
 import com.google.android.material.navigation.NavigationView
@@ -43,11 +45,15 @@ class MainActivity : AppCompatActivity(),
 
         if (!isConnected) {
             startServices("No internet connection")
+            appLog.writeToLog(this,"No internet Connection")
+            Toast.makeText(this,"no net",Toast.LENGTH_LONG).show()
         } else {
             startServices("${getString(R.string.app_name)} is Running")
+            appLog.writeToLog(this,"Connected to Internet")
         }
     }
 
+    val appLog= AppLog()
     lateinit var homeFragment: HomeFragment
     lateinit var settingsFragment: SettingsFragment
     lateinit var logFragment:LogFragment
@@ -91,6 +97,9 @@ class MainActivity : AppCompatActivity(),
             IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
         )
         App.instance.setConnectionListener(this)
+
+        //saving apps preference
+        PreferenceManager.setDefaultValues(this,R.xml.preferences,false)
 
     }
 

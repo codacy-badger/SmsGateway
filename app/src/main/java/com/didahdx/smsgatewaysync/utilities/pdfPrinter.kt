@@ -11,7 +11,7 @@ import java.io.FileOutputStream
 import java.util.Date
 
 
-class printMessage {
+class pdfPrinter {
     lateinit var pdfFile: File
 
     fun createPdf(message:String): File{

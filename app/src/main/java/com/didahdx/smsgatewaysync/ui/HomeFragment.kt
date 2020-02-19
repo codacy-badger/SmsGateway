@@ -248,6 +248,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
     override fun onPrintPdf(position: Int) {
         val messageInfo: MessageInfo = messageList[position]
         val smsFilter=SmsFilter()
+        val bluetoothPrinter=bluetoothPrinter()
         val smsprint=smsFilter.checkSmsType(messageInfo.messageBody)
 
 //        Toast.makeText(activity, smsprint,
@@ -259,7 +260,8 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
                 , ScanningActivity.SCANNING_FOR_PRINTER
             )
         }else{
-            printText(smsprint)
+            bluetoothPrinter.printText(smsprint,
+                activity as Activity,getString(R.string.app_name))
 
         }
 
@@ -385,38 +387,6 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
         }
     }
 
-
-    fun printText(message: String) {
-        val printables = ArrayList<Printable>()
-        printables.add(RawPrintable.Builder(byteArrayOf(27, 100, 4)).build())
-
-        //print header
-        printables.add(
-            TextPrintable.Builder()
-                .setText("Test ${getString(R.string.app_name)}")
-                .setCharacterCode(DefaultPrinter.CHARCODE_PC1252)
-                .setAlignment(DefaultPrinter.ALIGNMENT_CENTER)
-                .setEmphasizedMode(DefaultPrinter.EMPHASIZED_MODE_BOLD)
-
-                .setNewLinesAfter(1)
-                .build()
-        )
-
-        //print body
-        printables.add(
-            TextPrintable.Builder()
-                .setText(message)
-                .setLineSpacing(DefaultPrinter.LINE_SPACING_60)
-                .setAlignment(DefaultPrinter.ALIGNMENT_CENTER)
-                .setEmphasizedMode(DefaultPrinter.EMPHASIZED_MODE_BOLD)
-                .setUnderlined(DefaultPrinter.UNDERLINED_MODE_ON)
-                .setNewLinesAfter(2)
-                .build()
-        )
-
-
-        printing?.print(printables)
-    }
 
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

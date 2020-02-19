@@ -18,7 +18,7 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 
-
+   <!--  preference values  -->
     <string-array name="mpesa_types">
         <item>Pay Bill</item>
         <item>Buy Goods and Services</item>
@@ -26,5 +26,7 @@
         <item>Withdraw Cash</item>
         <item>All</item>
     </string-array>
+    <string name="host_url">https://www.server.com</string>
+
 
 </resources>

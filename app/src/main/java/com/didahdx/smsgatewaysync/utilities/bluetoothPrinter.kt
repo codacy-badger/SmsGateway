@@ -25,9 +25,9 @@ class bluetoothPrinter : PrintingCallback {
         //print header
         printables.add(
             TextPrintable.Builder()
-                .setText("Test $appName")
+                .setText(appName)
                 .setCharacterCode(DefaultPrinter.CHARCODE_PC1252)
-                .setAlignment(DefaultPrinter.ALIGNMENT_CENTER)
+                .setAlignment(DefaultPrinter.ALIGNMENT_LEFT)
                 .setFontSize(DefaultPrinter.FONT_SIZE_LARGE)
                 .setNewLinesAfter(1)
                 .build()

@@ -24,7 +24,7 @@ class AppServices :Service(){
             0,notificationIntent,0)
 
         var notification=NotificationCompat.Builder(this,CHANNEL_ID)
-            .setContentTitle("SmsGatewaySync")
+            .setContentTitle(getString(R.string.app_name))
             .setContentText(input)
             .setSmallIcon(R.drawable.ic_home)
             .setContentIntent(pendingIntent)

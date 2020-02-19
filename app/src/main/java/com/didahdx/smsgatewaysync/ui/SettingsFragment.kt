@@ -1,144 +1,170 @@
 package com.didahdx.smsgatewaysync.ui
 
 
-import android.Manifest
 import android.app.Activity
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.net.Uri
+import android.content.SharedPreferences
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import android.widget.Toast
-import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
+import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.didahdx.smsgatewaysync.R
-import com.didahdx.smsgatewaysync.utilities.PERMISSION_CALL_PHONE_CODE
+import com.didahdx.smsgatewaysync.utilities.PREF_CONNECT_PRINTER
+import com.didahdx.smsgatewaysync.utilities.PREF_HOST_URL
+import com.didahdx.smsgatewaysync.utilities.PREF_MPESA_TYPE
 import com.mazenrashed.printooth.Printooth
 import com.mazenrashed.printooth.ui.ScanningActivity
-import kotlinx.android.synthetic.main.fragment_settings.view.*
+import com.mazenrashed.printooth.utilities.Printing
+import com.mazenrashed.printooth.utilities.PrintingCallback
 
 
 /**
  * A simple [Fragment] subclass.
  */
-class SettingsFragment : PreferenceFragmentCompat() {
+class SettingsFragment : PreferenceFragmentCompat(),SharedPreferences.OnSharedPreferenceChangeListener
+,PrintingCallback{
+
+    lateinit var onSharedPreferenceChangeListener : SharedPreferences.OnSharedPreferenceChangeListener
+    var printing: Printing? = null
 
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-            setPreferencesFromResource(R.xml.settings, rootKey)
+            setPreferencesFromResource(R.xml.preferences, rootKey)
+            onSharedPreferenceChangeListener=this
+        }
+
+    //shared preference listener
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
+        if (key.equals(PREF_HOST_URL)){
+          val hostUrl: Preference? = findPreference<Preference>(key)
+            hostUrl?.summary=preferenceScreen.sharedPreferences.getString(PREF_HOST_URL,"")
         }
 
 
+        if (key.equals(PREF_MPESA_TYPE)){
+          val mpesaType: Preference? = findPreference<Preference>(key)
+            mpesaType?.summary=preferenceScreen.sharedPreferences.getString(PREF_MPESA_TYPE,"")
+        }
+
+        if (key.equals(PREF_CONNECT_PRINTER)){
+            val connectPrinter=findPreference<Preference>(key)
+            var isPrinterConnected= preferenceScreen.sharedPreferences
+                .getBoolean(PREF_CONNECT_PRINTER,false)
+
+            if (isPrinterConnected){
+                addPrinter()
+            }else{
+                removePrinter()
+            }
+        }
+    }
 
 
-//    override fun onCreateView(
-//        inflater: LayoutInflater, container: ViewGroup?,
-//        savedInstanceState: Bundle?
-//    ): View? {
-//        // Inflate the layout for this fragment
-//        val view = inflater.inflate(R.layout.fragment_settings, container, false)
-//        view.btn_add_printer.setOnClickListener {
-//            addPrinter()
-//        }
-//
-//        view.btn_remove_printer.setOnClickListener {
-//            removePrinter()
-//        }
-//
-//        view.btn_check_balance.setOnClickListener {
-//            checkCredit()
-//        }
-//
-//        return view
-//    }
+    override fun onResume() {
+        super.onResume()
+        preferenceScreen.sharedPreferences.registerOnSharedPreferenceChangeListener(onSharedPreferenceChangeListener)
+
+        //setting the summary values
+        val hostUrl=findPreference<Preference>(PREF_HOST_URL)
+        hostUrl?.summary=preferenceScreen.sharedPreferences.getString(PREF_HOST_URL,"")
+
+        val mpesaType=findPreference<Preference>(PREF_MPESA_TYPE)
+        mpesaType?.summary=preferenceScreen.sharedPreferences.getString(PREF_MPESA_TYPE,"")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        preferenceScreen.sharedPreferences.unregisterOnSharedPreferenceChangeListener(onSharedPreferenceChangeListener)
+    }
 
 
-//    fun checkCredit() {
-//        checkCallPermission()
-//        val i = Intent(Intent.ACTION_CALL)
-//        i.data = Uri.parse("tel:${Uri.encode("*131#")}")
-//
-//        if (ActivityCompat.checkSelfPermission(
-//                activity as Activity,
-//                Manifest.permission.CALL_PHONE
-//            ) == PackageManager.PERMISSION_GRANTED
-//        ) {
-//            startActivity(i)
-//        }
-//    }
+    //remove bluetooth printer
+    fun addPrinter() {
+        if (Printooth.hasPairedPrinter()) {
+            Printooth.removeCurrentPrinter()
+        } else {
+            startActivityForResult(
+                Intent(activity, ScanningActivity::class.java)
+                , ScanningActivity.SCANNING_FOR_PRINTER
+            )
+            changePairAndUnpair()
+        }
+    }
 
-//    private fun checkCallPermission() {
-//        if (ActivityCompat.checkSelfPermission(activity as Activity, Manifest.permission.CALL_PHONE)
-//            != PackageManager.PERMISSION_GRANTED
-//        ) {
-//            ActivityCompat.requestPermissions(
-//                activity as Activity,
-//                arrayOf(Manifest.permission.CALL_PHONE),
-//                PERMISSION_CALL_PHONE_CODE
-//            )
-//        }
-//    }
+    //remove bluetooth printer
+    fun removePrinter() {
+        if (Printooth.hasPairedPrinter()) {
+            Printooth.removeCurrentPrinter()
+        }
+        changePairAndUnpair()
+    }
+
+        private fun changePairAndUnpair() {
+        if (!Printooth.hasPairedPrinter()) {
+            Toast
+                .makeText(
+                    activity,
+                    "Unpair ${Printooth.getPairedPrinter()?.name}",
+                    Toast.LENGTH_LONG
+                )
+                .show()
+        } else {
+            Toast
+                .makeText(
+                    activity,
+                    "Paired with Printer ${Printooth.getPairedPrinter()?.name}",
+                    Toast.LENGTH_LONG
+                )
+                .show()
+        }
+    }
 
 
-//    //remove bluetooth printer
-//    fun removePrinter() {
-//        if (Printooth.hasPairedPrinter()) {
-//            Printooth.removeCurrentPrinter()
-//        }
-//        changePairAndUnpair()
-//    }
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode==ScanningActivity.SCANNING_FOR_PRINTER && resultCode== Activity.RESULT_OK){
+            initPrinter()
+            changePairAndUnpair()
+        }else{
+            val connectPrinter=findPreference<Preference>(PREF_CONNECT_PRINTER)
+            connectPrinter?.setDefaultValue(false)
+        }
+    }
 
+    private fun initPrinter() {
+        if (Printooth.hasPairedPrinter()){
+            printing=Printooth.printer()
+        }
 
-//    //remove bluetooth printer
-//    fun addPrinter() {
-//        if (Printooth.hasPairedPrinter()) {
-//            Printooth.removeCurrentPrinter()
-//        } else {
-//            startActivityForResult(
-//                Intent(activity, ScanningActivity::class.java)
-//                , ScanningActivity.SCANNING_FOR_PRINTER
-//            )
-//            changePairAndUnpair()
-//        }
-//    }
+        if (printing!=null){
+            printing?.printingCallback=this
+        }
+    }
 
-//    private fun changePairAndUnpair() {
-//        if (!Printooth.hasPairedPrinter()) {
-//            Toast
-//                .makeText(
-//                    activity,
-//                    "Unpair ${Printooth.getPairedPrinter()?.name}",
-//                    Toast.LENGTH_LONG
-//                )
-//                .show()
-//        } else {
-//            Toast
-//                .makeText(
-//                    activity,
-//                    "Paired with Printer ${Printooth.getPairedPrinter()?.name}",
-//                    Toast.LENGTH_LONG
-//                )
-//                .show()
-//        }
-//    }
+    /*********************************************************************************************************
+     ********************* BLUETOOTH PRINTER CALLBACK METHODS ************************************************
+     **********************************************************************************************************/
 
-//    override fun onRequestPermissionsResult(
-//        requestCode: Int,
-//        permissions: Array<out String>,
-//        grantResults: IntArray
-//    ) {
-//
-//        when (requestCode) {
-//            PERMISSION_CALL_PHONE_CODE -> {
-//                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//
-//                } else {
-//                    Toast.makeText(activity, "Permission denied", Toast.LENGTH_SHORT).show()
-//                }
-//            }
-//        }
-//    }
+    override fun connectingWithPrinter() {
+        Toast.makeText(activity,"Connecting to printer",Toast.LENGTH_SHORT).show()
+    }
+
+    override fun connectionFailed(error: String) {
+        Toast.makeText(activity,"Connecting to printer failed $error",Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onError(error: String) {
+        Toast.makeText(activity,"Error $error",Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onMessage(message: String) {
+        Toast.makeText(activity,"Message $message",Toast.LENGTH_SHORT).show()
+    }
+
+    override fun printingOrderSentSuccessfully() {
+        Toast.makeText(activity,"Order sent to printer",Toast.LENGTH_SHORT).show()
+    }
+
+    /***************************************************************************************************************************/
 
 }
