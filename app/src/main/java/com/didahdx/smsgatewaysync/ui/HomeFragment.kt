@@ -158,6 +158,9 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
     private fun backgroundCoroutineCall() {
         checkSmsPermission()
         startServices()
+        var mqttClient=MqttClient()
+        mqttClient.connect(activity as Activity)
+        mqttClient.publishMessage(activity as Activity,"test")
 
         if (ActivityCompat.checkSelfPermission(activity as Activity, Manifest.permission.READ_SMS)
             == PackageManager.PERMISSION_GRANTED

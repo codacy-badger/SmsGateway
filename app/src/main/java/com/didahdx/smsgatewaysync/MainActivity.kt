@@ -9,7 +9,10 @@ import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.MenuItem
+import android.view.View
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
@@ -20,20 +23,20 @@ import androidx.fragment.app.FragmentTransaction
 import androidx.preference.PreferenceManager
 import com.didahdx.smsgatewaysync.receiver.ConnectionReceiver
 import com.didahdx.smsgatewaysync.services.AppServices
-import com.didahdx.smsgatewaysync.ui.AboutFragment
-import com.didahdx.smsgatewaysync.ui.HomeFragment
-import com.didahdx.smsgatewaysync.ui.LogFragment
-import com.didahdx.smsgatewaysync.ui.SettingsFragment
+import com.didahdx.smsgatewaysync.ui.*
 import com.didahdx.smsgatewaysync.utilities.AppLog
 import com.didahdx.smsgatewaysync.utilities.INPUT_EXTRAS
 import com.didahdx.smsgatewaysync.utilities.PERMISSION_FOREGROUND_SERVICES_CODE
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.microsoft.appcenter.AppCenter
 import com.microsoft.appcenter.analytics.Analytics
 import com.microsoft.appcenter.crashes.Crashes
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_layout.*
+import kotlinx.android.synthetic.main.navigation_header.*
 
 
 class MainActivity : AppCompatActivity(),
@@ -101,6 +104,14 @@ class MainActivity : AppCompatActivity(),
         //saving apps preference
         PreferenceManager.setDefaultValues(this,R.xml.preferences,false)
 
+        val headView: View =navigation_view.getHeaderView(0)
+         val navUser:TextView= headView.findViewById<TextView>(R.id.text_view_user_loggedIn)
+       val firebaseUser= FirebaseAuth.getInstance().currentUser
+        if(firebaseUser!=null){
+            navUser.text=firebaseUser.email
+        }
+
+
     }
 
     //used to check foreground services permission on android 9+
@@ -166,6 +177,12 @@ class MainActivity : AppCompatActivity(),
                     .replace(R.id.frame_layout, settingsFragment)
                     .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
                     .commit()
+            }
+
+            R.id.nav_logout->{
+                FirebaseAuth.getInstance().signOut()
+                startActivity(Intent(this,LoginActivity::class.java))
+                finish()
             }
         }
 
