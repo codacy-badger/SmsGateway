@@ -77,11 +77,9 @@
                 android:id="@+id/button_login"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textStyle="bold"
                 android:layout_marginTop="14dp"
                 android:layout_marginBottom="12dp"
-                android:textColor="@color/white"
-                android:background="@color/colorPrimary"
+               style="@style/customButton"
                 android:text="Login" />
 
 
@@ -92,7 +90,6 @@
                 android:layout_margin="9dp"
                 android:layout_marginBottom="25dp"
                 android:text="Forgot Password"
-                android:textSize="18sp"
                 android:textStyle="italic" />
 
             <RelativeLayout

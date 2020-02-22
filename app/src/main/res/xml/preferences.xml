@@ -36,12 +36,7 @@
             android:title="Mpesa type"
             app:iconSpaceReserved="false" />
 
-        <SwitchPreferenceCompat
-            android:defaultValue="true"
-            android:summary="Enable automatic upload of sms"
-            android:title="Sms sync"
-            app:iconSpaceReserved="false"
-            app:key="auto_sms_upload" />
+
     </PreferenceCategory>
 
     <PreferenceCategory

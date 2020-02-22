@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -33,6 +32,7 @@
             <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="100dp"
+                android:padding="4dp"
                 android:src="@drawable/user_circle" />
 
 
@@ -45,8 +45,8 @@
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:layout_width="match_parent"
-                    android:drawableStart="@drawable/ic_account"
                     android:layout_height="wrap_content"
+                    android:drawableStart="@drawable/ic_account"
                     android:drawablePadding="12dp"
                     android:hint="Name"
                     android:inputType="text" />
@@ -129,12 +129,10 @@
 
             <Button
                 android:id="@+id/btn_sign_up"
+                style="@style/customButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textStyle="bold"
                 android:layout_gravity="center"
-                android:textColor="@color/white"
-                android:background="@color/colorPrimary"
                 android:text="Sign Up" />
 
         </LinearLayout>

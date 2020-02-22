@@ -21,6 +21,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.fragment.app.FragmentTransaction
 import androidx.preference.PreferenceManager
+import com.didahdx.smsgatewaysync.receiver.BatteryReceiver
 import com.didahdx.smsgatewaysync.receiver.ConnectionReceiver
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.ui.*
@@ -97,8 +98,13 @@ class MainActivity : AppCompatActivity(),
         //registering the broadcast receiver for network
         baseContext.registerReceiver(
             ConnectionReceiver(),
-            IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
+            IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
+
+        //registering broadcast receiver for battery
+        baseContext.registerReceiver(BatteryReceiver(),
+            IntentFilter(Intent.ACTION_BATTERY_CHANGED)
         )
+
         App.instance.setConnectionListener(this)
 
         //saving apps preference
@@ -222,5 +228,10 @@ class MainActivity : AppCompatActivity(),
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        unregisterReceiver(BatteryReceiver())
+        super.onDestroy()
     }
 }

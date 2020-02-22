@@ -7,6 +7,10 @@ import android.widget.Toast
 import java.io.*
 import java.util.*
 
+/**
+ * used to log events
+ * */
+
 class AppLog {
 
     //writing to log messages
