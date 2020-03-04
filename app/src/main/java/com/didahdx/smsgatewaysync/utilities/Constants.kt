@@ -3,15 +3,23 @@ package com.didahdx.smsgatewaysync.utilities
 /**
  * Constants used throughout the app.
  */
+const val SMS_DATE="SMS_DATE"
+const val SMS_SENDER="SMS_SENDER"
+const val SMS_BODY="SMS_BODY"
+const val DATE_FORMAT="dd/MMM/yy hh:mm aaa"
+
+const val APP_SERVICE_KEY = "APP_SERVICE_KEY"
+const val APP_SERVICE_STATE = "APP_SERVICE_STATE"
 
 const val INPUT_EXTRAS = "inputExtras"
 const val SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED"
 const val CHANNEL_ID="SmsServiceChannel"
 const val LOG_FILE_NAME="smsLog.txt"
 const val APP_NAME="Sms Gateway Sync"
+
 const val ACTIVEMQ_TAG = "ActiveMQ"
 const val clientId = "any_client_name"
-const val serverURI = "tcp://197.156.190.141:1883" //replace with your ip
+const val serverURI = "http://128.199.174.204:8161/admin/" //replace with your ip
 const val publishTopic = "outbox"
 const val subscribeTopic = "inbox"
 

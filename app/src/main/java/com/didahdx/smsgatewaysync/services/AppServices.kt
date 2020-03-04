@@ -1,17 +1,17 @@
 package com.didahdx.smsgatewaysync.services
 
-import android.Manifest
+import android.app.Notification
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.IBinder
-import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import com.didahdx.smsgatewaysync.MainActivity
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.utilities.CHANNEL_ID
 import com.didahdx.smsgatewaysync.utilities.INPUT_EXTRAS
+
 
 class AppServices :Service(){
 
@@ -28,23 +28,30 @@ class AppServices :Service(){
             .setContentText(input)
             .setSmallIcon(R.drawable.ic_home)
             .setContentIntent(pendingIntent)
+            .setPriority(Notification.PRIORITY_HIGH)
             .build()
+
+
 
             startForeground(1,notification)
 
-        return START_NOT_STICKY
+        return START_STICKY
     }
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
     }
 
-    override fun onCreate() {
-        super.onCreate()
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        val restartServiceIntent = Intent(applicationContext, this.javaClass)
+        restartServiceIntent.setPackage(packageName)
+        startService(restartServiceIntent)
+        super.onTaskRemoved(rootIntent)
+    }
+    override fun onLowMemory() { //Send broadcast to the Activity to kill this service and restart it.
+        super.onLowMemory()
     }
 
 
-    override fun onDestroy() {
-        super.onDestroy()
-    }
 }

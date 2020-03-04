@@ -29,7 +29,7 @@ class SmsReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
 
-        if (intent.action == SMS_RECEIVED) {
+        if (SMS_RECEIVED==intent.action) {
 
             val extras = intent.extras
 

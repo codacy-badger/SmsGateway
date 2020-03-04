@@ -36,6 +36,13 @@
             android:title="Mpesa type"
             app:iconSpaceReserved="false" />
 
+        <SwitchPreferenceCompat
+            android:key="auto_delete"
+            android:title="Auto Delete messages"
+            android:summary="Auto delete messages once they are uploaded"
+            app:iconSpaceReserved="false"
+            android:defaultValue="false"/>
+
 
     </PreferenceCategory>
 

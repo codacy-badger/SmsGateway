@@ -28,6 +28,7 @@
         <item>All</item>
     </string-array>
     <string name="host_url">https://www.server.com</string>
+    <string name="loading_messages">Loading Messages… %1$d </string>
 
 
 </resources>

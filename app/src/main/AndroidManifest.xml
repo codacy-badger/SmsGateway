@@ -12,6 +12,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
     <application
         android:name=".App"
@@ -22,9 +23,19 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <receiver
+            android:name=".receiver.BootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </receiver>
+        <receiver
             android:name=".receiver.BatteryReceiver"
             android:enabled="true"
-            android:exported="true"></receiver>
+            android:exported="false" />
 
         <activity android:name=".ForgotPasswordActivity" />
         <activity android:name=".SignUpActivity" />
@@ -65,7 +76,9 @@
             android:theme="@style/AppTheme.NoActionBar" />
 
         <service android:name="org.eclipse.paho.android.service.MqttService" />
-        <service android:name=".services.AppServices" />
+        <service
+            android:name=".services.AppServices"
+            android:exported="false" />
     </application>
 
 </manifest>

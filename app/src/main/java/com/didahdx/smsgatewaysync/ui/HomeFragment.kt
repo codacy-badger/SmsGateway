@@ -2,28 +2,30 @@ package com.didahdx.smsgatewaysync.ui
 
 
 import android.Manifest
-import android.content.*
-import android.os.Bundle
-import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-
-import androidx.recyclerview.widget.LinearLayoutManager
-import com.didahdx.smsgatewaysync.adapters.MessageAdapter
-import com.didahdx.smsgatewaysync.model.MessageInfo
-import com.didahdx.smsgatewaysync.R
-import kotlinx.android.synthetic.main.fragment_home.*
-import android.widget.Toast
+import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentTransaction
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.didahdx.smsgatewaysync.App
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.didahdx.smsgatewaysync.R
+import com.didahdx.smsgatewaysync.adapters.MessageAdapter
+import com.didahdx.smsgatewaysync.model.MessageInfo
 import com.didahdx.smsgatewaysync.receiver.ConnectionReceiver
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.utilities.*
@@ -31,6 +33,7 @@ import com.mazenrashed.printooth.Printooth
 import com.mazenrashed.printooth.ui.ScanningActivity
 import com.mazenrashed.printooth.utilities.Printing
 import com.mazenrashed.printooth.utilities.PrintingCallback
+import kotlinx.android.synthetic.main.fragment_home.*
 import kotlinx.android.synthetic.main.fragment_home.view.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
@@ -38,6 +41,7 @@ import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -46,30 +50,30 @@ import kotlin.collections.ArrayList
  * A simple [Fragment] subclass.
  */
 class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
-    PrintingCallback ,ConnectionReceiver.ConnectionReceiverListener {
+    PrintingCallback, ConnectionReceiver.ConnectionReceiverListener {
 
     /*********************************************************************************************************
      ********************* BLUETOOTH PRINTER CALLBACK METHODS ************************************************
      **********************************************************************************************************/
 
     override fun connectingWithPrinter() {
-       Toast.makeText(activity,"Connecting to printer",Toast.LENGTH_SHORT).show()
+        Toast.makeText(activity, "Connecting to printer", Toast.LENGTH_SHORT).show()
     }
 
     override fun connectionFailed(error: String) {
-        Toast.makeText(activity,"Connecting to printer failed $error",Toast.LENGTH_SHORT).show()
+        Toast.makeText(activity, "Connecting to printer failed $error", Toast.LENGTH_SHORT).show()
     }
 
     override fun onError(error: String) {
-        Toast.makeText(activity,"Error $error",Toast.LENGTH_SHORT).show()
+        Toast.makeText(activity, "Error $error", Toast.LENGTH_SHORT).show()
     }
 
     override fun onMessage(message: String) {
-        Toast.makeText(activity,"Message $message",Toast.LENGTH_SHORT).show()
+        Toast.makeText(activity, "Message $message", Toast.LENGTH_SHORT).show()
     }
 
     override fun printingOrderSentSuccessfully() {
-        Toast.makeText(activity,"Order sent to printer",Toast.LENGTH_SHORT).show()
+        Toast.makeText(activity, "Order sent to printer", Toast.LENGTH_SHORT).show()
     }
 
     /***************************************************************************************************************************/
@@ -78,8 +82,8 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
 
     val filter = IntentFilter(SMS_RECEIVED)
     var printing: Printing? = null
-    val appLog= AppLog()
-
+    val appLog = AppLog()
+    var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT)
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -91,10 +95,11 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
         //registering the broadcast receiver for network
         context?.registerReceiver(
             mConnectionReceiver,
-            IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
+            IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
+        )
 
 
-        view.text_view_status.text="$APP_NAME is running"
+        view.text_view_status.text = "$APP_NAME is running"
         if (printing != null) {
             printing?.printingCallback = this
         }
@@ -122,7 +127,6 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
     }
 
 
-
     //broadcast sms receiver
     private val mSmsReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent?) {
@@ -138,8 +142,15 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
                 if (phoneNumber != null && phoneNumber.equals("MPESA") && dateString != null
                     && messageText != null
                 ) {
+
                     val mpesaId = messageText.split("\\s".toRegex()).first()
-                    messageList.add(MessageInfo(messageText, dateString, phoneNumber, mpesaId))
+                    messageList.add(
+                        MessageInfo(
+                            messageText, dateString, phoneNumber, mpesaId,
+                            "", "", "", ""
+                        )
+                    )
+                    setUpAdapter()
                 }
             }
         }
@@ -153,16 +164,13 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
             val connectionManager =
                 context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
             val activeNetwork = connectionManager.activeNetworkInfo
-            val isConnected= (activeNetwork != null && activeNetwork.isConnectedOrConnecting)
-            when(isConnected){
-                true->text_view_status.text="${getString(R.string.app_name)} is Running"
-                false->text_view_status.text="No internet connection"
+            val isConnected = (activeNetwork != null && activeNetwork.isConnectedOrConnecting)
+            when (isConnected) {
+                true -> text_view_status.text = "${getString(R.string.app_name)} is Running"
+                false -> text_view_status.text = "No internet connection"
             }
         }
     }
-
-
-
 
 
     override fun onDestroyView() {
@@ -170,8 +178,9 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
         super.onDestroyView()
     }
 
-    private fun getMessages() {
-        progress_bar?.visibility=View.GONE
+    private fun setUpAdapter() {
+        progress_bar?.visibility = View.GONE
+        text_loading?.visibility = View.GONE
         recycler_view_message_list?.adapter = MessageAdapter(messageList, this)
         refresh_layout_home?.isRefreshing = false
     }
@@ -180,20 +189,20 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
     private fun backgroundCoroutineCall() {
         checkSmsPermission()
         startServices()
-//        var mqttClient=MqttClient()
+//        var mqttClient = MqttClient()
 //        mqttClient.connect(activity as Activity)
-//        mqttClient.publishMessage(activity as Activity,"test")
-
+//        mqttClient.publishMessage(activity as Activity, "test")
+//        var rabbitmqClient = RabbitmqClient()
+//        rabbitmqClient.publishMessage("Test message")
 
         if (ActivityCompat.checkSelfPermission(activity as Activity, Manifest.permission.READ_SMS)
             == PackageManager.PERMISSION_GRANTED
         ) {
             view?.refresh_layout_home?.isRefreshing = true
+            view?.text_loading?.text = getString(R.string.loading_messages, 0)
             //coroutine background job
             CoroutineScope(IO).launch {
-                var rabbitmqClient=RabbitmqClient()
-                rabbitmqClient.publishMessage("Test message")
-                getDbMessages()
+                getDatabaseMessages()
             }
         }
 
@@ -203,28 +212,38 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
             )
             == PackageManager.PERMISSION_GRANTED
         ) {
-                    LocalBroadcastManager
-            .getInstance(requireContext())
-            .registerReceiver(mSmsReceiver, filter)
+            LocalBroadcastManager
+                .getInstance(requireContext())
+                .registerReceiver(mSmsReceiver, filter)
         }
 
         LocalBroadcastManager
             .getInstance(requireContext())
-            .registerReceiver(mConnectionReceiver,  IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
+            .registerReceiver(
+                mConnectionReceiver,
+                IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
+            )
     }
 
     private suspend fun passMessagesToMain(list: ArrayList<MessageInfo>) {
         withContext(Main) {
             messageList.clear()
             messageList = ArrayList<MessageInfo>(list)
-            getMessages()
+            setUpAdapter()
         }
     }
 
-    private suspend fun getDbMessages() {
+
+    private suspend fun UpdateCounter(messageCount: Int) {
+        withContext(Main) {
+            text_loading?.text = getString(R.string.loading_messages, messageCount)
+        }
+    }
+
+    private suspend fun getDatabaseMessages() {
         val messageArrayList = ArrayList<MessageInfo>()
 
-        val cursor = activity!!.contentResolver.query(
+        val cursor = activity?.contentResolver?.query(
             Uri.parse("content://sms/inbox"),
             null,
             null,
@@ -232,8 +251,9 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
             null
         )
 
+        var messageCount = 0
 
-        if (cursor!!.moveToNext()) {
+        if (cursor != null && cursor.moveToNext()) {
             val nameId = cursor.getColumnIndex("address")
             val messageId = cursor.getColumnIndex("body")
             val dateId = cursor.getColumnIndex("date")
@@ -249,14 +269,20 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
                         mpesaId = " "
                     }
 
+                    var smsFilter = SmsFilter(cursor.getString(messageId))
+
                     messageArrayList.add(
                         MessageInfo(
                             cursor.getString(messageId),
-                            Date(dateString.toLong()).toString(),
+                            sdf.format(Date(dateString.toLong())).toString(),
                             cursor.getString(nameId),
-                            mpesaId
+                            mpesaId, "", smsFilter.amount, "", smsFilter.name
                         )
                     )
+
+                    UpdateCounter(messageCount)
+                    messageCount++
+
                 }
             } while (cursor.moveToNext())
 
@@ -273,27 +299,43 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
 
 
     override fun onItemClick(position: Int) {
+        val messageInfo: MessageInfo = messageList[position]
+        //Put the value
+        val smsDetailsFragment = SmsDetailsFragment()
+        val args = Bundle()
+        args.putString(SMS_BODY, messageInfo.messageBody)
+        args.putString(SMS_DATE, messageInfo.time)
+        args.putString(SMS_SENDER, messageInfo.sender)
+        smsDetailsFragment.arguments = args
+
+        fragmentManager
+            ?.beginTransaction()
+            ?.replace(R.id.frame_layout, smsDetailsFragment)
+            ?.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+            ?.commit()
 
     }
 
     //click Listener for pdf
     override fun onPrintPdf(position: Int) {
         val messageInfo: MessageInfo = messageList[position]
-        val smsFilter=SmsFilter()
-        val bluetoothPrinter=bluetoothPrinter()
-        val smsprint=smsFilter.checkSmsType(messageInfo.messageBody)
+        val smsFilter = SmsFilter()
+        val bluetoothPrinter = bluetoothPrinter()
+        val smsprint = smsFilter.checkSmsType(messageInfo.messageBody)
 
 //        Toast.makeText(activity, smsprint,
 //            Toast.LENGTH_LONG).show()
 
-        if (!Printooth.hasPairedPrinter()){
+        if (!Printooth.hasPairedPrinter()) {
             startActivityForResult(
                 Intent(activity, ScanningActivity::class.java)
                 , ScanningActivity.SCANNING_FOR_PRINTER
             )
-        }else{
-            bluetoothPrinter.printText(smsprint,
-                activity as Activity,getString(R.string.app_name))
+        } else {
+            bluetoothPrinter.printText(
+                smsprint,
+                activity as Activity, getString(R.string.app_name)
+            )
 
         }
 
@@ -340,7 +382,10 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
             )
         }
 
-        if (ActivityCompat.checkSelfPermission(activity as Activity, Manifest.permission.FOREGROUND_SERVICE)
+        if (ActivityCompat.checkSelfPermission(
+                activity as Activity,
+                Manifest.permission.FOREGROUND_SERVICE
+            )
             != PackageManager.PERMISSION_GRANTED
         ) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -396,9 +441,6 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
     }
 
 
-
-
-
     private fun changePairAndUnpair() {
         if (!Printooth.hasPairedPrinter()) {
             Toast
@@ -420,22 +462,21 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
     }
 
 
-
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode==ScanningActivity.SCANNING_FOR_PRINTER && resultCode==Activity.RESULT_OK){
+        if (requestCode == ScanningActivity.SCANNING_FOR_PRINTER && resultCode == Activity.RESULT_OK) {
             initPrinter()
             changePairAndUnpair()
         }
     }
 
     private fun initPrinter() {
-       if (Printooth.hasPairedPrinter()){
-           printing=Printooth.printer()
-       }
+        if (Printooth.hasPairedPrinter()) {
+            printing = Printooth.printer()
+        }
 
-        if (printing!=null){
-            printing?.printingCallback=this
+        if (printing != null) {
+            printing?.printingCallback = this
         }
     }
 
@@ -444,12 +485,12 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
 
         if (!isConnected) {
             startServices("No internet connection")
-            text_view_status.text="No internet connection"
-            appLog.writeToLog(activity as Activity,"No internet Connection")
+            text_view_status.text = "No internet connection"
+            appLog.writeToLog(activity as Activity, "No internet Connection")
         } else {
-            text_view_status.text="${getString(R.string.app_name)} is Running"
+            text_view_status.text = "${getString(R.string.app_name)} is Running"
             startServices("${getString(R.string.app_name)} is Running")
-            appLog.writeToLog(activity as Activity,"Connected to Internet")
+            appLog.writeToLog(activity as Activity, "Connected to Internet")
         }
     }
 

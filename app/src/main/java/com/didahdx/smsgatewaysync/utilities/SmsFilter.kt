@@ -1,6 +1,6 @@
 package com.didahdx.smsgatewaysync.utilities
 
-class SmsFilter {
+class SmsFilter() {
 
     var name: String = "N/A"
     var phoneNumber: String = "N/A"
@@ -8,7 +8,11 @@ class SmsFilter {
     var date: String = "N/A"
     var time: String = "N/A"
     var mpesaId: String = "N/A"
-    var mpesaType:String="N/A"
+    var mpesaType: String = "N/A"
+
+    constructor(messageBody: String) : this() {
+        checkSmsType(messageBody)
+    }
 
     //returns the sms format to be printed
     fun checkSmsType(message: String): String {
@@ -42,12 +46,12 @@ class SmsFilter {
         if (message.toLowerCase().indexOf("sent to") != -1 && message.indexOf(pattern) != -1) {
             name = message.substring(message.indexOf("sent to") + 4, message.indexOf("07") - 1)
             phoneNumber = message.substring(message.indexOf("07") - 1, message.indexOf("07") + 11)
-            mpesaType= SEND_MONEY
+            mpesaType = SEND_MONEY
         }
 
         //pay bill
         if (message.toLowerCase().indexOf("sent to") != -1 && message.indexOf("for account") != -1) {
-            mpesaType=PAY_BILL
+            mpesaType = PAY_BILL
             name = message.substring(
                 message.indexOf("sent to") + 7,
                 message.indexOf("for account") - 1
@@ -57,26 +61,26 @@ class SmsFilter {
         } else if (message.toLowerCase().indexOf("sent to") != -1) {
             name = message.substring(message.indexOf("sent to") + 7, message.indexOf("07") - 1)
             phoneNumber = message.substring(message.indexOf("07"), message.indexOf("/") - 5)
-            mpesaType= PAY_BILL
+            mpesaType = PAY_BILL
         }
 
         //widthdraw
         if (message.toLowerCase().indexOf("withdraw") != -1) {
             name = message.substring(message.indexOf("from") + 4, message.indexOf("New") - 1)
-            mpesaType= WITHDRAW
+            mpesaType = WITHDRAW
         }
 
         //buy goods and services
         if (message.indexOf("paid to") != -1) {
             name = message.substring(message.indexOf("paid to") + 7, message.indexOf("/") - 5)
-            mpesaType= BUY_GOODS_AND_SERVICES
+            mpesaType = BUY_GOODS_AND_SERVICES
         }
 
         //receiving from another user
         if (message.indexOf("received") != -1) {
             name = message.substring(message.indexOf("from") + 4, message.indexOf("07") - 1)
             phoneNumber = message.substring(message.indexOf("07") - 1, message.indexOf("07") + 11)
-            mpesaType= RECEIVED_PAYMENT
+            mpesaType = RECEIVED_PAYMENT
         }
 
 
@@ -86,12 +90,11 @@ class SmsFilter {
         ) {
             name = message.toLowerCase()
                 .substring(message.indexOf("cash to") + 4, message.indexOf("New") - 1)
-            mpesaType= DEPOSIT
+            mpesaType = DEPOSIT
         }
 
         return name
     }
-
 
 
 }

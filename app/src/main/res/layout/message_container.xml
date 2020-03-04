@@ -6,7 +6,7 @@
     android:layout_height="wrap_content"
     android:background="@color/white"
     android:clickable="true"
-    android:layout_margin="8dp"
+    android:layout_margin="2dp"
     app:contentPadding="5dp"
     android:focusable="true"
     android:orientation="vertical"
@@ -14,49 +14,45 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="230dp"
-        android:layout_margin="15dp">
+        android:layout_height="90dp"
+        android:layout_margin="4dp">
+        <TextView
+            android:id="@+id/text_view_sender1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sender :"/>
 
         <TextView
+            android:layout_toEndOf="@id/text_view_sender1"
             android:id="@+id/text_view_sender"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
-            android:layout_marginStart="14dp"
+            android:layout_marginStart="4dp"
             android:layout_marginBottom="5dp"
             android:textStyle="italic|bold"
-            android:layout_toEndOf="@id/image_view_message"
             tools:text="Mpesa"
             android:textColor="@color/black"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_toEndOf="@id/image_view_message"
-            android:layout_marginBottom="5dp"
-            android:layout_below="@id/text_view_sender"
-            android:layout_marginStart="14dp"
+            android:layout_alignParentBottom="true"
+            android:layout_marginStart="4dp"
             android:id="@+id/text_view_mpesaId"
-            android:text="mpesaId"/>
+            tools:text="mpesaId"/>
 
-        <ImageView
-            android:id="@+id/image_view_message"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentStart="true"
-            android:layout_centerVertical="true"
-            android:layout_marginEnd="10dp"
-            android:src="@drawable/ic_message" />
+
 
 
         <TextView
-            android:id="@+id/text_view_message_body"
+            android:id="@+id/text_view_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/text_view_mpesaId"
+            android:layout_below="@id/text_view_sender1"
             android:layout_marginStart="5dp"
-            android:layout_marginBottom="3dp"
-            android:layout_toStartOf="@id/image_view_more"
-            android:layout_toEndOf="@id/image_view_message"
+            android:textStyle="bold"
+            android:layout_marginTop="7dp"
+            android:layout_marginBottom="7dp"
             tools:text="mpesa message body" />
 
 
@@ -64,21 +60,21 @@
             android:id="@+id/text_view_time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_marginStart="14dp"
+            android:layout_alignParentTop="true"
+           android:layout_alignParentEnd="true"
             android:ellipsize="end"
             android:layout_marginBottom="5dp"
-            android:layout_toEndOf="@id/image_view_message"
             android:textStyle="italic"
             tools:text="5:00pm" />
 
-        <ImageView
-            android:id="@+id/image_view_more"
+        <TextView
+            tools:text="2,000.00"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:src="@drawable/ic_print" />
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:id="@+id/text_view_amount"/>
+
 
     </RelativeLayout>
 

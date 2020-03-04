@@ -25,7 +25,10 @@ class AppLog {
         try {
             fileOutputStream = context.openFileOutput(LOG_FILE_NAME, MODE_APPEND)
             fileOutputStream.write(logText.toByteArray())
-        } catch (e: FileNotFoundException) {
+        }catch (e:OutOfMemoryError){
+            Toast.makeText(context,e.localizedMessage,Toast.LENGTH_LONG).show()
+        }
+        catch (e: FileNotFoundException) {
             e.printStackTrace()
         } catch (io: IOException) {
             io.printStackTrace()
@@ -55,6 +58,8 @@ class AppLog {
 
             text=stringBuilder.toString()
 
+        }catch (e:OutOfMemoryError){
+            Toast.makeText(context,e.localizedMessage,Toast.LENGTH_LONG).show()
         }catch (e:FileNotFoundException){
             e.printStackTrace()
         }catch (e:IOException){

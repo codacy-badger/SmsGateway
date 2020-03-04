@@ -29,9 +29,7 @@ class App : MultiDexApplication() {
         ConnectionReceiver.connectionReceiverListener=listener
     }
     
-  fun setBatteryStatusListener(listener: BatteryReceiver.BatteryReceiverListener){
-      BatteryReceiver.batteryReceiverListener=listener
-  }
+
 
     companion object{
         @get:Synchronized

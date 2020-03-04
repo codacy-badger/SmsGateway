@@ -21,7 +21,7 @@ class BatteryReceiver : BroadcastReceiver() {
             batteryReceiverListener?.onBatteryStatusChanged(batteryStatus)
         }
 
-        Toast.makeText(context,"$batteryStatus",Toast.LENGTH_LONG).show()
+//        Toast.makeText(context, batteryStatus,Toast.LENGTH_LONG).show()
 
     }
 

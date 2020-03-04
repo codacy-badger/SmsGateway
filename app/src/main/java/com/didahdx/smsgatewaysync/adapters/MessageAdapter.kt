@@ -3,6 +3,7 @@ package com.didahdx.smsgatewaysync.adapters;
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.model.MessageInfo
@@ -23,6 +24,11 @@ class MessageAdapter(
 
 
     class MessageViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
+        val textViewSender: TextView =view.text_view_sender
+        val textViewName:TextView=view.text_view_name
+        val textViewTime:TextView=view.text_view_time
+        val textViewAmount: TextView=view.text_view_amount
+        val textViewMpesaId:TextView=view.text_view_mpesaId
 
         fun initialise(item:MessageInfo,action: OnItemClickListener) {
             itemView.setOnClickListener {
@@ -32,12 +38,6 @@ class MessageAdapter(
                 }
             }
 
-            itemView.image_view_more.setOnClickListener {
-                val position = adapterPosition
-                if (position != RecyclerView.NO_POSITION) {
-                    action.onPrintPdf(position)
-                }
-            }
 
 
         }
@@ -56,10 +56,11 @@ class MessageAdapter(
 
     override fun onBindViewHolder(holder: MessageViewHolder, position: Int) {
         val message = messageList[position]
-        holder.view.text_view_sender.text = message.sender
-        holder.view.text_view_message_body.text = message.messageBody
-        holder.view.text_view_time.text = message.time
-        holder.view.text_view_mpesaId.text = message.mpesaId
+        holder.textViewSender.text = message.sender
+        holder.textViewName.text = message.name
+        holder.textViewAmount.text=message.amount
+        holder.textViewTime.text = message.time
+        holder.textViewMpesaId.text = message.mpesaId
 
         holder.initialise(message,clickListener)
     }

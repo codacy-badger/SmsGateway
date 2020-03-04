@@ -37,7 +37,7 @@ class AboutFragment : Fragment(),BatteryReceiver.BatteryReceiverListener {
         // Inflate the layout for this fragment
         val view:View= inflater.inflate(R.layout.fragment_about, container, false)
 
-        App.instance.setBatteryStatusListener(this)
+
         //registering broadcast receiver for battery
         context?.registerReceiver(BatteryReceiver(),
             IntentFilter(Intent.ACTION_BATTERY_CHANGED)
@@ -50,9 +50,7 @@ class AboutFragment : Fragment(),BatteryReceiver.BatteryReceiverListener {
     }
 
     override fun onBatteryStatusChanged(batteryStatus: String) {
-        if (!batteryStatus.isNullOrEmpty()){
-            text_about_phone.text=batteryStatus
-        }
+        text_about_phone.text=batteryStatus
     }
 
 
