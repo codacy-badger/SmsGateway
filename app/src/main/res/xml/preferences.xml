@@ -11,7 +11,7 @@
             android:defaultValue="true"
             android:key="push_url"
             android:summary="Enable forwarding to a custom Host url"
-            android:title="Enable Forward Host Url"
+            android:title="Enable Host Url"
             app:iconSpaceReserved="false" />
 
         <EditTextPreference

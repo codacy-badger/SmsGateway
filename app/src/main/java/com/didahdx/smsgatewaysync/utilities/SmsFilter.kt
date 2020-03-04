@@ -29,7 +29,7 @@ class SmsFilter {
 
     //format used for print out
     private fun messageFormat(): String {
-        return "Payment details:\n\n Name: ${name.toUpperCase()}  \n Phone No: $phoneNumber \n Amount: $amount " +
+        return "Payment details:\n Name: ${name.toUpperCase()}  \n Phone No: $phoneNumber \n Amount: $amount " +
                 "\n Transaction Date: $date \n Time: $time \n Transaction ID: ${mpesaId.toUpperCase()}\n\n\n"
     }
 

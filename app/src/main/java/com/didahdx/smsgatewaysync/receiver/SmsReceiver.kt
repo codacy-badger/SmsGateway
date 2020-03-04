@@ -59,9 +59,10 @@ class SmsReceiver : BroadcastReceiver() {
                     val printer= bluetoothPrinter()
                     val smsFilter=SmsFilter()
                     if (Printooth.hasPairedPrinter()){
-                        printer.printText(smsFilter.checkSmsType(messageText),context, APP_NAME)
+                        val printMessage=smsFilter.checkSmsType(messageText)
+                        printer.printText(printMessage,context, APP_NAME)
                     }else{
-                        Toast.makeText(context,"Connect a printer",Toast.LENGTH_LONG).show()
+                        Toast.makeText(context,"Printer not connected",Toast.LENGTH_LONG).show()
                     }
                     LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
 

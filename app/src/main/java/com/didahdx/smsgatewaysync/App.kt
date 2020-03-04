@@ -6,6 +6,7 @@ import android.content.Context
 import android.os.Build
 import androidx.multidex.MultiDex
 import androidx.multidex.MultiDexApplication
+import com.didahdx.smsgatewaysync.receiver.BatteryReceiver
 import com.didahdx.smsgatewaysync.receiver.ConnectionReceiver
 import com.didahdx.smsgatewaysync.utilities.CHANNEL_ID
 import com.mazenrashed.printooth.Printooth
@@ -27,11 +28,17 @@ class App : MultiDexApplication() {
     fun setConnectionListener(listener: ConnectionReceiver.ConnectionReceiverListener){
         ConnectionReceiver.connectionReceiverListener=listener
     }
+    
+  fun setBatteryStatusListener(listener: BatteryReceiver.BatteryReceiverListener){
+      BatteryReceiver.batteryReceiverListener=listener
+  }
 
     companion object{
         @get:Synchronized
         lateinit var instance:App
     }
+
+
 
     private fun createNotificationChannel() {
         if(Build.VERSION.SDK_INT>Build.VERSION_CODES.O){

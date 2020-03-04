@@ -77,10 +77,12 @@ dependencies {
     // Kotlin preference settings
     implementation "androidx.preference:preference-ktx:1.1.0"
 
-    //Active
+    //Active mqtt
     implementation 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.1.0'
     implementation 'org.eclipse.paho:org.eclipse.paho.android.service:1.1.1'
     implementation 'com.google.firebase:firebase-database:19.2.1'
 
-
+    //rabbitmq client
+    implementation 'com.rabbitmq:amqp-client:4.11.3'
+//    implementation 'com.rabbitmq:amqp-client:5.8.0'
 }

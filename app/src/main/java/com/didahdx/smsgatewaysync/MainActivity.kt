@@ -41,16 +41,14 @@ import kotlinx.android.synthetic.main.navigation_header.*
 
 
 class MainActivity : AppCompatActivity(),
-    NavigationView.OnNavigationItemSelectedListener, ConnectionReceiver.ConnectionReceiverListener {
+    NavigationView.OnNavigationItemSelectedListener,ConnectionReceiver.ConnectionReceiverListener{
 
     //checks on network connectivity to update the notification bar
     override fun onNetworkConnectionChanged(isConnected: Boolean) {
-        checkForegroundPermission()
 
         if (!isConnected) {
             startServices("No internet connection")
             appLog.writeToLog(this,"No internet Connection")
-            Toast.makeText(this,"no net",Toast.LENGTH_LONG).show()
         } else {
             startServices("${getString(R.string.app_name)} is Running")
             appLog.writeToLog(this,"Connected to Internet")
@@ -95,17 +93,15 @@ class MainActivity : AppCompatActivity(),
 
         settingUpDefaultFragment()
 
-        //registering the broadcast receiver for network
-        baseContext.registerReceiver(
-            ConnectionReceiver(),
-            IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
-
         //registering broadcast receiver for battery
         baseContext.registerReceiver(BatteryReceiver(),
-            IntentFilter(Intent.ACTION_BATTERY_CHANGED)
-        )
+            IntentFilter(Intent.ACTION_BATTERY_CHANGED))
 
         App.instance.setConnectionListener(this)
+        //registering broadcast receiver for battery
+        baseContext.registerReceiver(ConnectionReceiver(),
+            IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
+
 
         //saving apps preference
         PreferenceManager.setDefaultValues(this,R.xml.preferences,false)
@@ -206,12 +202,6 @@ class MainActivity : AppCompatActivity(),
     }
 
 
-    private fun startServices(input: String) {
-        val serviceIntent = Intent(this, AppServices::class.java)
-        serviceIntent.putExtra(INPUT_EXTRAS, input)
-        ContextCompat.startForegroundService(this as Activity, serviceIntent)
-    }
-
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -230,8 +220,14 @@ class MainActivity : AppCompatActivity(),
         }
     }
 
+    private fun startServices(input: String) {
+        val serviceIntent = Intent(this, AppServices::class.java)
+        serviceIntent.putExtra(INPUT_EXTRAS, input)
+        ContextCompat.startForegroundService(this, serviceIntent)
+    }
+
     override fun onDestroy() {
-        unregisterReceiver(BatteryReceiver())
         super.onDestroy()
+        baseContext.unregisterReceiver(BatteryReceiver())
     }
 }

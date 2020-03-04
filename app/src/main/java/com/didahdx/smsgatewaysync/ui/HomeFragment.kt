@@ -17,18 +17,17 @@ import kotlinx.android.synthetic.main.fragment_home.*
 import android.widget.Toast
 import android.app.Activity
 import android.content.pm.PackageManager
+import android.net.ConnectivityManager
 import android.net.Uri
 import android.os.Build
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.didahdx.smsgatewaysync.App
+import com.didahdx.smsgatewaysync.receiver.ConnectionReceiver
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.utilities.*
 import com.mazenrashed.printooth.Printooth
-import com.mazenrashed.printooth.data.printable.Printable
-import com.mazenrashed.printooth.data.printable.RawPrintable
-import com.mazenrashed.printooth.data.printable.TextPrintable
-import com.mazenrashed.printooth.data.printer.DefaultPrinter
 import com.mazenrashed.printooth.ui.ScanningActivity
 import com.mazenrashed.printooth.utilities.Printing
 import com.mazenrashed.printooth.utilities.PrintingCallback
@@ -46,7 +45,8 @@ import kotlin.collections.ArrayList
 /**
  * A simple [Fragment] subclass.
  */
-class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCallback {
+class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
+    PrintingCallback ,ConnectionReceiver.ConnectionReceiverListener {
 
     /*********************************************************************************************************
      ********************* BLUETOOTH PRINTER CALLBACK METHODS ************************************************
@@ -78,6 +78,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
 
     val filter = IntentFilter(SMS_RECEIVED)
     var printing: Printing? = null
+    val appLog= AppLog()
 
 
     override fun onCreateView(
@@ -87,6 +88,13 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
         val view = inflater.inflate(R.layout.fragment_home, container, false)
         view.recycler_view_message_list.layoutManager = LinearLayoutManager(activity)
 
+        //registering the broadcast receiver for network
+        context?.registerReceiver(
+            mConnectionReceiver,
+            IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
+
+
+        view.text_view_status.text="$APP_NAME is running"
         if (printing != null) {
             printing?.printingCallback = this
         }
@@ -113,14 +121,10 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
 //       stopService(serviceIntent)
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-
-    }
 
 
     //broadcast sms receiver
-    private val mReceiver = object : BroadcastReceiver() {
+    private val mSmsReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent?) {
 
             if (intent != null && intent.extras != null) {
@@ -142,9 +146,27 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
 
     }
 
+    //broadcast connection receiver
+    private val mConnectionReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent?) {
+
+            val connectionManager =
+                context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            val activeNetwork = connectionManager.activeNetworkInfo
+            val isConnected= (activeNetwork != null && activeNetwork.isConnectedOrConnecting)
+            when(isConnected){
+                true->text_view_status.text="${getString(R.string.app_name)} is Running"
+                false->text_view_status.text="No internet connection"
+            }
+        }
+    }
+
+
+
+
 
     override fun onDestroyView() {
-        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(mReceiver)
+        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(mSmsReceiver)
         super.onDestroyView()
     }
 
@@ -158,9 +180,10 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
     private fun backgroundCoroutineCall() {
         checkSmsPermission()
         startServices()
-        var mqttClient=MqttClient()
-        mqttClient.connect(activity as Activity)
-        mqttClient.publishMessage(activity as Activity,"test")
+//        var mqttClient=MqttClient()
+//        mqttClient.connect(activity as Activity)
+//        mqttClient.publishMessage(activity as Activity,"test")
+
 
         if (ActivityCompat.checkSelfPermission(activity as Activity, Manifest.permission.READ_SMS)
             == PackageManager.PERMISSION_GRANTED
@@ -168,6 +191,8 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
             view?.refresh_layout_home?.isRefreshing = true
             //coroutine background job
             CoroutineScope(IO).launch {
+                var rabbitmqClient=RabbitmqClient()
+                rabbitmqClient.publishMessage("Test message")
                 getDbMessages()
             }
         }
@@ -180,8 +205,12 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
         ) {
                     LocalBroadcastManager
             .getInstance(requireContext())
-            .registerReceiver(mReceiver, filter)
+            .registerReceiver(mSmsReceiver, filter)
         }
+
+        LocalBroadcastManager
+            .getInstance(requireContext())
+            .registerReceiver(mConnectionReceiver,  IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
     }
 
     private suspend fun passMessagesToMain(list: ArrayList<MessageInfo>) {
@@ -408,5 +437,32 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener, PrintingCal
         if (printing!=null){
             printing?.printingCallback=this
         }
+    }
+
+    //checks on network connectivity to update the notification bar
+    override fun onNetworkConnectionChanged(isConnected: Boolean) {
+
+        if (!isConnected) {
+            startServices("No internet connection")
+            text_view_status.text="No internet connection"
+            appLog.writeToLog(activity as Activity,"No internet Connection")
+        } else {
+            text_view_status.text="${getString(R.string.app_name)} is Running"
+            startServices("${getString(R.string.app_name)} is Running")
+            appLog.writeToLog(activity as Activity,"Connected to Internet")
+        }
+    }
+
+
+    private fun startServices(input: String) {
+        val serviceIntent = Intent(activity as Activity, AppServices::class.java)
+        serviceIntent.putExtra(INPUT_EXTRAS, input)
+        ContextCompat.startForegroundService(activity as Activity, serviceIntent)
+    }
+
+
+    override fun onDestroy() {
+        super.onDestroy()
+        activity?.unregisterReceiver(mConnectionReceiver)
     }
 }
