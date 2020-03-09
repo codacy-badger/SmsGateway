@@ -143,6 +143,7 @@ class SmsFilter() {
             mpesaType = PAY_BILL
             accountNumber= message.substring(message.toLowerCase().indexOf("account number") + 14,
                 message.toLowerCase().indexOf("new utility") - 1)
+            mpesaType= PAY_BILL
         }
 
 

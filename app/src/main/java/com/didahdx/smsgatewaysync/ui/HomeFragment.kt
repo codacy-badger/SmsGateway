@@ -50,39 +50,12 @@ import kotlin.collections.ArrayList
 /**
  * A simple [Fragment] subclass.
  */
-class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
-    PrintingCallback {
-
-    /*********************************************************************************************************
-     ********************* BLUETOOTH PRINTER CALLBACK METHODS ************************************************
-     **********************************************************************************************************/
-
-    override fun connectingWithPrinter() {
-        Toast.makeText(activity, "Connecting to printer", Toast.LENGTH_SHORT).show()
-    }
-
-    override fun connectionFailed(error: String) {
-        Toast.makeText(activity, "Connecting to printer failed $error", Toast.LENGTH_SHORT).show()
-    }
-
-    override fun onError(error: String) {
-        Toast.makeText(activity, "Error $error", Toast.LENGTH_SHORT).show()
-    }
-
-    override fun onMessage(message: String) {
-        Toast.makeText(activity, "Message $message", Toast.LENGTH_SHORT).show()
-    }
-
-    override fun printingOrderSentSuccessfully() {
-        Toast.makeText(activity, "Order sent to printer", Toast.LENGTH_SHORT).show()
-    }
-
-    /***************************************************************************************************************************/
+class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener{
 
     private var messageList: ArrayList<MessageInfo> = ArrayList<MessageInfo>()
 
     val filter = IntentFilter(SMS_RECEIVED)
-    var printing: Printing? = null
+
     val appLog = AppLog()
    lateinit var mHomeViewModel: HomeViewModel
     var mMessageAdapter: MessageAdapter ?=null
@@ -107,10 +80,6 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
         )
 
         view.text_view_status.text = "$APP_NAME is running"
-        if (printing != null) {
-            printing?.printingCallback = this
-        }
-
         view.refresh_layout_home.setOnRefreshListener {
             backgroundCoroutineCall()
         }
@@ -343,27 +312,6 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
 
     //click Listener for pdf
     override fun onPrintPdf(position: Int) {
-        val messageInfo: MessageInfo = messageList[position]
-        val smsFilter = SmsFilter()
-        val bluetoothPrinter = bluetoothPrinter()
-        val smsprint = smsFilter.checkSmsType(messageInfo.messageBody)
-
-//        Toast.makeText(activity, smsprint,
-//            Toast.LENGTH_LONG).show()
-
-        if (!Printooth.hasPairedPrinter()) {
-            startActivityForResult(
-                Intent(activity, ScanningActivity::class.java)
-                , ScanningActivity.SCANNING_FOR_PRINTER
-            )
-        } else {
-            bluetoothPrinter.printText(
-                smsprint,
-                activity as Activity, getString(R.string.app_name)
-            )
-
-        }
-
 
     }
 
@@ -464,48 +412,6 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
             }
         }
     }
-
-
-    private fun changePairAndUnpair() {
-        if (!Printooth.hasPairedPrinter()) {
-
-            Toast
-                .makeText(
-                    activity,
-                    "Unpair ${Printooth.getPairedPrinter()?.name}",
-                    Toast.LENGTH_LONG
-                )
-                .show()
-        } else {
-            Toast
-                .makeText(
-                    activity,
-                    "Paired with Printer ${Printooth.getPairedPrinter()?.name}",
-                    Toast.LENGTH_LONG
-                )
-                .show()
-        }
-    }
-
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == ScanningActivity.SCANNING_FOR_PRINTER && resultCode == Activity.RESULT_OK) {
-            initPrinter()
-            changePairAndUnpair()
-        }
-    }
-
-    private fun initPrinter() {
-        if (Printooth.hasPairedPrinter()) {
-            printing = Printooth.printer()
-        }
-
-        if (printing != null) {
-            printing?.printingCallback = this
-        }
-    }
-
 
     private fun startServices(input: String) {
         val serviceIntent = Intent(activity as Activity, AppServices::class.java)

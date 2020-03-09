@@ -53,6 +53,7 @@ class SmsDetailsFragment : Fragment() {
             view.text_view_account_no.text=smsFilter.accountNumber
         }
 
+
         return view
     }
 }
