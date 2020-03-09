@@ -60,6 +60,7 @@ class MainActivity : AppCompatActivity(),
     lateinit var settingsFragment: SettingsFragment
     lateinit var logFragment:LogFragment
     lateinit var aboutFragment: AboutFragment
+    lateinit var phoneStatusFragment: PhoneStatusFragment
     private var mFirebaseAnalytics: FirebaseAnalytics? = null
 
 
@@ -98,7 +99,7 @@ class MainActivity : AppCompatActivity(),
             IntentFilter(Intent.ACTION_BATTERY_CHANGED))
 
         App.instance.setConnectionListener(this)
-        //registering broadcast receiver for battery
+        //registering broadcast receiver for internet connection
         baseContext.registerReceiver(ConnectionReceiver(),
             IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
 
@@ -159,6 +160,15 @@ class MainActivity : AppCompatActivity(),
                 supportFragmentManager
                     .beginTransaction()
                     .replace(R.id.frame_layout,aboutFragment)
+                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                    .commit()
+            }
+
+            R.id.nav_phone_status->{
+                phoneStatusFragment= PhoneStatusFragment()
+                supportFragmentManager
+                    .beginTransaction()
+                    .replace(R.id.frame_layout,phoneStatusFragment)
                     .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
                     .commit()
             }

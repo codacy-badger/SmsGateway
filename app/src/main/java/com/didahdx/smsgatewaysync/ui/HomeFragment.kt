@@ -1,6 +1,5 @@
 package com.didahdx.smsgatewaysync.ui
 
-
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -9,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.net.ConnectivityManager
 import android.net.Uri
 import android.os.Build
@@ -17,40 +17,41 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.annotation.Nullable
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProviders
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.didahdx.smsgatewaysync.R
+import com.didahdx.smsgatewaysync.SmsDetailsActivity
 import com.didahdx.smsgatewaysync.adapters.MessageAdapter
 import com.didahdx.smsgatewaysync.model.MessageInfo
-import com.didahdx.smsgatewaysync.receiver.ConnectionReceiver
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.utilities.*
+import com.didahdx.smsgatewaysync.viewmodels.HomeViewModel
 import com.mazenrashed.printooth.Printooth
 import com.mazenrashed.printooth.ui.ScanningActivity
 import com.mazenrashed.printooth.utilities.Printing
 import com.mazenrashed.printooth.utilities.PrintingCallback
 import kotlinx.android.synthetic.main.fragment_home.*
 import kotlinx.android.synthetic.main.fragment_home.view.*
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
-
 
 /**
  * A simple [Fragment] subclass.
  */
 class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
-    PrintingCallback, ConnectionReceiver.ConnectionReceiverListener {
+    PrintingCallback {
 
     /*********************************************************************************************************
      ********************* BLUETOOTH PRINTER CALLBACK METHODS ************************************************
@@ -83,7 +84,11 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
     val filter = IntentFilter(SMS_RECEIVED)
     var printing: Printing? = null
     val appLog = AppLog()
+   lateinit var mHomeViewModel: HomeViewModel
+    var mMessageAdapter: MessageAdapter ?=null
     var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT)
+
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -91,13 +96,15 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
     ): View? {
         val view = inflater.inflate(R.layout.fragment_home, container, false)
         view.recycler_view_message_list.layoutManager = LinearLayoutManager(activity)
-
+        mHomeViewModel= ViewModelProviders.of(this).get(HomeViewModel::class.java)
+//        mHomeViewModel.getMessages().observe(viewLifecycleOwner, Observer{
+//         mMessageAdapter?.notifyDataSetChanged()
+//        });
         //registering the broadcast receiver for network
         context?.registerReceiver(
             mConnectionReceiver,
             IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
         )
-
 
         view.text_view_status.text = "$APP_NAME is running"
         if (printing != null) {
@@ -166,8 +173,16 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
             val activeNetwork = connectionManager.activeNetworkInfo
             val isConnected = (activeNetwork != null && activeNetwork.isConnectedOrConnecting)
             when (isConnected) {
-                true -> text_view_status.text = "${getString(R.string.app_name)} is Running"
-                false -> text_view_status.text = "No internet connection"
+                true -> {
+                    text_view_status.text = "${getString(R.string.app_name)} is Running"
+                    text_view_status?.background =
+                        resources.getDrawable(R.drawable.item_background_green)
+                }
+                false -> {
+                    text_view_status.text = "No internet connection"
+                    text_view_status?.background =
+                        resources.getDrawable(R.drawable.item_background_red)
+                }
             }
         }
     }
@@ -181,7 +196,11 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
     private fun setUpAdapter() {
         progress_bar?.visibility = View.GONE
         text_loading?.visibility = View.GONE
-        recycler_view_message_list?.adapter = MessageAdapter(messageList, this)
+
+
+
+        mMessageAdapter=MessageAdapter(messageList, this)
+        recycler_view_message_list?.adapter = mMessageAdapter
         refresh_layout_home?.isRefreshing = false
     }
 
@@ -261,29 +280,28 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
             do {
                 val dateString = cursor.getString(dateId)
 
-                if (cursor.getString(nameId).equals("MPESA")) {
-                    val regexPattern = "^[A-Z0-9]*$"
-                    var mpesaId: String =
-                        cursor.getString(messageId).split("\\s".toRegex()).first().trim()
-                    if (!regexPattern.toRegex().matches(mpesaId)) {
-                        mpesaId = " "
-                    }
-
-                    var smsFilter = SmsFilter(cursor.getString(messageId))
-
-                    messageArrayList.add(
-                        MessageInfo(
-                            cursor.getString(messageId),
-                            sdf.format(Date(dateString.toLong())).toString(),
-                            cursor.getString(nameId),
-                            mpesaId, "", smsFilter.amount, "", smsFilter.name
-                        )
-                    )
-
-                    UpdateCounter(messageCount)
-                    messageCount++
-
+//                if (cursor.getString(nameId).equals("MPESA")) {
+                var mpesaId: String =
+                    cursor.getString(messageId).split("\\s".toRegex()).first().trim()
+                if (!MPESA_ID_PATTERN.toRegex().matches(mpesaId)) {
+                    mpesaId = " "
                 }
+
+                var smsFilter = SmsFilter(cursor.getString(messageId))
+
+                messageArrayList.add(
+                    MessageInfo(
+                        cursor.getString(messageId),
+                        sdf.format(Date(dateString.toLong())).toString(),
+                        cursor.getString(nameId),
+                        mpesaId, "", smsFilter.amount, "", smsFilter.name
+                    )
+                )
+
+                UpdateCounter(messageCount)
+                messageCount++
+
+//                }
             } while (cursor.moveToNext())
 
             cursor.close()
@@ -308,11 +326,18 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
         args.putString(SMS_SENDER, messageInfo.sender)
         smsDetailsFragment.arguments = args
 
-        fragmentManager
-            ?.beginTransaction()
-            ?.replace(R.id.frame_layout, smsDetailsFragment)
-            ?.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-            ?.commit()
+        val intent=Intent(context,SmsDetailsActivity::class.java)
+        intent.putExtra(SMS_BODY, messageInfo.messageBody)
+        intent.putExtra(SMS_DATE, messageInfo.time)
+        intent.putExtra(SMS_SENDER, messageInfo.sender)
+        startActivity(intent)
+
+//        fragmentManager
+//            ?.beginTransaction()
+//            ?.replace(R.id.frame_layout, smsDetailsFragment)
+//            ?.addToBackStack("fragment_home")
+//            ?.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+//            ?.commit()
 
     }
 
@@ -443,6 +468,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
 
     private fun changePairAndUnpair() {
         if (!Printooth.hasPairedPrinter()) {
+
             Toast
                 .makeText(
                     activity,
@@ -477,20 +503,6 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
 
         if (printing != null) {
             printing?.printingCallback = this
-        }
-    }
-
-    //checks on network connectivity to update the notification bar
-    override fun onNetworkConnectionChanged(isConnected: Boolean) {
-
-        if (!isConnected) {
-            startServices("No internet connection")
-            text_view_status.text = "No internet connection"
-            appLog.writeToLog(activity as Activity, "No internet Connection")
-        } else {
-            text_view_status.text = "${getString(R.string.app_name)} is Running"
-            startServices("${getString(R.string.app_name)} is Running")
-            appLog.writeToLog(activity as Activity, "Connected to Internet")
         }
     }
 
