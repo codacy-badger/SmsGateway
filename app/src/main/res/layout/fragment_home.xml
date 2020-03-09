@@ -20,9 +20,11 @@
                 android:id="@+id/text_view_status"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="5dp"
                 android:layout_marginBottom="9dp"
-                android:textAlignment="center" />
+                android:background="@color/green"
+                android:padding="8dp"
+                android:textAlignment="center"
+                android:textColor="@color/white" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler_view_message_list"
@@ -46,8 +48,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/progress_bar"
+        android:layout_centerHorizontal="true"
         android:layout_marginTop="12dp"
-        android:layout_centerHorizontal="true"/>
+        android:text="@string/loading_messages_0" />
 
 
 </RelativeLayout>
