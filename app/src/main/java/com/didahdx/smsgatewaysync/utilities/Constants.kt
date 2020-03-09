@@ -7,6 +7,7 @@ const val SMS_DATE="SMS_DATE"
 const val SMS_SENDER="SMS_SENDER"
 const val SMS_BODY="SMS_BODY"
 const val DATE_FORMAT="dd/MMM/yy hh:mm aaa"
+const val MPESA_ID_PATTERN="^[A-Z0-9]*$"
 
 const val APP_SERVICE_KEY = "APP_SERVICE_KEY"
 const val APP_SERVICE_STATE = "APP_SERVICE_STATE"

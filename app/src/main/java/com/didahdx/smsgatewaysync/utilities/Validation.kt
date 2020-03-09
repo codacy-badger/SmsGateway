@@ -4,7 +4,9 @@ import java.util.regex.Pattern
 
 class Validation {
 
-    // valid email pattern
+    /**
+     * valid email pattern
+     * */
     fun isValidEmailId(email: String?): Boolean {
         return Pattern.compile(
             "^(([\\w-]+\\.)+[\\w-]+|([a-zA-Z]{1}|[\\w-]{2,}))@"
