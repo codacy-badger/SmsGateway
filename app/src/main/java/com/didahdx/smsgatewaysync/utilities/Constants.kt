@@ -8,6 +8,8 @@ const val SMS_SENDER="SMS_SENDER"
 const val SMS_BODY="SMS_BODY"
 const val DATE_FORMAT="dd/MMM/yy hh:mm aaa"
 const val MPESA_ID_PATTERN="^[A-Z0-9]*$"
+const val SENT = "SMS_SENT"
+const val DELIVERED = "SMS_DELIVERED"
 
 const val APP_SERVICE_KEY = "APP_SERVICE_KEY"
 const val APP_SERVICE_STATE = "APP_SERVICE_STATE"
@@ -27,8 +29,10 @@ const val subscribeTopic = "inbox"
 /**
  * MPESA TYPES
  * */
-const val PAY_BILL="PAY_BILL"
-const val BUY_GOODS_AND_SERVICES="BUY_GOODS_AND_SERVICES"
+const val PAY_BILL="Pay Bill"
+const val BUY_GOODS_AND_SERVICES="Buy Goods and Services"
+const val DIRECT_MPESA="Direct Mpesa"
+const val ALL="All"
 const val WITHDRAW="WITHDRAW"
 const val SEND_MONEY="SEND_MONEY"
 const val DEPOSIT="DEPOSIT"
@@ -43,12 +47,15 @@ const val PREF_MPESA_TYPE="mpesa_types"
 const val PREF_AUTO_UPLOAD_SMS="auto_sms_upload"
 const val PREF_CONNECT_PRINTER="connect_printer"
 const val PREF_AUTO_PRINT="auto_print"
+const val PREF_PHONE_NUMBER="forward_sms_number"
+const val PREF_ENABLE_FORWARD_SMS="enable_forward_sms"
 
 /**
  *  user permission codes
  */
 const val PERMISSION_RECEIVE_SMS_CODE = 2
 const val PERMISSION_READ_SMS_CODE = 100
+const val PERMISSION_SEND_SMS_CODE = 200
 const val PERMISSION_WRITE_EXTERNAL_STORAGE_CODE = 500
 const val PERMISSION_CALL_PHONE_CODE=1200
 const val PERMISSION_FOREGROUND_SERVICES_CODE=1300

@@ -9,7 +9,7 @@ class SmsFilter() {
     var time: String = "N/A"
     var mpesaId: String = "N/A"
     var mpesaType: String = "N/A"
-    var accountNumber:String="N/A"
+    var accountNumber: String = "N/A"
 
 
     constructor(messageBody: String) : this() {
@@ -40,8 +40,10 @@ class SmsFilter() {
 
     //format used for print out
     private fun messageFormat(): String {
-        return "Payment details:\n Name: ${name.toUpperCase()}  \n Phone No: $phoneNumber \n Amount: $amount " +
-                "\n Transaction Date: $date \n Time: $time \n Transaction ID: ${mpesaId.toUpperCase()}\n\n\n"
+        return "Payment details:\n Name: ${name.toUpperCase().trim()} \n Phone No: $phoneNumber " +
+                "\n Amount: $amount \n Transaction Date: $date \n Time: $time " +
+                "\n Transaction ID: ${mpesaId.toUpperCase()}\n" +
+                "******** END OF RECEIPT ******* \n\n\n"
     }
 
 
@@ -55,14 +57,14 @@ class SmsFilter() {
         if (message.toLowerCase().indexOf("sent to") != -1 && message.indexOf(pattern) != -1) {
             name = message.substring(message.indexOf("sent to") + 4, message.indexOf("07") - 1)
             phoneNumber = message.substring(message.indexOf("07") - 1, message.indexOf("07") + 11)
-            mpesaType = SEND_MONEY
+            mpesaType = DIRECT_MPESA
         } else if (message.toLowerCase().indexOf("sent to") != -1 && message.indexOf(pattern) != -1
             && message.indexOf("+254") != -1
         ) {
             name = message.substring(message.indexOf("sent to") + 4, message.indexOf("+254") - 1)
             phoneNumber =
                 message.substring(message.indexOf("+254") - 1, message.indexOf("+254") + 14)
-            mpesaType = SEND_MONEY
+            mpesaType = DIRECT_MPESA
         }
 
         /**
@@ -81,13 +83,13 @@ class SmsFilter() {
         } else if (message.toLowerCase().indexOf("sent to") != -1 && message.indexOf("07") != -1) {
             name = message.substring(message.indexOf("sent to") + 7, message.indexOf("07") - 1)
             phoneNumber = message.substring(message.indexOf("07"), message.indexOf("/") - 5)
-            mpesaType = PAY_BILL
+            mpesaType = DIRECT_MPESA
         } else if (message.toLowerCase()
                 .indexOf("sent to") != -1 && message.indexOf("+254") != -1
         ) {
             name = message.substring(message.indexOf("sent to") + 7, message.indexOf("+254") - 1)
             phoneNumber = message.substring(message.indexOf("+254"), message.indexOf("/") - 5)
-            mpesaType = PAY_BILL
+            mpesaType = DIRECT_MPESA
         }
 
         /**
@@ -95,7 +97,7 @@ class SmsFilter() {
          * */
         if (message.toLowerCase().indexOf("withdraw") != -1) {
             name = message.substring(message.indexOf("from") + 4, message.indexOf("New") - 1)
-            mpesaType = WITHDRAW
+            mpesaType = DIRECT_MPESA
         }
 
         /**
@@ -109,14 +111,15 @@ class SmsFilter() {
         /**
          * receiving from another user
          * */
-        if (message.indexOf("received") != -1 && message.indexOf("07")!=-1) {
+        if (message.indexOf("received") != -1 && message.indexOf("07") != -1) {
             name = message.substring(message.indexOf("from") + 4, message.indexOf("07") - 1)
             phoneNumber = message.substring(message.indexOf("07") - 1, message.indexOf("07") + 11)
-            mpesaType = RECEIVED_PAYMENT
-        }else  if (message.indexOf("received") != -1 && message.indexOf("+254")!=-1) {
+            mpesaType = DIRECT_MPESA
+        } else if (message.indexOf("received") != -1 && message.indexOf("+254") != -1) {
             name = message.substring(message.indexOf("from") + 4, message.indexOf("+254") - 1)
-            phoneNumber = message.substring(message.indexOf("+254") - 1, message.indexOf("+254") + 14)
-            mpesaType = RECEIVED_PAYMENT
+            phoneNumber =
+                message.substring(message.indexOf("+254") - 1, message.indexOf("+254") + 14)
+            mpesaType = DIRECT_MPESA
         }
 
         /**
@@ -127,28 +130,27 @@ class SmsFilter() {
         ) {
             name = message.toLowerCase()
                 .substring(message.indexOf("cash to") + 7, message.indexOf("New") - 1)
-            mpesaType = DEPOSIT
+            mpesaType = DIRECT_MPESA
+        }
+
+
+        /**
+         * pay bill seller side
+         * */
+        if (message.indexOf("received from") != -1 && message.indexOf("254") != -1) {
+            name = message.substring(message.indexOf("from") + 4, message.indexOf("254") - 1)
+            phoneNumber = message.substring(message.indexOf("254") - 1, message.indexOf("254") + 12)
+            accountNumber = message.substring(
+                message.toLowerCase().indexOf("account number") + 14,
+                message.toLowerCase().indexOf("new utility") - 1
+            )
+            mpesaType = PAY_BILL
         }
 
         if (name.indexOf(".") != -1) {
             name.replace(".", "")
         }
 
-        /**
-         * pay bill seller side
-         * */
-        if (message.indexOf("received from") != -1 && message.indexOf("254")!=-1) {
-            name = message.substring(message.indexOf("from") + 4, message.indexOf("254") - 1)
-            phoneNumber = message.substring(message.indexOf("254") - 1, message.indexOf("254") + 12)
-            mpesaType = PAY_BILL
-            accountNumber= message.substring(message.toLowerCase().indexOf("account number") + 14,
-                message.toLowerCase().indexOf("new utility") - 1)
-            mpesaType= PAY_BILL
-        }
-
-
         return name
     }
-
-
 }

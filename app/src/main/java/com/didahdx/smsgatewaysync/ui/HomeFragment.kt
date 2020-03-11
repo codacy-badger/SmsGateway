@@ -3,10 +3,7 @@ package com.didahdx.smsgatewaysync.ui
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.*
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.ConnectivityManager
@@ -26,6 +23,7 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.SmsDetailsActivity
@@ -50,17 +48,17 @@ import kotlin.collections.ArrayList
 /**
  * A simple [Fragment] subclass.
  */
-class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener{
+class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
 
     private var messageList: ArrayList<MessageInfo> = ArrayList<MessageInfo>()
 
     val filter = IntentFilter(SMS_RECEIVED)
 
     val appLog = AppLog()
-   lateinit var mHomeViewModel: HomeViewModel
-    var mMessageAdapter: MessageAdapter ?=null
+    lateinit var mHomeViewModel: HomeViewModel
+    var mMessageAdapter: MessageAdapter? = null
     var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT)
-
+    lateinit var sharedPrferences: SharedPreferences
 
 
     override fun onCreateView(
@@ -69,11 +67,13 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener{
     ): View? {
         val view = inflater.inflate(R.layout.fragment_home, container, false)
         view.recycler_view_message_list.layoutManager = LinearLayoutManager(activity)
-        mHomeViewModel= ViewModelProviders.of(this).get(HomeViewModel::class.java)
+        mHomeViewModel = ViewModelProviders.of(this).get(HomeViewModel::class.java)
 //        mHomeViewModel.getMessages().observe(viewLifecycleOwner, Observer{
 //         mMessageAdapter?.notifyDataSetChanged()
 //        });
         //registering the broadcast receiver for network
+
+        sharedPrferences = PreferenceManager.getDefaultSharedPreferences(context)
         context?.registerReceiver(
             mConnectionReceiver,
             IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
@@ -168,7 +168,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener{
 
 
 
-        mMessageAdapter=MessageAdapter(messageList, this)
+        mMessageAdapter = MessageAdapter(messageList, this)
         recycler_view_message_list?.adapter = mMessageAdapter
         refresh_layout_home?.isRefreshing = false
     }
@@ -182,6 +182,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener{
 //        mqttClient.publishMessage(activity as Activity, "test")
 //        var rabbitmqClient = RabbitmqClient()
 //        rabbitmqClient.publishMessage("Test message")
+
 
         if (ActivityCompat.checkSelfPermission(activity as Activity, Manifest.permission.READ_SMS)
             == PackageManager.PERMISSION_GRANTED
@@ -245,31 +246,92 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener{
             val nameId = cursor.getColumnIndex("address")
             val messageId = cursor.getColumnIndex("body")
             val dateId = cursor.getColumnIndex("date")
+            val mpesaType = sharedPrferences.getString(PREF_MPESA_TYPE, ALL)
 
             do {
                 val dateString = cursor.getString(dateId)
 
 //                if (cursor.getString(nameId).equals("MPESA")) {
-                var mpesaId: String =
-                    cursor.getString(messageId).split("\\s".toRegex()).first().trim()
-                if (!MPESA_ID_PATTERN.toRegex().matches(mpesaId)) {
-                    mpesaId = " "
-                }
 
-                var smsFilter = SmsFilter(cursor.getString(messageId))
+                    var mpesaId: String =
+                        cursor.getString(messageId).split("\\s".toRegex()).first().trim()
+                    if (!MPESA_ID_PATTERN.toRegex().matches(mpesaId)) {
+                        mpesaId = " "
+                    }
 
-                messageArrayList.add(
-                    MessageInfo(
-                        cursor.getString(messageId),
-                        sdf.format(Date(dateString.toLong())).toString(),
-                        cursor.getString(nameId),
-                        mpesaId, "", smsFilter.amount, "", smsFilter.name
-                    )
-                )
+                    var smsFilter = SmsFilter(cursor.getString(messageId))
 
-                UpdateCounter(messageCount)
-                messageCount++
 
+                    when (mpesaType) {
+                        ALL -> {
+                            messageArrayList.add(
+                                MessageInfo(
+                                    cursor.getString(messageId),
+                                    sdf.format(Date(dateString.toLong())).toString(),
+                                    cursor.getString(nameId),
+                                    mpesaId, "", smsFilter.amount, "", smsFilter.name
+                                )
+                            )
+                            UpdateCounter(messageCount)
+                            messageCount++
+                        }
+                        PAY_BILL -> {
+                            if (smsFilter.mpesaType == PAY_BILL) {
+                                messageArrayList.add(
+                                    MessageInfo(
+                                        cursor.getString(messageId),
+                                        sdf.format(Date(dateString.toLong())).toString(),
+                                        cursor.getString(nameId),
+                                        mpesaId, "", smsFilter.amount, "", smsFilter.name
+                                    )
+                                )
+                                UpdateCounter(messageCount)
+                                messageCount++
+                            }
+                        }
+                        DIRECT_MPESA -> {
+                            if (smsFilter.mpesaType == DIRECT_MPESA) {
+                                messageArrayList.add(
+                                    MessageInfo(
+                                        cursor.getString(messageId),
+                                        sdf.format(Date(dateString.toLong())).toString(),
+                                        cursor.getString(nameId),
+                                        mpesaId, "", smsFilter.amount, "", smsFilter.name
+                                    )
+                                )
+                                UpdateCounter(messageCount)
+                                messageCount++
+                            }
+                        }
+
+                        BUY_GOODS_AND_SERVICES -> {
+                            if (smsFilter.mpesaType == BUY_GOODS_AND_SERVICES) {
+                                messageArrayList.add(
+                                    MessageInfo(
+                                        cursor.getString(messageId),
+                                        sdf.format(Date(dateString.toLong())).toString(),
+                                        cursor.getString(nameId),
+                                        mpesaId, "", smsFilter.amount, "", smsFilter.name
+                                    )
+                                )
+                                UpdateCounter(messageCount)
+                                messageCount++
+                            }
+                        }
+
+                        else->{
+                            messageArrayList.add(
+                                MessageInfo(
+                                    cursor.getString(messageId),
+                                    sdf.format(Date(dateString.toLong())).toString(),
+                                    cursor.getString(nameId),
+                                    mpesaId, "", smsFilter.amount, "", smsFilter.name
+                                )
+                            )
+                            UpdateCounter(messageCount)
+                            messageCount++
+                        }
+                    }
 //                }
             } while (cursor.moveToNext())
 
@@ -295,7 +357,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener{
         args.putString(SMS_SENDER, messageInfo.sender)
         smsDetailsFragment.arguments = args
 
-        val intent=Intent(context,SmsDetailsActivity::class.java)
+        val intent = Intent(context, SmsDetailsActivity::class.java)
         intent.putExtra(SMS_BODY, messageInfo.messageBody)
         intent.putExtra(SMS_DATE, messageInfo.time)
         intent.putExtra(SMS_SENDER, messageInfo.sender)

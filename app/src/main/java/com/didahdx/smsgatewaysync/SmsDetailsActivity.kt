@@ -1,18 +1,26 @@
 package com.didahdx.smsgatewaysync
 
+import android.Manifest
+import android.R.id.message
 import android.app.Activity
-import android.content.Intent
+import android.app.PendingIntent
+import android.content.*
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
+import android.telephony.SmsManager
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.preference.PreferenceManager
 import com.didahdx.smsgatewaysync.utilities.*
 import com.mazenrashed.printooth.Printooth
 import com.mazenrashed.printooth.ui.ScanningActivity
 import com.mazenrashed.printooth.utilities.Printing
 import com.mazenrashed.printooth.utilities.PrintingCallback
 import kotlinx.android.synthetic.main.activity_sms_details.*
+import java.util.ArrayList
 
 
 class SmsDetailsActivity : AppCompatActivity(), PrintingCallback {
@@ -49,10 +57,12 @@ class SmsDetailsActivity : AppCompatActivity(), PrintingCallback {
     var smsDate: String? = null
     var smsSender: String? = null
     var printing: Printing? = null
+    lateinit var sharedPrferences: SharedPreferences
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_sms_details)
-
+        sharedPrferences = PreferenceManager.getDefaultSharedPreferences(this)
         if (printing != null) {
             printing?.printingCallback = this
         }
@@ -96,16 +106,85 @@ class SmsDetailsActivity : AppCompatActivity(), PrintingCallback {
             R.id.action_print -> {
                 print()
             }
+            R.id.action_forward_sms -> {
+                forwardSms()
+            }
         }
         return super.onOptionsItemSelected(item)
     }
 
+    private fun forwardSms() {
+
+        checkSendSmsPermission()
+        val phoneNumber = sharedPrferences.getString(PREF_PHONE_NUMBER, "")
+        val usePhoneNumber= sharedPrferences.getBoolean(PREF_ENABLE_FORWARD_SMS,false)
+        if (usePhoneNumber && phoneNumber != null && !phoneNumber.isNullOrEmpty() && phoneNumber.indexOf("x") < 0) {
+
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.SEND_SMS
+                )
+                == PackageManager.PERMISSION_GRANTED
+            ) {
+                val smsManager = SmsManager.getDefault()
+
+                val sentPI = PendingIntent.getBroadcast(
+                    this, 0, Intent(SENT), 0)
+
+                val deliveredPI = PendingIntent.getBroadcast(
+                    this, 0, Intent(DELIVERED), 0)
+
+                //when the SMS has been sent
+                registerReceiver(object : BroadcastReceiver() {
+                    override fun onReceive(arg0: Context?, arg1: Intent?) {
+                        when (resultCode) {
+                            Activity.RESULT_OK -> toast("SMS sent to $phoneNumber")
+                            SmsManager.RESULT_ERROR_GENERIC_FAILURE -> toast("Generic failure")
+                            SmsManager.RESULT_ERROR_NO_SERVICE -> toast("No service")
+                            SmsManager.RESULT_ERROR_NULL_PDU -> toast("Null PDU")
+                            SmsManager.RESULT_ERROR_RADIO_OFF -> toast("Radio off")
+                        }
+                    }
+                }, IntentFilter(SENT))
+
+                //when the SMS has been delivered
+                registerReceiver(object : BroadcastReceiver() {
+                    override fun onReceive(arg0: Context?, arg1: Intent?) {
+                        when (resultCode) {
+                            Activity.RESULT_OK -> toast("SMS delivered")
+                            Activity.RESULT_CANCELED -> toast("SMS not delivered")
+                        }
+                    }
+                }, IntentFilter(DELIVERED))
+
+                val parts = smsManager.divideMessage(smsBody)
+
+                val arraySendInt=ArrayList<PendingIntent>()
+                arraySendInt.add(sentPI)
+                val arrayDelivery=ArrayList<PendingIntent>()
+                arrayDelivery.add(deliveredPI)
+                smsManager.sendMultipartTextMessage(phoneNumber, null, parts, arraySendInt, arrayDelivery)
+
+            } else {
+
+                val sendIntent = Intent(Intent.ACTION_VIEW)
+                sendIntent.data = Uri.parse("sms:")
+                sendIntent.putExtra("sms_body", smsBody)
+                startActivity(sendIntent)
+            }
+
+        } else {
+            val sendIntent = Intent(Intent.ACTION_VIEW)
+            sendIntent.data = Uri.parse("sms:")
+            sendIntent.putExtra("sms_body", smsBody)
+            startActivity(sendIntent)
+        }
+    }
+
     private fun print() {
         if (smsBody != null) {
-            val smsFilter = SmsFilter()
             val bluetoothPrinter = bluetoothPrinter()
-
-            val smsprint = smsFilter.checkSmsType(smsBody!!)
+            val smsprint = SmsFilter().checkSmsType(smsBody!!)
 
             if (!Printooth.hasPairedPrinter()) {
                 startActivityForResult(
@@ -149,4 +228,35 @@ class SmsDetailsActivity : AppCompatActivity(), PrintingCallback {
         }
     }
 
+    private fun checkSendSmsPermission() {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.SEND_SMS
+            )
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.SEND_SMS),
+                PERMISSION_RECEIVE_SMS_CODE
+            )
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+
+        when (requestCode) {
+            PERMISSION_SEND_SMS_CODE -> {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    toast("Permission granted")
+                } else {
+                    toast("Permission denied")
+                }
+            }
+        }
+    }
 }

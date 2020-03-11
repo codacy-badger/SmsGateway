@@ -10,9 +10,7 @@ import androidx.fragment.app.Fragment
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.didahdx.smsgatewaysync.R
-import com.didahdx.smsgatewaysync.utilities.PREF_CONNECT_PRINTER
-import com.didahdx.smsgatewaysync.utilities.PREF_HOST_URL
-import com.didahdx.smsgatewaysync.utilities.PREF_MPESA_TYPE
+import com.didahdx.smsgatewaysync.utilities.*
 import com.mazenrashed.printooth.Printooth
 import com.mazenrashed.printooth.ui.ScanningActivity
 import com.mazenrashed.printooth.utilities.Printing
@@ -35,15 +33,19 @@ class SettingsFragment : PreferenceFragmentCompat(),SharedPreferences.OnSharedPr
 
     //shared preference listener
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
-        if (key.equals(PREF_HOST_URL)){
+        if (key == PREF_HOST_URL){
           val hostUrl: Preference? = findPreference<Preference>(key)
             hostUrl?.summary=preferenceScreen.sharedPreferences.getString(PREF_HOST_URL,"")
         }
 
 
-        if (key.equals(PREF_MPESA_TYPE)){
+        if (key == PREF_MPESA_TYPE){
           val mpesaType: Preference? = findPreference<Preference>(key)
             mpesaType?.summary=preferenceScreen.sharedPreferences.getString(PREF_MPESA_TYPE,"")
+        }
+        if (key == PREF_PHONE_NUMBER){
+          val phoneNumber: Preference? = findPreference<Preference>(key)
+            phoneNumber?.summary=preferenceScreen.sharedPreferences.getString(PREF_PHONE_NUMBER,"")
         }
 
         if (key.equals(PREF_CONNECT_PRINTER)){
@@ -69,7 +71,10 @@ class SettingsFragment : PreferenceFragmentCompat(),SharedPreferences.OnSharedPr
         hostUrl?.summary=preferenceScreen.sharedPreferences.getString(PREF_HOST_URL,"")
 
         val mpesaType=findPreference<Preference>(PREF_MPESA_TYPE)
-        mpesaType?.summary=preferenceScreen.sharedPreferences.getString(PREF_MPESA_TYPE,"")
+        mpesaType?.summary=preferenceScreen.sharedPreferences.getString(PREF_MPESA_TYPE,ALL)
+
+        val phoneNumber=findPreference<Preference>(PREF_PHONE_NUMBER)
+        phoneNumber?.summary=preferenceScreen.sharedPreferences.getString(PREF_PHONE_NUMBER,"+2547xxxxxxxx")
     }
 
     override fun onPause() {

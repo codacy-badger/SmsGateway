@@ -37,11 +37,27 @@
             app:iconSpaceReserved="false" />
 
         <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="enable_forward_sms"
+            android:summary="@string/phone_number"
+            android:title="Enable Forwarding of messages"
+            app:defaultValue="false"
+            app:iconSpaceReserved="false" />
+
+        <EditTextPreference
+            android:dependency="enable_forward_sms"
+            android:key="forward_sms_number"
+            app:defaultValue="+2547xxxxxxxx"
+            android:summary="Add default phone number"
+            android:title="Phone Number"
+            app:iconSpaceReserved="false" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
             android:key="auto_delete"
+            android:summary="Enable auto deleting messages that are sent to server"
             android:title="Auto Delete messages"
-            android:summary="Auto delete messages once they are uploaded"
-            app:iconSpaceReserved="false"
-            android:defaultValue="false"/>
+            app:iconSpaceReserved="false" />
 
 
     </PreferenceCategory>
@@ -50,25 +66,25 @@
         android:title="Printing"
         app:iconSpaceReserved="false">
         <SwitchPreferenceCompat
-            app:iconSpaceReserved="false"
             android:defaultValue="false"
             android:key="connect_printer"
             android:summary="Connect to a printer"
-            android:title="Add Printer" />
+            android:title="Add Printer"
+            app:iconSpaceReserved="false" />
 
         <SwitchPreferenceCompat
-            app:iconSpaceReserved="false"
             android:defaultValue="false"
             android:dependency="connect_printer"
             android:key="auto_print"
             android:summary="Allow automatic printing on incoming sms"
-            android:title="Auto Printing" />
+            android:title="Auto Printing"
+            app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
 
     <Preference
-        app:iconSpaceReserved="false"
         android:title="Send feedback"
+        app:iconSpaceReserved="false"
         app:key="feedback"
         app:summary="Report technical issues or suggest new features" />
 
