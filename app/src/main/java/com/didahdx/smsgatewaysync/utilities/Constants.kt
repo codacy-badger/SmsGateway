@@ -21,10 +21,10 @@ const val LOG_FILE_NAME="smsLog.txt"
 const val APP_NAME="Sms Gateway Sync"
 
 const val ACTIVEMQ_TAG = "ActiveMQ"
-const val clientId = "any_client_name"
-const val serverURI = "http://128.199.174.204:8161/admin/" //replace with your ip
+const val serverURI = "tcp://128.199.174.204:1883" //replace with your ip
 const val publishTopic = "outbox"
 const val subscribeTopic = "inbox"
+
 
 /**
  * MPESA TYPES

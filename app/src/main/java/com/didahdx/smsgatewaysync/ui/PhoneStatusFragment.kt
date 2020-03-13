@@ -1,22 +1,29 @@
 package com.didahdx.smsgatewaysync.ui
 
+import android.Manifest
+import android.app.Activity
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.BatteryManager
-import android.os.Bundle
-import androidx.fragment.app.Fragment
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.*
+import android.telephony.TelephonyManager
+import android.telephony.TelephonyManager.UssdResponseCallback
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
-
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat.getSystemService
+import androidx.fragment.app.Fragment
 import com.didahdx.smsgatewaysync.R
-import com.didahdx.smsgatewaysync.model.MessageInfo
 import com.didahdx.smsgatewaysync.receiver.BatteryReceiver
-import kotlinx.android.synthetic.main.fragment_phone_status.*
+import com.didahdx.smsgatewaysync.utilities.PERMISSION_CALL_PHONE_CODE
+import com.didahdx.smsgatewaysync.utilities.toast
+
 
 /**
  * A simple [Fragment] subclass.
@@ -30,7 +37,67 @@ class PhoneStatusFragment : Fragment() {
         // Inflate the layout for this fragment
 
             context?.registerReceiver(mBatteryReceiver,IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            checkBalance()
+        }
         return inflater.inflate(R.layout.fragment_phone_status, container, false)
+    }
+
+    private fun checkBalance() {
+        checkCallPhonePermission()
+
+        val telephonyManager: TelephonyManager? =
+            activity?.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager?
+        val handler: Handler = object : Handler(Looper.getMainLooper()) {
+            override fun handleMessage(message: Message) {
+                Log.e("ussd", message.toString())
+            }
+        }
+        var callback: UssdResponseCallback?=null
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            callback =
+                object : UssdResponseCallback() {
+                    override fun onReceiveUssdResponse(
+                        telephonyManager: TelephonyManager,
+                        request: String,
+                        response: CharSequence
+                    ) {
+                        super.onReceiveUssdResponse(telephonyManager, request, response)
+                        context?.toast(" response $response")
+                        Log.e("ussd", "Success with response : $response  ")
+                    }
+
+                    override fun onReceiveUssdResponseFailed(
+                        telephonyManager: TelephonyManager,
+                        request: String,
+                        failureCode: Int
+                    ) {
+                        super.onReceiveUssdResponseFailed(telephonyManager, request, failureCode)
+                        context?.toast(" request $request  \n failureCode $failureCode ")
+                        Log.e("ussd", "failed with code $failureCode")
+                    }
+                }
+        }
+
+        if (ActivityCompat.checkSelfPermission(activity as Activity, Manifest.permission.CALL_PHONE)
+            == PackageManager.PERMISSION_GRANTED
+        ) {
+        try {
+            Log.e("ussd", "trying to send ussd request")
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                telephonyManager!!.sendUssdRequest(
+                   "*144#",
+                    callback,
+                    handler
+                )
+            }
+        } catch (e: Exception) {
+            val msg = e.message
+            Log.e("DEBUG", e.toString())
+            e.printStackTrace()
+        }
+    }
     }
 
 
@@ -92,5 +159,33 @@ class PhoneStatusFragment : Fragment() {
         }
     }
 
+    private fun checkCallPhonePermission() {
+        if (ActivityCompat.checkSelfPermission(
+                activity as Activity,
+                Manifest.permission.CALL_PHONE
+            )
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                activity as Activity,
+                arrayOf(Manifest.permission.CALL_PHONE),
+                PERMISSION_CALL_PHONE_CODE
+            )
+        }
+    }
 
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+
+        when (requestCode) {
+            PERMISSION_CALL_PHONE_CODE -> {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                } else {
+                    Toast.makeText(activity, "Permission denied", Toast.LENGTH_SHORT).show()
+                }
+            }}}
 }

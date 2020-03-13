@@ -54,7 +54,7 @@ class SmsReceiver : BroadcastReceiver() {
                     val newIntent = Intent(SMS_RECEIVED)
                     newIntent.putExtra("phoneNumber", phoneNumber)
                     newIntent.putExtra("messageText", messageText)
-                    Toast.makeText(context,"message $messageText",Toast.LENGTH_LONG).show()
+
                     Toast.makeText(context,"display $sms",Toast.LENGTH_LONG).show()
                     val printer= bluetoothPrinter()
                     val smsFilter=SmsFilter()

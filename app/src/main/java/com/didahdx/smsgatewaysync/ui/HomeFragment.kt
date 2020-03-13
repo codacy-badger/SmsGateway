@@ -1,26 +1,21 @@
 package com.didahdx.smsgatewaysync.ui
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.*
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.net.ConnectivityManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.annotation.Nullable
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentTransaction
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
@@ -32,10 +27,8 @@ import com.didahdx.smsgatewaysync.model.MessageInfo
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.utilities.*
 import com.didahdx.smsgatewaysync.viewmodels.HomeViewModel
-import com.mazenrashed.printooth.Printooth
-import com.mazenrashed.printooth.ui.ScanningActivity
-import com.mazenrashed.printooth.utilities.Printing
-import com.mazenrashed.printooth.utilities.PrintingCallback
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import kotlinx.android.synthetic.main.fragment_home.*
 import kotlinx.android.synthetic.main.fragment_home.view.*
 import kotlinx.coroutines.*
@@ -58,7 +51,8 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
     lateinit var mHomeViewModel: HomeViewModel
     var mMessageAdapter: MessageAdapter? = null
     var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT)
-    lateinit var sharedPrferences: SharedPreferences
+    private lateinit var sharedPreferences: SharedPreferences
+    val TAG=HomeFragment::class.java.simpleName
 
 
     override fun onCreateView(
@@ -68,12 +62,13 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
         val view = inflater.inflate(R.layout.fragment_home, container, false)
         view.recycler_view_message_list.layoutManager = LinearLayoutManager(activity)
         mHomeViewModel = ViewModelProviders.of(this).get(HomeViewModel::class.java)
+        checkSmsPermission()
 //        mHomeViewModel.getMessages().observe(viewLifecycleOwner, Observer{
 //         mMessageAdapter?.notifyDataSetChanged()
 //        });
         //registering the broadcast receiver for network
 
-        sharedPrferences = PreferenceManager.getDefaultSharedPreferences(context)
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
         context?.registerReceiver(
             mConnectionReceiver,
             IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
@@ -112,8 +107,6 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
                 val dateString = intent.extras!!.getString("dateString")
                 val messageText = intent.extras!!.getString("messageText")
 
-                Toast.makeText(context, "$messageText $phoneNumber $dateString", Toast.LENGTH_LONG)
-                    .show()
 
                 if (phoneNumber != null && phoneNumber.equals("MPESA") && dateString != null
                     && messageText != null
@@ -166,8 +159,6 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
         progress_bar?.visibility = View.GONE
         text_loading?.visibility = View.GONE
 
-
-
         mMessageAdapter = MessageAdapter(messageList, this)
         recycler_view_message_list?.adapter = mMessageAdapter
         refresh_layout_home?.isRefreshing = false
@@ -177,8 +168,11 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
     private fun backgroundCoroutineCall() {
         checkSmsPermission()
         startServices()
-//        var mqttClient = MqttClient()
-//        mqttClient.connect(activity as Activity)
+        var mqttClient = MqttClient()
+
+        val user=FirebaseAuth.getInstance().currentUser
+
+        mqttClient.connect(activity as Activity,user?.email!!)
 //        mqttClient.publishMessage(activity as Activity, "test")
 //        var rabbitmqClient = RabbitmqClient()
 //        rabbitmqClient.publishMessage("Test message")
@@ -193,6 +187,16 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
             CoroutineScope(IO).launch {
                 getDatabaseMessages()
             }
+        }else{
+            if (ActivityCompat.checkSelfPermission(activity as Activity, Manifest.permission.READ_SMS)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                context?.toast("READ SMS PERMISSION DENIED")
+            }
+
+            progress_bar?.visibility = View.GONE
+            text_loading?.visibility = View.GONE
+            setUpAdapter()
         }
 
         if (ActivityCompat.checkSelfPermission(
@@ -230,6 +234,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
     }
 
     private suspend fun getDatabaseMessages() {
+        Log.d(TAG,"mpesa method called")
         val messageArrayList = ArrayList<MessageInfo>()
 
         val cursor = activity?.contentResolver?.query(
@@ -242,16 +247,21 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
 
         var messageCount = 0
 
+        Log.d(TAG,"mpesa $messageCount")
+        Log.d(TAG,"mpesa $cursor")
         if (cursor != null && cursor.moveToNext()) {
             val nameId = cursor.getColumnIndex("address")
             val messageId = cursor.getColumnIndex("body")
             val dateId = cursor.getColumnIndex("date")
-            val mpesaType = sharedPrferences.getString(PREF_MPESA_TYPE, ALL)
+            val mpesaType = sharedPreferences.getString(PREF_MPESA_TYPE, ALL)
+
+
+            Log.d(TAG,"mpesa sms $mpesaType ")
 
             do {
                 val dateString = cursor.getString(dateId)
 
-//                if (cursor.getString(nameId).equals("MPESA")) {
+                if (cursor.getString(nameId).equals("MPESA")) {
 
                     var mpesaId: String =
                         cursor.getString(messageId).split("\\s".toRegex()).first().trim()
@@ -332,7 +342,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
                             messageCount++
                         }
                     }
-//                }
+                }
             } while (cursor.moveToNext())
 
             cursor.close()

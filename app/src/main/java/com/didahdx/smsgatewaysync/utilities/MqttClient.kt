@@ -1,36 +1,49 @@
 package com.didahdx.smsgatewaysync.utilities
 
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import com.microsoft.appcenter.utils.HandlerUtils.runOnUiThread
 import org.eclipse.paho.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.*
+import org.eclipse.paho.client.mqttv3.MqttClient.generateClientId
 
 
 class MqttClient {
 
     var client: MqttAndroidClient? = null
+    var clientId: String = generateClientId()
+    var options = MqttConnectOptions()
+    val TAG=MqttClient::class.java.simpleName
 
-    fun connect(context: Context) {
-        Toast.makeText(context, "Connecting to Server", Toast.LENGTH_LONG).show()
-        val connectOptions = MqttConnectOptions()
-        connectOptions.isAutomaticReconnect = true
-        client = MqttAndroidClient(context, serverURI, clientId)
+    fun connect(context: Context,clientId:String) {
+        context.toast("Connecting to Server")
+
+//        val clientId: String = generateClientId()
+        val client = MqttAndroidClient(context, serverURI, clientId)
+
+        val options = MqttConnectOptions()
+        options.userName = "admin"
+        options.password = "admin".toCharArray()
+
+        val token = client.connect(options)
+
         try {
-            client?.connect(connectOptions, object : IMqttActionListener {
+
+            token.actionCallback = object : IMqttActionListener {
                 override fun onSuccess(asyncActionToken: IMqttToken) {
-                    subscribe(context)
-
-                    Toast.makeText(context, "Established a connection to Server", Toast.LENGTH_LONG)
-                        .show()
-
+                    // We are connected
+                   context.toast( "onSuccess")
                 }
 
-                override fun onFailure(asyncActionToken: IMqttToken, e: Throwable) {
-                    e.printStackTrace()
-                    Toast.makeText(context, "Error connecting $e", Toast.LENGTH_LONG).show()
+                override fun onFailure(
+                    asyncActionToken: IMqttToken,
+                    exception: Throwable
+                ) {
+                    // Something went wrong e.g. connection timeout or firewall problems
+                    Log.d( TAG,"onFailure \n asyncActionToken: $asyncActionToken \n exeception : $exception")
                 }
-            })
+            }
         } catch (e: MqttException) {
             e.printStackTrace()
         }
