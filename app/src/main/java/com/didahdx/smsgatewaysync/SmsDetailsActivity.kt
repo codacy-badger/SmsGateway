@@ -1,13 +1,13 @@
 package com.didahdx.smsgatewaysync
 
 import android.Manifest
-import android.R.id.message
 import android.app.Activity
 import android.app.PendingIntent
 import android.content.*
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
+import android.provider.ContactsContract
 import android.telephony.SmsManager
 import android.view.Menu
 import android.view.MenuItem
@@ -109,16 +109,75 @@ class SmsDetailsActivity : AppCompatActivity(), PrintingCallback {
             R.id.action_forward_sms -> {
                 forwardSms()
             }
+            R.id.action_save_contact -> {
+                if (text_view_phone_number_act.text != NOT_AVAILABLE && text_view_name_act.text != NOT_AVAILABLE) {
+                    saveContact()
+                }
+            }
         }
         return super.onOptionsItemSelected(item)
     }
 
-    private fun forwardSms() {
+    private fun saveContact() {
+        checkWriteContactPermission()
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.WRITE_CONTACTS
+            )
+            == PackageManager.PERMISSION_GRANTED
+        ) {
 
+        }
+    }
+
+    private fun sendSaveContactIntent(){
+        // Creates a new Intent to insert a contact
+        val intent = Intent(ContactsContract.Intents.Insert.ACTION).apply {
+            // Sets the MIME type to match the Contacts Provider
+            type = ContactsContract.RawContacts.CONTENT_TYPE
+        }
+        intent.apply {
+            // Inserts an name
+            putExtra(ContactsContract.Intents.Insert.NAME, text_view_name_act?.text)
+
+            // Inserts a phone number
+            putExtra(ContactsContract.Intents.Insert.PHONE, text_view_phone_number_act?.text)
+            /*
+             * In this example, sets the phone type to be a work phone.
+             * You can set other phone types as necessary.
+             */
+            putExtra(
+                ContactsContract.Intents.Insert.PHONE_TYPE,
+                ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE
+            )
+        }
+
+        startActivity(intent)
+    }
+
+    private fun checkWriteContactPermission() {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.WRITE_CONTACTS
+            )
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.WRITE_CONTACTS),
+                PERMISSION_WRITE_CONTACTS_CODE
+            )
+        }
+    }
+
+    private fun forwardSms() {
         checkSendSmsPermission()
         val phoneNumber = sharedPrferences.getString(PREF_PHONE_NUMBER, "")
-        val usePhoneNumber= sharedPrferences.getBoolean(PREF_ENABLE_FORWARD_SMS,false)
-        if (usePhoneNumber && phoneNumber != null && !phoneNumber.isNullOrEmpty() && phoneNumber.indexOf("x") < 0) {
+        val usePhoneNumber = sharedPrferences.getBoolean(PREF_ENABLE_FORWARD_SMS, false)
+        if (usePhoneNumber && phoneNumber != null && !phoneNumber.isNullOrEmpty() && phoneNumber.indexOf(
+                "x"
+            ) < 0
+        ) {
 
             if (ActivityCompat.checkSelfPermission(
                     this,
@@ -129,10 +188,12 @@ class SmsDetailsActivity : AppCompatActivity(), PrintingCallback {
                 val smsManager = SmsManager.getDefault()
 
                 val sentPI = PendingIntent.getBroadcast(
-                    this, 0, Intent(SENT), 0)
+                    this, 0, Intent(SENT), 0
+                )
 
                 val deliveredPI = PendingIntent.getBroadcast(
-                    this, 0, Intent(DELIVERED), 0)
+                    this, 0, Intent(DELIVERED), 0
+                )
 
                 //when the SMS has been sent
                 registerReceiver(object : BroadcastReceiver() {
@@ -159,11 +220,17 @@ class SmsDetailsActivity : AppCompatActivity(), PrintingCallback {
 
                 val parts = smsManager.divideMessage(smsBody)
 
-                val arraySendInt=ArrayList<PendingIntent>()
+                val arraySendInt = ArrayList<PendingIntent>()
                 arraySendInt.add(sentPI)
-                val arrayDelivery=ArrayList<PendingIntent>()
+                val arrayDelivery = ArrayList<PendingIntent>()
                 arrayDelivery.add(deliveredPI)
-                smsManager.sendMultipartTextMessage(phoneNumber, null, parts, arraySendInt, arrayDelivery)
+                smsManager.sendMultipartTextMessage(
+                    phoneNumber,
+                    null,
+                    parts,
+                    arraySendInt,
+                    arrayDelivery
+                )
 
             } else {
 
@@ -252,11 +319,20 @@ class SmsDetailsActivity : AppCompatActivity(), PrintingCallback {
         when (requestCode) {
             PERMISSION_SEND_SMS_CODE -> {
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    toast("Permission granted")
+                    toast("Permission granted to send sms")
                 } else {
-                    toast("Permission denied")
+                    toast("Permission denied  to send sms")
                 }
             }
+            PERMISSION_WRITE_CONTACTS_CODE -> {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    toast("Permission granted to save contacts")
+                } else {
+                    sendSaveContactIntent()
+                    toast("Permission denied to save contacts")
+                }
+            }
+
         }
     }
 }
