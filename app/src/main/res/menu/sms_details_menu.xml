@@ -13,4 +13,9 @@
         android:icon="@drawable/ic_next"
         android:title="@string/action_forward_sms"
         app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_save_contact"
+        android:icon="@drawable/ic_save"
+        android:title="@string/action_save_phone_number"
+        app:showAsAction="ifRoom"/>
 </menu>
