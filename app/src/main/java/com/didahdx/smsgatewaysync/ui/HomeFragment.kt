@@ -175,7 +175,6 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
         if (checkSelfPermission(activity as Activity, Manifest.permission.READ_SMS)
             == PackageManager.PERMISSION_GRANTED
         ) {
-            context?.toast("reading sms")
             view?.refresh_layout_home?.isRefreshing = true
             view?.text_loading?.text = getString(R.string.loading_messages, 0)
             //coroutine background job
@@ -223,7 +222,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
     }
 
     private suspend fun getDatabaseMessages() {
-        Log.d(TAG, "mpesa method called")
+
         val messageArrayList = ArrayList<MessageInfo>()
 
         val cursor = activity?.contentResolver?.query(

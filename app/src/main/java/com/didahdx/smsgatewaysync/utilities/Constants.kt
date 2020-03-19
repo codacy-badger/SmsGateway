@@ -12,7 +12,7 @@ const val SENT = "SMS_SENT"
 const val DELIVERED = "SMS_DELIVERED"
 const val RED_COLOR="RED_COLOR"
 const val GREEN_COLOR="GREEN_COLOR"
-const val KSH_REGEX="\"^\\Ksh?\\-?([1-9]{1}[0-9]{0,2}(\\,\\d{3})*(\\.\\d{0,2})?|[1-9]{1}\\d{0,}(\\.\\d{0,2})?|0(\\.\\d{0,2})?|(\\.\\d{1,2}))\$|^\\-?\\\$?([1-9]{1}\\d{0,2}(\\,\\d{3})*(\\.\\d{0,2})?|[1-9]{1}\\d{0,}(\\.\\d{0,2})?|0(\\.\\d{0,2})?|(\\.\\d{1,2}))\$|^\\(\\\$?([1-9]{1}\\d{0,2}(\\,\\d{3})*(\\.\\d{0,2})?|[1-9]{1}\\d{0,}(\\.\\d{0,2})?|0(\\.\\d{0,2})?|(\\.\\d{1,2}))\\)\$\""
+//const val KSH_REGEX="^\\Ksh\\d{1,3}\\.[0-9]{2}\$|^\\\$(\\d{1,3},)+\\d{3}\\.[0-9]{2}\$"
 const val NOT_AVAILABLE="N/A"
 
 const val APP_SERVICE_KEY = "APP_SERVICE_KEY"
