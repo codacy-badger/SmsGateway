@@ -2,14 +2,14 @@ package com.didahdx.smsgatewaysync.utilities
 
 class SmsFilter() {
 
-    var name: String = "N/A"
-    var phoneNumber: String = "N/A"
-    var amount: String = "N/A"
-    var date: String = "N/A"
-    var time: String = "N/A"
-    var mpesaId: String = "N/A"
-    var mpesaType: String = "N/A"
-    var accountNumber: String = "N/A"
+    var name: String = NOT_AVAILABLE
+    var phoneNumber: String = NOT_AVAILABLE
+    var amount: String = NOT_AVAILABLE
+    var date: String = NOT_AVAILABLE
+    var time: String = NOT_AVAILABLE
+    var mpesaId: String = NOT_AVAILABLE
+    var mpesaType: String = NOT_AVAILABLE
+    var accountNumber: String = NOT_AVAILABLE
 
 
     constructor(messageBody: String) : this() {
@@ -22,7 +22,7 @@ class SmsFilter() {
             mpesaId = message.split("\\s".toRegex()).first().trim()
 
             if (!MPESA_ID_PATTERN.toRegex().matches(mpesaId)) {
-                mpesaId = " "
+                mpesaId = NOT_AVAILABLE
             }
 
             amount =
@@ -48,7 +48,7 @@ class SmsFilter() {
 
 
     private fun extractName(message: String): String {
-        var name: String = "N/A"
+        var name: String = NOT_AVAILABLE
         val pattern = "^[0-9]{10}$"
 
         /**
@@ -68,12 +68,12 @@ class SmsFilter() {
         }
 
         /**
-         * pay bill
+         * pay bill for client side
          * */
         if (message.toLowerCase()
                 .indexOf("sent to") != -1 && message.indexOf("for account") != -1
         ) {
-            mpesaType = PAY_BILL
+            mpesaType = DIRECT_MPESA
             name = message.substring(
                 message.indexOf("sent to") + 7,
                 message.indexOf("for account") - 1
@@ -93,7 +93,7 @@ class SmsFilter() {
         }
 
         /**
-         * widthdraw
+         * widthdraw from agent
          * */
         if (message.toLowerCase().indexOf("withdraw") != -1) {
             name = message.substring(message.indexOf("from") + 4, message.indexOf("New") - 1)
@@ -101,11 +101,11 @@ class SmsFilter() {
         }
 
         /**
-         * buy goods and services
+         * buy goods and services for client side
          * */
         if (message.indexOf("paid to") != -1) {
             name = message.substring(message.indexOf("paid to") + 7, message.indexOf("/") - 5)
-            mpesaType = BUY_GOODS_AND_SERVICES
+            mpesaType = DIRECT_MPESA
         }
 
         /**

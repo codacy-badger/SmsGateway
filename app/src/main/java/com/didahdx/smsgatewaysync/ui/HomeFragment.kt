@@ -15,6 +15,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProviders
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -23,12 +24,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.SmsDetailsActivity
 import com.didahdx.smsgatewaysync.adapters.MessageAdapter
+import com.didahdx.smsgatewaysync.manager.MqttClientManager
 import com.didahdx.smsgatewaysync.model.MessageInfo
+import com.didahdx.smsgatewaysync.model.MqttConnectionParam
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.utilities.*
 import com.didahdx.smsgatewaysync.viewmodels.HomeViewModel
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
 import kotlinx.android.synthetic.main.fragment_home.*
 import kotlinx.android.synthetic.main.fragment_home.view.*
 import kotlinx.coroutines.*
@@ -41,7 +43,8 @@ import kotlin.collections.ArrayList
 /**
  * A simple [Fragment] subclass.
  */
-class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
+class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
+    UiUpdaterInterface {
 
     private var messageList: ArrayList<MessageInfo> = ArrayList<MessageInfo>()
 
@@ -52,8 +55,18 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
     var mMessageAdapter: MessageAdapter? = null
     var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT)
     private lateinit var sharedPreferences: SharedPreferences
-    val TAG=HomeFragment::class.java.simpleName
+    val TAG = HomeFragment::class.java.simpleName
 
+    var mMqttClientManager: MqttClientManager? = null
+    val user = FirebaseAuth.getInstance().currentUser
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val connectionParam = MqttConnectionParam(user?.email!!, SERVER_URI, PUBLISH_TOPIC, "", "")
+        mMqttClientManager = context?.let { MqttClientManager(connectionParam, it, this) }
+        mMqttClientManager?.connect()
+
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -62,25 +75,20 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
         val view = inflater.inflate(R.layout.fragment_home, container, false)
         view.recycler_view_message_list.layoutManager = LinearLayoutManager(activity)
         mHomeViewModel = ViewModelProviders.of(this).get(HomeViewModel::class.java)
-        checkSmsPermission()
-//        mHomeViewModel.getMessages().observe(viewLifecycleOwner, Observer{
-//         mMessageAdapter?.notifyDataSetChanged()
-//        });
-        //registering the broadcast receiver for network
+        startServices()
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+
+        //registering the broadcast receiver for network
         context?.registerReceiver(
             mConnectionReceiver,
             IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
         )
 
         view.text_view_status.text = "$APP_NAME is running"
-        view.refresh_layout_home.setOnRefreshListener {
-            backgroundCoroutineCall()
-        }
+        view.refresh_layout_home.setOnRefreshListener { backgroundCoroutineCall() }
 
         backgroundCoroutineCall()
-
         // Inflate the layout for this fragment
         return view
     }
@@ -133,17 +141,14 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
             val connectionManager =
                 context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
             val activeNetwork = connectionManager.activeNetworkInfo
-            val isConnected = (activeNetwork != null && activeNetwork.isConnectedOrConnecting)
-            when (isConnected) {
+            when ((activeNetwork != null && activeNetwork.isConnectedOrConnecting)) {
                 true -> {
-                    text_view_status.text = "${getString(R.string.app_name)} is Running"
-                    text_view_status?.background =
-                        resources.getDrawable(R.drawable.item_background_green)
+//                    text_view_status.text = "${getString(R.string.app_name)} is Running"
+//                    text_view_status?.BackGroundGreen()
                 }
                 false -> {
-                    text_view_status.text = "No internet connection"
-                    text_view_status?.background =
-                        resources.getDrawable(R.drawable.item_background_red)
+//                    text_view_status.text = "No internet connection"
+//                    text_view_status?.BackGroundRed()
                 }
             }
         }
@@ -156,8 +161,8 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
     }
 
     private fun setUpAdapter() {
-        progress_bar?.visibility = View.GONE
-        text_loading?.visibility = View.GONE
+        progress_bar?.hide()
+        text_loading?.hide()
 
         mMessageAdapter = MessageAdapter(messageList, this)
         recycler_view_message_list?.adapter = mMessageAdapter
@@ -165,41 +170,25 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
     }
 
 
-    private fun backgroundCoroutineCall() {
-        checkSmsPermission()
-        startServices()
-        var mqttClient = MqttClient()
+    fun backgroundCoroutineCall() {
 
-        val user=FirebaseAuth.getInstance().currentUser
-
-        mqttClient.connect(activity as Activity,user?.email!!)
-//        mqttClient.publishMessage(activity as Activity, "test")
-//        var rabbitmqClient = RabbitmqClient()
-//        rabbitmqClient.publishMessage("Test message")
-
-
-        if (ActivityCompat.checkSelfPermission(activity as Activity, Manifest.permission.READ_SMS)
+        if (checkSelfPermission(activity as Activity, Manifest.permission.READ_SMS)
             == PackageManager.PERMISSION_GRANTED
         ) {
+            context?.toast("reading sms")
             view?.refresh_layout_home?.isRefreshing = true
             view?.text_loading?.text = getString(R.string.loading_messages, 0)
             //coroutine background job
             CoroutineScope(IO).launch {
                 getDatabaseMessages()
             }
-        }else{
-            if (ActivityCompat.checkSelfPermission(activity as Activity, Manifest.permission.READ_SMS)
-                != PackageManager.PERMISSION_GRANTED
-            ) {
-                context?.toast("READ SMS PERMISSION DENIED")
-            }
-
-            progress_bar?.visibility = View.GONE
-            text_loading?.visibility = View.GONE
+        } else {
+            progress_bar?.hide()
+            text_loading?.hide()
             setUpAdapter()
         }
 
-        if (ActivityCompat.checkSelfPermission(
+        if (checkSelfPermission(
                 activity as Activity,
                 Manifest.permission.RECEIVE_SMS
             )
@@ -234,7 +223,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
     }
 
     private suspend fun getDatabaseMessages() {
-        Log.d(TAG,"mpesa method called")
+        Log.d(TAG, "mpesa method called")
         val messageArrayList = ArrayList<MessageInfo>()
 
         val cursor = activity?.contentResolver?.query(
@@ -247,8 +236,8 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
 
         var messageCount = 0
 
-        Log.d(TAG,"mpesa $messageCount")
-        Log.d(TAG,"mpesa $cursor")
+        Log.d(TAG, "mpesa $messageCount")
+        Log.d(TAG, "mpesa $cursor")
         if (cursor != null && cursor.moveToNext()) {
             val nameId = cursor.getColumnIndex("address")
             val messageId = cursor.getColumnIndex("body")
@@ -256,24 +245,66 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
             val mpesaType = sharedPreferences.getString(PREF_MPESA_TYPE, ALL)
 
 
-            Log.d(TAG,"mpesa sms $mpesaType ")
+            Log.d(TAG, "mpesa sms $mpesaType ")
 
             do {
                 val dateString = cursor.getString(dateId)
 
-                if (cursor.getString(nameId).equals("MPESA")) {
+//                if (cursor.getString(nameId) == "MPESA") {
 
-                    var mpesaId: String =
-                        cursor.getString(messageId).split("\\s".toRegex()).first().trim()
-                    if (!MPESA_ID_PATTERN.toRegex().matches(mpesaId)) {
-                        mpesaId = " "
+                var mpesaId: String =
+                    cursor.getString(messageId).split("\\s".toRegex()).first().trim()
+                if (!MPESA_ID_PATTERN.toRegex().matches(mpesaId)) {
+                    mpesaId = NOT_AVAILABLE
+                }
+
+                var smsFilter = SmsFilter(cursor.getString(messageId))
+
+
+                when (mpesaType) {
+                    ALL -> {
+                        messageArrayList.add(
+                            MessageInfo(
+                                cursor.getString(messageId),
+                                sdf.format(Date(dateString.toLong())).toString(),
+                                cursor.getString(nameId),
+                                mpesaId, "", smsFilter.amount, "", smsFilter.name
+                            )
+                        )
+                        UpdateCounter(messageCount)
+                        messageCount++
+                    }
+                    PAY_BILL -> {
+                        if (smsFilter.mpesaType == PAY_BILL) {
+                            messageArrayList.add(
+                                MessageInfo(
+                                    cursor.getString(messageId),
+                                    sdf.format(Date(dateString.toLong())).toString(),
+                                    cursor.getString(nameId),
+                                    mpesaId, "", smsFilter.amount, "", smsFilter.name
+                                )
+                            )
+                            UpdateCounter(messageCount)
+                            messageCount++
+                        }
+                    }
+                    DIRECT_MPESA -> {
+                        if (smsFilter.mpesaType == DIRECT_MPESA) {
+                            messageArrayList.add(
+                                MessageInfo(
+                                    cursor.getString(messageId),
+                                    sdf.format(Date(dateString.toLong())).toString(),
+                                    cursor.getString(nameId),
+                                    mpesaId, "", smsFilter.amount, "", smsFilter.name
+                                )
+                            )
+                            UpdateCounter(messageCount)
+                            messageCount++
+                        }
                     }
 
-                    var smsFilter = SmsFilter(cursor.getString(messageId))
-
-
-                    when (mpesaType) {
-                        ALL -> {
+                    BUY_GOODS_AND_SERVICES -> {
+                        if (smsFilter.mpesaType == BUY_GOODS_AND_SERVICES) {
                             messageArrayList.add(
                                 MessageInfo(
                                     cursor.getString(messageId),
@@ -285,64 +316,22 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
                             UpdateCounter(messageCount)
                             messageCount++
                         }
-                        PAY_BILL -> {
-                            if (smsFilter.mpesaType == PAY_BILL) {
-                                messageArrayList.add(
-                                    MessageInfo(
-                                        cursor.getString(messageId),
-                                        sdf.format(Date(dateString.toLong())).toString(),
-                                        cursor.getString(nameId),
-                                        mpesaId, "", smsFilter.amount, "", smsFilter.name
-                                    )
-                                )
-                                UpdateCounter(messageCount)
-                                messageCount++
-                            }
-                        }
-                        DIRECT_MPESA -> {
-                            if (smsFilter.mpesaType == DIRECT_MPESA) {
-                                messageArrayList.add(
-                                    MessageInfo(
-                                        cursor.getString(messageId),
-                                        sdf.format(Date(dateString.toLong())).toString(),
-                                        cursor.getString(nameId),
-                                        mpesaId, "", smsFilter.amount, "", smsFilter.name
-                                    )
-                                )
-                                UpdateCounter(messageCount)
-                                messageCount++
-                            }
-                        }
+                    }
 
-                        BUY_GOODS_AND_SERVICES -> {
-                            if (smsFilter.mpesaType == BUY_GOODS_AND_SERVICES) {
-                                messageArrayList.add(
-                                    MessageInfo(
-                                        cursor.getString(messageId),
-                                        sdf.format(Date(dateString.toLong())).toString(),
-                                        cursor.getString(nameId),
-                                        mpesaId, "", smsFilter.amount, "", smsFilter.name
-                                    )
-                                )
-                                UpdateCounter(messageCount)
-                                messageCount++
-                            }
-                        }
-
-                        else->{
-                            messageArrayList.add(
-                                MessageInfo(
-                                    cursor.getString(messageId),
-                                    sdf.format(Date(dateString.toLong())).toString(),
-                                    cursor.getString(nameId),
-                                    mpesaId, "", smsFilter.amount, "", smsFilter.name
-                                )
+                    else -> {
+                        messageArrayList.add(
+                            MessageInfo(
+                                cursor.getString(messageId),
+                                sdf.format(Date(dateString.toLong())).toString(),
+                                cursor.getString(nameId),
+                                mpesaId, "", smsFilter.amount, "", smsFilter.name
                             )
-                            UpdateCounter(messageCount)
-                            messageCount++
-                        }
+                        )
+                        UpdateCounter(messageCount)
+                        messageCount++
                     }
                 }
+//                }
             } while (cursor.moveToNext())
 
             cursor.close()
@@ -360,12 +349,12 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
     override fun onItemClick(position: Int) {
         val messageInfo: MessageInfo = messageList[position]
         //Put the value
-        val smsDetailsFragment = SmsDetailsFragment()
-        val args = Bundle()
-        args.putString(SMS_BODY, messageInfo.messageBody)
-        args.putString(SMS_DATE, messageInfo.time)
-        args.putString(SMS_SENDER, messageInfo.sender)
-        smsDetailsFragment.arguments = args
+//        val smsDetailsFragment = SmsDetailsFragment()
+//        val args = Bundle()
+//        args.putString(SMS_BODY, messageInfo.messageBody)
+//        args.putString(SMS_DATE, messageInfo.time)
+//        args.putString(SMS_SENDER, messageInfo.sender)
+//        smsDetailsFragment.arguments = args
 
         val intent = Intent(context, SmsDetailsActivity::class.java)
         intent.putExtra(SMS_BODY, messageInfo.messageBody)
@@ -403,92 +392,15 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
         }
     }
 
-    private fun checkSmsPermission() {
-        if (ActivityCompat.checkSelfPermission(
-                activity as Activity,
-                Manifest.permission.RECEIVE_SMS
-            )
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                activity as Activity,
-                arrayOf(Manifest.permission.RECEIVE_SMS),
-                PERMISSION_RECEIVE_SMS_CODE
-            )
-        }
-
-        if (ActivityCompat.checkSelfPermission(activity as Activity, Manifest.permission.READ_SMS)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                activity as Activity,
-                arrayOf(Manifest.permission.READ_SMS),
-                PERMISSION_READ_SMS_CODE
-            )
-        }
-
-        if (ActivityCompat.checkSelfPermission(
-                activity as Activity,
-                Manifest.permission.FOREGROUND_SERVICE
-            )
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                ActivityCompat.requestPermissions(
-                    activity as Activity,
-                    arrayOf(Manifest.permission.FOREGROUND_SERVICE),
-                    PERMISSION_FOREGROUND_SERVICES_CODE
-                )
-
-            }
-        }
-
-    }
-
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-
-        when (requestCode) {
-            PERMISSION_RECEIVE_SMS_CODE -> {
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                } else {
-                    Toast.makeText(activity, "Permission denied", Toast.LENGTH_SHORT).show()
-                }
-            }
-            PERMISSION_READ_SMS_CODE -> {
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                } else {
-                    Toast.makeText(activity, "Permission denied", Toast.LENGTH_SHORT).show()
-                }
-            }
-
-            PERMISSION_WRITE_EXTERNAL_STORAGE_CODE -> {
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(activity, "Permission granted", Toast.LENGTH_LONG).show()
-                }
-
-            }
-
-            PERMISSION_FOREGROUND_SERVICES_CODE -> {
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                } else {
-                    Toast.makeText(activity, "Permission denied", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
 
     private fun startServices(input: String) {
-        val serviceIntent = Intent(activity as Activity, AppServices::class.java)
-        serviceIntent.putExtra(INPUT_EXTRAS, input)
-        ContextCompat.startForegroundService(activity as Activity, serviceIntent)
+        try {
+            val serviceIntent = Intent(context, AppServices::class.java)
+            serviceIntent.putExtra(INPUT_EXTRAS, input)
+            context?.let { ContextCompat.startForegroundService(it, serviceIntent) }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
 
@@ -496,4 +408,30 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener {
         super.onDestroy()
         activity?.unregisterReceiver(mConnectionReceiver)
     }
+
+    override fun toasterMessage(message: String) {
+        context?.toast(message)
+    }
+
+    override fun updateStatusViewWith(status: String, color: String) {
+        text_view_status?.text = status
+        startServices(status)
+        when (color) {
+            RED_COLOR -> {
+                text_view_status?.backgroundRed()
+            }
+
+            GREEN_COLOR -> {
+                text_view_status?.backgroundGreen()
+            }
+        }
+
+    }
+
+    override fun publish(isReadyToPublish: Boolean) {
+        if (isReadyToPublish) {
+            mMqttClientManager?.publish("Sample message")
+        }
+    }
+
 }

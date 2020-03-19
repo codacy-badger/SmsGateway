@@ -10,6 +10,10 @@ const val DATE_FORMAT="dd/MMM/yy hh:mm aaa"
 const val MPESA_ID_PATTERN="^[A-Z0-9]*$"
 const val SENT = "SMS_SENT"
 const val DELIVERED = "SMS_DELIVERED"
+const val RED_COLOR="RED_COLOR"
+const val GREEN_COLOR="GREEN_COLOR"
+const val KSH_REGEX="\"^\\Ksh?\\-?([1-9]{1}[0-9]{0,2}(\\,\\d{3})*(\\.\\d{0,2})?|[1-9]{1}\\d{0,}(\\.\\d{0,2})?|0(\\.\\d{0,2})?|(\\.\\d{1,2}))\$|^\\-?\\\$?([1-9]{1}\\d{0,2}(\\,\\d{3})*(\\.\\d{0,2})?|[1-9]{1}\\d{0,}(\\.\\d{0,2})?|0(\\.\\d{0,2})?|(\\.\\d{1,2}))\$|^\\(\\\$?([1-9]{1}\\d{0,2}(\\,\\d{3})*(\\.\\d{0,2})?|[1-9]{1}\\d{0,}(\\.\\d{0,2})?|0(\\.\\d{0,2})?|(\\.\\d{1,2}))\\)\$\""
+const val NOT_AVAILABLE="N/A"
 
 const val APP_SERVICE_KEY = "APP_SERVICE_KEY"
 const val APP_SERVICE_STATE = "APP_SERVICE_STATE"
@@ -20,11 +24,9 @@ const val CHANNEL_ID="SmsServiceChannel"
 const val LOG_FILE_NAME="smsLog.txt"
 const val APP_NAME="Sms Gateway Sync"
 
-const val ACTIVEMQ_TAG = "ActiveMQ"
-const val serverURI = "tcp://128.199.174.204:1883" //replace with your ip
-const val publishTopic = "outbox"
-const val subscribeTopic = "inbox"
-
+const val SERVER_URI = "tcp://128.199.174.204:1883"
+const val PUBLISH_TOPIC = "outbox"
+const val SUBSCRIBE_TOPIC = "inbox"
 
 /**
  * MPESA TYPES
@@ -49,13 +51,15 @@ const val PREF_CONNECT_PRINTER="connect_printer"
 const val PREF_AUTO_PRINT="auto_print"
 const val PREF_PHONE_NUMBER="forward_sms_number"
 const val PREF_ENABLE_FORWARD_SMS="enable_forward_sms"
+const val PREF_SERVICES_KEY="services_key"
 
 /**
  *  user permission codes
  */
-const val PERMISSION_RECEIVE_SMS_CODE = 2
-const val PERMISSION_READ_SMS_CODE = 100
-const val PERMISSION_SEND_SMS_CODE = 200
-const val PERMISSION_WRITE_EXTERNAL_STORAGE_CODE = 500
-const val PERMISSION_CALL_PHONE_CODE=1200
-const val PERMISSION_FOREGROUND_SERVICES_CODE=1300
+const val PERMISSION_RECEIVE_SMS_CODE = 100
+const val PERMISSION_READ_SMS_CODE = 200
+const val PERMISSION_SEND_SMS_CODE = 300
+const val PERMISSION_WRITE_EXTERNAL_STORAGE_CODE = 400
+const val PERMISSION_CALL_PHONE_CODE=500
+const val PERMISSION_FOREGROUND_SERVICES_CODE=600
+const val PERMISSION_WRITE_CONTACTS_CODE=700

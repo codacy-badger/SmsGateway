@@ -2,7 +2,6 @@ package com.didahdx.smsgatewaysync.utilities
 
 import android.content.Context
 import android.content.Context.MODE_APPEND
-import android.content.Context.MODE_PRIVATE
 import android.widget.Toast
 import java.io.*
 import java.util.*
@@ -15,20 +14,15 @@ class AppLog {
 
     //writing to log messages
     fun writeToLog(context: Context, log: String) {
-        val time= Date()
-
-        var logText="\n\n $time \n"
-        logText += log
 
         var fileOutputStream: FileOutputStream? = null
 
         try {
             fileOutputStream = context.openFileOutput(LOG_FILE_NAME, MODE_APPEND)
-            fileOutputStream.write(logText.toByteArray())
-        }catch (e:OutOfMemoryError){
-            Toast.makeText(context,e.localizedMessage,Toast.LENGTH_LONG).show()
-        }
-        catch (e: FileNotFoundException) {
+            fileOutputStream.write(log.toByteArray())
+        } catch (e: OutOfMemoryError) {
+            Toast.makeText(context, e.localizedMessage, Toast.LENGTH_LONG).show()
+        } catch (e: FileNotFoundException) {
             e.printStackTrace()
         } catch (io: IOException) {
             io.printStackTrace()
@@ -42,10 +36,10 @@ class AppLog {
     }
 
     //reading log messages
-    fun readLog(context: Context):String{
-        var text: String=""
+    fun readLog(context: Context): String {
+        var text: String = ""
         val stringBuilder = StringBuilder()
-        var fileInputStream:FileInputStream?=null
+        var fileInputStream: FileInputStream? = null
         try {
             fileInputStream = context.openFileInput(LOG_FILE_NAME)
             val isr = InputStreamReader(fileInputStream)
@@ -53,16 +47,16 @@ class AppLog {
 
 
             br.forEachLine {
-            stringBuilder.append(it).append("\n")
-                }
+                stringBuilder.append(it).append("\n")
+            }
 
-            text=stringBuilder.toString()
+            text = stringBuilder.toString()
 
-        }catch (e:OutOfMemoryError){
-            Toast.makeText(context,e.localizedMessage,Toast.LENGTH_LONG).show()
-        }catch (e:FileNotFoundException){
+        } catch (e: OutOfMemoryError) {
+            Toast.makeText(context, e.localizedMessage, Toast.LENGTH_LONG).show()
+        } catch (e: FileNotFoundException) {
             e.printStackTrace()
-        }catch (e:IOException){
+        } catch (e: IOException) {
             e.printStackTrace()
         } finally {
             try {

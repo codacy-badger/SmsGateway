@@ -63,7 +63,7 @@ class PhoneStatusFragment : Fragment() {
                         response: CharSequence
                     ) {
                         super.onReceiveUssdResponse(telephonyManager, request, response)
-                        context?.toast(" response $response")
+                        context?.toast("ussd response: $response")
                         Log.e("ussd", "Success with response : $response  ")
                     }
 

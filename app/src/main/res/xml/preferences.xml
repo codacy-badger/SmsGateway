@@ -5,6 +5,18 @@
     tools:targetApi="o">
 
     <PreferenceCategory
+        android:title="Services"
+        app:iconSpaceReserved="false">
+        <SwitchPreferenceCompat
+            app:iconSpaceReserved="false"
+            android:key="services_key"
+            android:summary="Used to enable or disable the running services of the application"
+            android:title="Enable or Disable services"
+            app:defaultValue="true" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
         android:title="Url Configuration"
         app:iconSpaceReserved="false">
         <SwitchPreferenceCompat
@@ -47,9 +59,9 @@
         <EditTextPreference
             android:dependency="enable_forward_sms"
             android:key="forward_sms_number"
-            app:defaultValue="+2547xxxxxxxx"
             android:summary="Add default phone number"
             android:title="Phone Number"
+            app:defaultValue="+2547xxxxxxxx"
             app:iconSpaceReserved="false" />
 
         <SwitchPreferenceCompat

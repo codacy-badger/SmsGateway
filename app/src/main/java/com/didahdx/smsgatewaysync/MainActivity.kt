@@ -2,23 +2,21 @@ package com.didahdx.smsgatewaysync
 
 
 import android.Manifest
-import android.app.Activity
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
 import androidx.preference.PreferenceManager
 import com.didahdx.smsgatewaysync.receiver.BatteryReceiver
@@ -28,40 +26,43 @@ import com.didahdx.smsgatewaysync.ui.*
 import com.didahdx.smsgatewaysync.utilities.AppLog
 import com.didahdx.smsgatewaysync.utilities.INPUT_EXTRAS
 import com.didahdx.smsgatewaysync.utilities.PERMISSION_FOREGROUND_SERVICES_CODE
+import com.didahdx.smsgatewaysync.utilities.toast
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
 import com.microsoft.appcenter.AppCenter
 import com.microsoft.appcenter.analytics.Analytics
 import com.microsoft.appcenter.crashes.Crashes
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_layout.*
-import kotlinx.android.synthetic.main.navigation_header.*
+import java.util.*
 
 
 class MainActivity : AppCompatActivity(),
-    NavigationView.OnNavigationItemSelectedListener,ConnectionReceiver.ConnectionReceiverListener{
+    NavigationView.OnNavigationItemSelectedListener, ConnectionReceiver.ConnectionReceiverListener {
 
     //checks on network connectivity to update the notification bar
     override fun onNetworkConnectionChanged(isConnected: Boolean) {
-
+        val time = Date()
         if (!isConnected) {
-            startServices("No internet connection")
-            appLog.writeToLog(this,"No internet Connection")
+//            startServices("No internet connection")
+            appLog.writeToLog(this, "\n\n $time \n No internet Connection")
         } else {
-            startServices("${getString(R.string.app_name)} is Running")
-            appLog.writeToLog(this,"Connected to Internet")
+//            startServices("${getString(R.string.app_name)} is Running")
+            appLog.writeToLog(this, "\n\n $time \n Connected to Internet ")
         }
     }
 
-    val appLog= AppLog()
+
+    val appLog = AppLog()
     lateinit var homeFragment: HomeFragment
     lateinit var settingsFragment: SettingsFragment
-    lateinit var logFragment:LogFragment
+    lateinit var logFragment: LogFragment
     lateinit var aboutFragment: AboutFragment
     lateinit var phoneStatusFragment: PhoneStatusFragment
     private var mFirebaseAnalytics: FirebaseAnalytics? = null
+    var isReadyToPublish: Boolean = false
+    var mIMainActivity:IMainActivity?=null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,7 +74,7 @@ class MainActivity : AppCompatActivity(),
             Analytics::class.java, Crashes::class.java
         )
 
-        checkForegroundPermission()
+
 
         // Obtain the FirebaseAnalytics instance.
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this)
@@ -95,26 +96,30 @@ class MainActivity : AppCompatActivity(),
         settingUpDefaultFragment()
 
         //registering broadcast receiver for battery
-        baseContext.registerReceiver(BatteryReceiver(),
-            IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        baseContext.registerReceiver(
+            BatteryReceiver(),
+            IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+        )
 
         App.instance.setConnectionListener(this)
         //registering broadcast receiver for internet connection
-        baseContext.registerReceiver(ConnectionReceiver(),
-            IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
+        baseContext.registerReceiver(
+            ConnectionReceiver(),
+            IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
+        )
 
 
         //saving apps preference
-        PreferenceManager.setDefaultValues(this,R.xml.preferences,false)
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false)
 
-        val headView: View =navigation_view.getHeaderView(0)
-         val navUser:TextView= headView.findViewById<TextView>(R.id.text_view_user_loggedIn)
-       val firebaseUser= FirebaseAuth.getInstance().currentUser
-        if(firebaseUser!=null){
-            navUser.text=firebaseUser.email
+        val headView: View = navigation_view.getHeaderView(0)
+        val navUser: TextView = headView.findViewById<TextView>(R.id.text_view_user_loggedIn)
+        val firebaseUser = FirebaseAuth.getInstance().currentUser
+        if (firebaseUser != null) {
+            navUser.text = firebaseUser.email
         }
 
-
+        checkForegroundPermission()
     }
 
     //used to check foreground services permission on android 9+
@@ -155,29 +160,29 @@ class MainActivity : AppCompatActivity(),
                     .commit()
             }
 
-            R.id.nav_about->{
-                aboutFragment= AboutFragment()
+            R.id.nav_about -> {
+                aboutFragment = AboutFragment()
                 supportFragmentManager
                     .beginTransaction()
-                    .replace(R.id.frame_layout,aboutFragment)
+                    .replace(R.id.frame_layout, aboutFragment)
                     .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
                     .commit()
             }
 
-            R.id.nav_phone_status->{
-                phoneStatusFragment= PhoneStatusFragment()
+            R.id.nav_phone_status -> {
+                phoneStatusFragment = PhoneStatusFragment()
                 supportFragmentManager
                     .beginTransaction()
-                    .replace(R.id.frame_layout,phoneStatusFragment)
+                    .replace(R.id.frame_layout, phoneStatusFragment)
                     .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
                     .commit()
             }
 
-            R.id.nav_log->{
-                logFragment= LogFragment()
+            R.id.nav_log -> {
+                logFragment = LogFragment()
                 supportFragmentManager
                     .beginTransaction()
-                    .replace(R.id.frame_layout,logFragment)
+                    .replace(R.id.frame_layout, logFragment)
                     .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
                     .commit()
             }
@@ -191,9 +196,10 @@ class MainActivity : AppCompatActivity(),
                     .commit()
             }
 
-            R.id.nav_logout->{
+            R.id.nav_logout -> {
                 FirebaseAuth.getInstance().signOut()
-                startActivity(Intent(this,LoginActivity::class.java))
+                startActivity(Intent(this, LoginActivity::class.java))
+                stopServices()
                 finish()
             }
         }
@@ -217,18 +223,27 @@ class MainActivity : AppCompatActivity(),
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
-
-        when (requestCode) {
+        when(requestCode){
             PERMISSION_FOREGROUND_SERVICES_CODE -> {
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
                 } else {
-                    Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show()
-                    finish()
+                    toast("Permission denied")
                 }
             }
         }
+
+
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        val fragments: List<Fragment> = supportFragmentManager.fragments
+        if (fragments != null) {
+            for (fragment in fragments) {
+                fragment.onRequestPermissionsResult(requestCode, permissions, grantResults)
+            }
+        }
+
     }
+
 
     private fun startServices(input: String) {
         val serviceIntent = Intent(this, AppServices::class.java)
@@ -236,8 +251,13 @@ class MainActivity : AppCompatActivity(),
         ContextCompat.startForegroundService(this, serviceIntent)
     }
 
+    private fun stopServices() {
+        val serviceIntent = Intent(this, AppServices::class.java)
+        stopService(serviceIntent)
+    }
+
     override fun onDestroy() {
         super.onDestroy()
-
     }
+
 }

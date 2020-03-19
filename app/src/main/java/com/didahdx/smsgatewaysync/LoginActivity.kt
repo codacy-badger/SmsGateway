@@ -1,11 +1,16 @@
 package com.didahdx.smsgatewaysync
 
+import android.Manifest
+import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.didahdx.smsgatewaysync.utilities.Validation
+import androidx.core.app.ActivityCompat
+import com.didahdx.smsgatewaysync.utilities.*
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
@@ -29,6 +34,45 @@ class LoginActivity : AppCompatActivity(), View.OnClickListener {
 
     }
 
+    private fun checkSmsPermission() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_SMS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(this,
+                arrayOf(Manifest.permission.READ_SMS),
+                PERMISSION_READ_SMS_CODE
+            )
+        }
+
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.RECEIVE_SMS
+            )
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(this,
+                arrayOf(Manifest.permission.RECEIVE_SMS),
+                PERMISSION_RECEIVE_SMS_CODE
+            )
+        }
+
+
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.FOREGROUND_SERVICE
+            )
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                ActivityCompat.requestPermissions(this,
+                    arrayOf(Manifest.permission.FOREGROUND_SERVICE),
+                    PERMISSION_FOREGROUND_SERVICES_CODE
+                )
+
+            }
+        }
+    }
+
     override fun onClick(v: View?) {
         if (v == text_view_sign_up) {
             startActivity(Intent(this, SignUpActivity::class.java))
@@ -37,11 +81,44 @@ class LoginActivity : AppCompatActivity(), View.OnClickListener {
         } else if (v == button_login) {
 
             if (validateEmail() && validatePassword()) {
-                loginUser()
+                checkSmsPermission()
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_SMS)
+                    == PackageManager.PERMISSION_GRANTED
+                ) {
+                    loginUser()
+                }
             }
 
         }
     }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+
+        when (requestCode) {
+            PERMISSION_READ_SMS_CODE -> {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    loginUser()
+                   toast("Permission granted to read sms")
+                } else {
+                    toast("Permission denied to read sms")
+                }
+            }
+            PERMISSION_FOREGROUND_SERVICES_CODE -> {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                } else {
+                    toast("Permission denied")
+                }
+            }
+
+        }
+    }
+
+
 
 
     private fun validatePassword(): Boolean {
