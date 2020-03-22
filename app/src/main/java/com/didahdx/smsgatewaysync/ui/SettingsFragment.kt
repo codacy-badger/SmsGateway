@@ -24,13 +24,16 @@ import com.mazenrashed.printooth.utilities.PrintingCallback
  */
 class SettingsFragment : PreferenceFragmentCompat(),
     SharedPreferences.OnSharedPreferenceChangeListener
-    , PrintingCallback {
+    , PrintingCallback, Preference.OnPreferenceClickListener {
 
     lateinit var onSharedPreferenceChangeListener: SharedPreferences.OnSharedPreferenceChangeListener
+    lateinit var onPreferenceClickListener: Preference.OnPreferenceClickListener
     var printing: Printing? = null
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.preferences, rootKey)
+
+       onPreferenceClickListener=this
         onSharedPreferenceChangeListener = this
     }
 
@@ -81,9 +84,23 @@ class SettingsFragment : PreferenceFragmentCompat(),
                  stopServices()
              }
          }
+
+            PREF_FEEDBACK->{
+
+            }
         }
     }
+    override fun onPreferenceClick(preference: Preference?): Boolean {
+        val feedBack =
+            findPreference(PREF_FEEDBACK) as Preference?
+when(preference){
+    feedBack->{
 
+    }
+}
+
+        return false
+    }
 
     override fun onResume() {
         super.onResume()
@@ -206,6 +223,9 @@ class SettingsFragment : PreferenceFragmentCompat(),
     override fun printingOrderSentSuccessfully() {
         Toast.makeText(activity, "Order sent to printer", Toast.LENGTH_SHORT).show()
     }
+
+
+
 
     /***************************************************************************************************************************/
 

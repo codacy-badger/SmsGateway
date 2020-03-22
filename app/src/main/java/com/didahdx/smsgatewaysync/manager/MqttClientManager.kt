@@ -55,7 +55,6 @@ class MqttClientManager(
         val mqttConnectOptions = MqttConnectOptions()
         mqttConnectOptions.isAutomaticReconnect = true
         mqttConnectOptions.isCleanSession = false
-        mqttConnectOptions.keepAliveInterval = 7
         //mqttConnectOptions.setUserName(this.connectionParams.username)
         //mqttConnectOptions.setPassword(this.connectionParams.password.toCharArray())
         try {
@@ -182,7 +181,7 @@ class MqttClientManager(
                     })
             }
         } catch (ex: MqttException) {
-            System.err.println("Exception publishing")
+            System.err.println("Exception publishing  ")
             ex.printStackTrace()
         }
     }

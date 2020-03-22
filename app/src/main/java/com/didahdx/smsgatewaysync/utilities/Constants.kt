@@ -52,6 +52,7 @@ const val PREF_AUTO_PRINT="auto_print"
 const val PREF_PHONE_NUMBER="forward_sms_number"
 const val PREF_ENABLE_FORWARD_SMS="enable_forward_sms"
 const val PREF_SERVICES_KEY="services_key"
+const val PREF_FEEDBACK="feedback"
 
 /**
  *  user permission codes

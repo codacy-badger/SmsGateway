@@ -6,13 +6,11 @@ import android.content.*
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.checkSelfPermission
@@ -249,7 +247,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
             do {
                 val dateString = cursor.getString(dateId)
 
-//                if (cursor.getString(nameId) == "MPESA") {
+                if (cursor.getString(nameId) == "MPESA") {
 
                 var mpesaId: String =
                     cursor.getString(messageId).split("\\s".toRegex()).first().trim()
@@ -330,7 +328,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
                         messageCount++
                     }
                 }
-//                }
+                }
             } while (cursor.moveToNext())
 
             cursor.close()
