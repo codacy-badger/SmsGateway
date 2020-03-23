@@ -6,6 +6,7 @@ import java.io.IOException
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.TimeoutException
 
+
 class RabbitmqClient {
 
     val queue = LinkedBlockingDeque<String>()
