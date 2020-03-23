@@ -22,7 +22,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.SmsDetailsActivity
 import com.didahdx.smsgatewaysync.adapters.MessageAdapter
-import com.didahdx.smsgatewaysync.manager.MqttClientManager
+import com.didahdx.smsgatewaysync.manager.QueueMessageProducer
+//import com.didahdx.smsgatewaysync.manager.MqttClientManager
 import com.didahdx.smsgatewaysync.model.MessageInfo
 import com.didahdx.smsgatewaysync.model.MqttConnectionParam
 import com.didahdx.smsgatewaysync.services.AppServices
@@ -55,14 +56,16 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
     private lateinit var sharedPreferences: SharedPreferences
     val TAG = HomeFragment::class.java.simpleName
 
-    var mMqttClientManager: MqttClientManager? = null
+//    var mMqttClientManager: MqttClientManager? = null
     val user = FirebaseAuth.getInstance().currentUser
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val connectionParam = MqttConnectionParam(user?.email!!, SERVER_URI, PUBLISH_TOPIC, "", "")
-        mMqttClientManager = context?.let { MqttClientManager(connectionParam, it, this) }
-        mMqttClientManager?.connect()
+        val producer=QueueMessageProducer(user?.email!!,"admin")
+        producer.sendDummyMessages("test_apache_lib")
+//        val connectionParam = MqttConnectionParam(user?.email!!, SERVER_URI, PUBLISH_TOPIC, "", "")
+//        mMqttClientManager = context?.let { MqttClientManager(connectionParam, it, this) }
+//        mMqttClientManager?.connect()
 
     }
 
@@ -427,7 +430,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
 
     override fun publish(isReadyToPublish: Boolean) {
         if (isReadyToPublish) {
-            mMqttClientManager?.publish("Sample message")
+//            mMqttClientManager?.publish("Sample message")
         }
     }
 

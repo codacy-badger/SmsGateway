@@ -1,5 +1,11 @@
 package com.didahdx.smsgatewaysync.utilities
 
+import android.os.Build
+import androidx.annotation.RequiresApi
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.*
+
 /**
  * Constants used throughout the app.
  */
@@ -64,3 +70,11 @@ const val PERMISSION_WRITE_EXTERNAL_STORAGE_CODE = 400
 const val PERMISSION_CALL_PHONE_CODE=500
 const val PERMISSION_FOREGROUND_SERVICES_CODE=600
 const val PERMISSION_WRITE_CONTACTS_CODE=700
+
+private const val INPUT_PROMPT_1 = SERVER_URI
+private const val INPUT_PROMPT_2 = "Enter Queue Name: "
+const val MESSAGE_SIZE = 10
+const val ADMIN = "admin"
+
+
+
