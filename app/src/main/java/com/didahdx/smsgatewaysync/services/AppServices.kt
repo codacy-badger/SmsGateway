@@ -35,7 +35,7 @@ class AppServices :Service(){
 
             startForeground(1,notification)
 
-        return START_STICKY
+        return START_REDELIVER_INTENT
     }
 
     override fun onBind(intent: Intent?): IBinder? {

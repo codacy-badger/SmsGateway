@@ -48,13 +48,12 @@ class MqttClientManager(
 
     fun connect() {
 
-        if (client.isConnected) {
-            return
-        }
-
         val mqttConnectOptions = MqttConnectOptions()
         mqttConnectOptions.isAutomaticReconnect = true
         mqttConnectOptions.isCleanSession = false
+        mqttConnectOptions.keepAliveInterval=10
+        mqttConnectOptions.maxReconnectDelay=3
+
         //mqttConnectOptions.setUserName(this.connectionParams.username)
         //mqttConnectOptions.setPassword(this.connectionParams.password.toCharArray())
         try {
@@ -76,7 +75,7 @@ class MqttClientManager(
                 override fun onFailure(asyncActionToken: IMqttToken, exception: Throwable) {
                     uiUpdater?.updateStatusViewWith("Error connecting to server", RED_COLOR)
 //                    uiUpdater?.publish(false)
-                    Log.w("Mqtt", "Failed to connect to: " + params.host + exception.toString())
+                    Log.w("Mqtt", "Error connecting to server:  ${params.host} $exception")
                 }
             })
         } catch (ex: MqttException) {
@@ -163,8 +162,8 @@ class MqttClientManager(
                 client.publish(
                     this.connectionParams.topic,
                     message.toByteArray(),
-                    0,
-                    false,
+                    2,
+                    true,
                     null,
                     object : IMqttActionListener {
                         override fun onSuccess(asyncActionToken: IMqttToken?) {

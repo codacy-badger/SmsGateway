@@ -23,6 +23,7 @@ import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.SmsDetailsActivity
 import com.didahdx.smsgatewaysync.adapters.MessageAdapter
 import com.didahdx.smsgatewaysync.manager.MqttClientManager
+import com.didahdx.smsgatewaysync.manager.RabbitmqClient
 import com.didahdx.smsgatewaysync.model.MessageInfo
 import com.didahdx.smsgatewaysync.model.MqttConnectionParam
 import com.didahdx.smsgatewaysync.services.AppServices
@@ -61,8 +62,14 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val connectionParam = MqttConnectionParam(user?.email!!, SERVER_URI, PUBLISH_TOPIC, "", "")
-        mMqttClientManager = context?.let { MqttClientManager(connectionParam, it, this) }
-        mMqttClientManager?.connect()
+        CoroutineScope(IO).launch {
+
+            val rabbitmqClient=RabbitmqClient()
+            rabbitmqClient.connection("Test sample")
+        }
+
+//        mMqttClientManager = context?.let { MqttClientManager(connectionParam, it, this) }
+//        mMqttClientManager?.connect()
 
     }
 

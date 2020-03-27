@@ -1,6 +1,8 @@
-package com.didahdx.smsgatewaysync.utilities
+package com.didahdx.smsgatewaysync.manager
 
 import android.util.Log
+import com.rabbitmq.client.Channel
+import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
 import java.io.IOException
 import java.util.concurrent.LinkedBlockingDeque
@@ -13,30 +15,39 @@ class RabbitmqClient {
 
     fun connection(message: String) {
         val connectionFactory = ConnectionFactory()
-
+        var connection: Connection?=null
+        var channel:Channel?=null
         try {
 
-            connectionFactory.host = "192.168.43.182"
-            connectionFactory.username="guest"
-            connectionFactory.port=15672
-            connectionFactory.password="guest"
-            val connection = connectionFactory.newConnection()
+            connectionFactory.host = "128.199.174.204"
+            connectionFactory.username="didahdx"
+//            connectionFactory.port=15672
+            connectionFactory.password="test"
+//            connectionFactory.connectionTimeout=6000
 
-            val channel = connection.createChannel()
-            channel.queueDeclare("android-mq", false, false,
-                false, null)
-            channel.basicPublish("","android-mq",false,
+           if(connection== null) {
+
+               connection = connectionFactory.newConnection()
+                channel = connection?.createChannel()
+               channel?.queueDeclare("android-mq", false, false,
+                   false, null)
+           }
+
+
+            channel?.basicPublish("","android-mq",false,
                 null,message.toByteArray())
 
             Log.d("RabbitMQ","message sent!!!")
 
         } catch (e: IOException) {
             e.printStackTrace()
-            Log.d("RabbitMQ","$e")
+            Log.d("RabbitMQ","$e  ${e.localizedMessage}")
         } catch (e: TimeoutException) {
+            Log.d("RabbitMQ","$e  ${e.localizedMessage}")
             e.printStackTrace()
             Log.d("RabbitMQ","$e")
         }catch (e:Exception){
+            Log.d("RabbitMQ","$e  ${e.localizedMessage}")
             Log.d("RabbitMQ","$e")
         }
     }
