@@ -12,7 +12,7 @@ android {
     buildToolsVersion "29.0.2"
     defaultConfig {
         applicationId "com.didahdx.smsgatewaysync"
-        minSdkVersion 19
+        minSdkVersion 24
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
@@ -62,11 +62,11 @@ dependencies {
 
 // Recommended: Add the Firebase SDK for Google Analytics.
     implementation 'com.google.firebase:firebase-analytics:17.2.3'
-    implementation 'com.google.firebase:firebase-auth:19.2.0'
+    implementation 'com.google.firebase:firebase-auth:19.3.0'
     implementation 'com.google.firebase:firebase-core:17.2.3'
     implementation 'com.google.firebase:firebase-database:19.2.1'
     // Add the Firebase SDK for Crashlytics.
-    implementation 'com.google.firebase:firebase-crashlytics:17.0.0-beta01'
+    implementation 'com.google.firebase:firebase-crashlytics:17.0.0-beta02'
 
     implementation "androidx.cardview:cardview:1.0.0"
     implementation 'com.android.support:multidex:1.0.3'
@@ -83,26 +83,10 @@ dependencies {
     // Kotlin preference settings
     implementation "androidx.preference:preference-ktx:1.1.0"
 
-    //Active mqtt
-    implementation 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.2'
-    implementation 'org.eclipse.paho:org.eclipse.paho.android.service:1.1.1'
-
     //rabbitmq client
     implementation 'com.rabbitmq:amqp-client:5.8.0'
 
-    //activemq apache broker and client lib
-    // https://mvnrepository.com/artifact/org.apache.activemq/activemq-core
-//    implementation 'org.apache.activemq:activemq-core:5.7.0'
-
-    //activemq latest client lib
-   // https://mvnrepository.com/artifact/org.apache.activemq/activemq-client
-//   implementation 'org.apache.activemq:activemq-client:5.15.12'
-
-    //activemq
-    // https://mvnrepository.com/artifact/org.apache.activemq/activemq-broker
-//    implementation 'org.apache.activemq:activemq-broker:5.15.12'
-
     //room db library
-    implementation "androidx.room:room-runtime:2.2.4"
-    annotationProcessor "androidx.room:room-compiler:2.2.4"
+    implementation "androidx.room:room-runtime:2.2.5"
+    annotationProcessor "androidx.room:room-compiler:2.2.5"
 }

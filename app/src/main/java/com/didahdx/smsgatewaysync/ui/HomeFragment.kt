@@ -22,7 +22,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.SmsDetailsActivity
 import com.didahdx.smsgatewaysync.adapters.MessageAdapter
-import com.didahdx.smsgatewaysync.manager.MqttClientManager
 import com.didahdx.smsgatewaysync.manager.RabbitmqClient
 import com.didahdx.smsgatewaysync.model.MessageInfo
 import com.didahdx.smsgatewaysync.model.MqttConnectionParam
@@ -56,15 +55,15 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
     private lateinit var sharedPreferences: SharedPreferences
     val TAG = HomeFragment::class.java.simpleName
 
-    var mMqttClientManager: MqttClientManager? = null
+    //    var mMqttClientManager: MqttClientManager? = null
     val user = FirebaseAuth.getInstance().currentUser
-
+    var UiUpdaterInterface: UiUpdaterInterface? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        UiUpdaterInterface = this
         val connectionParam = MqttConnectionParam(user?.email!!, SERVER_URI, PUBLISH_TOPIC, "", "")
         CoroutineScope(IO).launch {
-
-            val rabbitmqClient=RabbitmqClient()
+            val rabbitmqClient = RabbitmqClient(UiUpdaterInterface)
             rabbitmqClient.connection("Test sample")
         }
 
@@ -256,30 +255,73 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
 
                 if (cursor.getString(nameId) == "MPESA") {
 
-                var mpesaId: String =
-                    cursor.getString(messageId).split("\\s".toRegex()).first().trim()
-                if (!MPESA_ID_PATTERN.toRegex().matches(mpesaId)) {
-                    mpesaId = NOT_AVAILABLE
-                }
-
-                var smsFilter = SmsFilter(cursor.getString(messageId))
-
-
-                when (mpesaType) {
-                    ALL -> {
-                        messageArrayList.add(
-                            MessageInfo(
-                                cursor.getString(messageId),
-                                sdf.format(Date(dateString.toLong())).toString(),
-                                cursor.getString(nameId),
-                                mpesaId, "", smsFilter.amount, "", smsFilter.name
-                            )
-                        )
-                        UpdateCounter(messageCount)
-                        messageCount++
+                    var mpesaId: String =
+                        cursor.getString(messageId).split("\\s".toRegex()).first().trim()
+                    if (!MPESA_ID_PATTERN.toRegex().matches(mpesaId)) {
+                        mpesaId = NOT_AVAILABLE
                     }
-                    PAY_BILL -> {
-                        if (smsFilter.mpesaType == PAY_BILL) {
+
+                    var smsFilter = SmsFilter(cursor.getString(messageId))
+
+
+                    when (mpesaType) {
+                        ALL -> {
+                            messageArrayList.add(
+                                MessageInfo(
+                                    cursor.getString(messageId),
+                                    sdf.format(Date(dateString.toLong())).toString(),
+                                    cursor.getString(nameId),
+                                    mpesaId, "", smsFilter.amount, "", smsFilter.name
+                                )
+                            )
+                            UpdateCounter(messageCount)
+                            messageCount++
+                        }
+                        PAY_BILL -> {
+                            if (smsFilter.mpesaType == PAY_BILL) {
+                                messageArrayList.add(
+                                    MessageInfo(
+                                        cursor.getString(messageId),
+                                        sdf.format(Date(dateString.toLong())).toString(),
+                                        cursor.getString(nameId),
+                                        mpesaId, "", smsFilter.amount, "", smsFilter.name
+                                    )
+                                )
+                                UpdateCounter(messageCount)
+                                messageCount++
+                            }
+                        }
+                        DIRECT_MPESA -> {
+                            if (smsFilter.mpesaType == DIRECT_MPESA) {
+                                messageArrayList.add(
+                                    MessageInfo(
+                                        cursor.getString(messageId),
+                                        sdf.format(Date(dateString.toLong())).toString(),
+                                        cursor.getString(nameId),
+                                        mpesaId, "", smsFilter.amount, "", smsFilter.name
+                                    )
+                                )
+                                UpdateCounter(messageCount)
+                                messageCount++
+                            }
+                        }
+
+                        BUY_GOODS_AND_SERVICES -> {
+                            if (smsFilter.mpesaType == BUY_GOODS_AND_SERVICES) {
+                                messageArrayList.add(
+                                    MessageInfo(
+                                        cursor.getString(messageId),
+                                        sdf.format(Date(dateString.toLong())).toString(),
+                                        cursor.getString(nameId),
+                                        mpesaId, "", smsFilter.amount, "", smsFilter.name
+                                    )
+                                )
+                                UpdateCounter(messageCount)
+                                messageCount++
+                            }
+                        }
+
+                        else -> {
                             messageArrayList.add(
                                 MessageInfo(
                                     cursor.getString(messageId),
@@ -292,49 +334,6 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
                             messageCount++
                         }
                     }
-                    DIRECT_MPESA -> {
-                        if (smsFilter.mpesaType == DIRECT_MPESA) {
-                            messageArrayList.add(
-                                MessageInfo(
-                                    cursor.getString(messageId),
-                                    sdf.format(Date(dateString.toLong())).toString(),
-                                    cursor.getString(nameId),
-                                    mpesaId, "", smsFilter.amount, "", smsFilter.name
-                                )
-                            )
-                            UpdateCounter(messageCount)
-                            messageCount++
-                        }
-                    }
-
-                    BUY_GOODS_AND_SERVICES -> {
-                        if (smsFilter.mpesaType == BUY_GOODS_AND_SERVICES) {
-                            messageArrayList.add(
-                                MessageInfo(
-                                    cursor.getString(messageId),
-                                    sdf.format(Date(dateString.toLong())).toString(),
-                                    cursor.getString(nameId),
-                                    mpesaId, "", smsFilter.amount, "", smsFilter.name
-                                )
-                            )
-                            UpdateCounter(messageCount)
-                            messageCount++
-                        }
-                    }
-
-                    else -> {
-                        messageArrayList.add(
-                            MessageInfo(
-                                cursor.getString(messageId),
-                                sdf.format(Date(dateString.toLong())).toString(),
-                                cursor.getString(nameId),
-                                mpesaId, "", smsFilter.amount, "", smsFilter.name
-                            )
-                        )
-                        UpdateCounter(messageCount)
-                        messageCount++
-                    }
-                }
                 }
             } while (cursor.moveToNext())
 
@@ -414,28 +413,35 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
     }
 
     override fun toasterMessage(message: String) {
-        context?.toast(message)
+        Log.d("Rabbit","called $message")
+        Log.d("Rabbit","thread name ${Thread.currentThread().name}")
+        CoroutineScope(Main).launch {
+            context?.toast(message)
+            Log.d("Rabbit","thread name ${Thread.currentThread().name}")
+        }
     }
 
     override fun updateStatusViewWith(status: String, color: String) {
-        text_view_status?.text = status
-        startServices(status)
-        when (color) {
-            RED_COLOR -> {
-                text_view_status?.backgroundRed()
-            }
+        CoroutineScope(Main).launch {
+            text_view_status?.text = status
+            startServices(status)
+            when (color) {
+                RED_COLOR -> {
+                    text_view_status?.backgroundRed()
+                }
 
-            GREEN_COLOR -> {
-                text_view_status?.backgroundGreen()
+                GREEN_COLOR -> {
+                    text_view_status?.backgroundGreen()
+                }
+                else -> {
+                }
             }
         }
-
     }
 
     override fun publish(isReadyToPublish: Boolean) {
-        if (isReadyToPublish) {
-            mMqttClientManager?.publish("Sample message")
-        }
+            if (isReadyToPublish) {
+            }
     }
 
 }
