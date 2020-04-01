@@ -12,7 +12,6 @@ const val SENT = "SMS_SENT"
 const val DELIVERED = "SMS_DELIVERED"
 const val RED_COLOR="RED_COLOR"
 const val GREEN_COLOR="GREEN_COLOR"
-//const val KSH_REGEX="^\\Ksh\\d{1,3}\\.[0-9]{2}\$|^\\\$(\\d{1,3},)+\\d{3}\\.[0-9]{2}\$"
 const val NOT_AVAILABLE="N/A"
 
 const val APP_SERVICE_KEY = "APP_SERVICE_KEY"
@@ -20,13 +19,16 @@ const val APP_SERVICE_STATE = "APP_SERVICE_STATE"
 
 const val INPUT_EXTRAS = "inputExtras"
 const val SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED"
-const val CHANNEL_ID="SmsServiceChannel"
 const val LOG_FILE_NAME="smsLog.txt"
-const val APP_NAME="Sms Gateway Sync"
+const val APP_NAME="Sms Router"
+const val CHANNEL_ID="sms_services_notification"
+const val CHANNEL_NAME="$APP_NAME status"
 
-const val SERVER_URI = "tcp://128.199.174.204:1883"
-const val PUBLISH_TOPIC = "outbox"
-const val SUBSCRIBE_TOPIC = "inbox"
+/**
+ *  Queues
+ * **/
+const val NOTIFICATION="notification"
+const val PUBLISH_FROM_CLIENT="current"
 
 /**
  * MPESA TYPES
@@ -35,11 +37,6 @@ const val PAY_BILL="Pay Bill"
 const val BUY_GOODS_AND_SERVICES="Buy Goods and Services"
 const val DIRECT_MPESA="Direct Mpesa"
 const val ALL="All"
-const val WITHDRAW="WITHDRAW"
-const val SEND_MONEY="SEND_MONEY"
-const val DEPOSIT="DEPOSIT"
-const val RECEIVED_PAYMENT="RECEIVED_PAYMENT"
-
 
 /**
  * PREFERENCES String

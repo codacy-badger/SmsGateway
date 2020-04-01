@@ -11,7 +11,7 @@ import com.mazenrashed.printooth.data.printer.DefaultPrinter
 import com.mazenrashed.printooth.utilities.Printing
 import com.mazenrashed.printooth.utilities.PrintingCallback
 
-class bluetoothPrinter : PrintingCallback {
+class BluetoothPrinter : PrintingCallback {
     var context:Context?=null
     var printing: Printing? = null
 

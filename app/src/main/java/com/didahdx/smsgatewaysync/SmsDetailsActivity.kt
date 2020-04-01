@@ -7,7 +7,6 @@ import android.content.*
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
-import android.provider.ContactsContract
 import android.telephony.SmsManager
 import android.view.Menu
 import android.view.MenuItem
@@ -212,7 +211,7 @@ class SmsDetailsActivity : AppCompatActivity(), PrintingCallback {
 
     private fun print() {
         if (smsBody != null) {
-            val bluetoothPrinter = bluetoothPrinter()
+            val bluetoothPrinter = BluetoothPrinter()
             val smsprint = SmsFilter().checkSmsType(smsBody!!)
 
             if (!Printooth.hasPairedPrinter()) {

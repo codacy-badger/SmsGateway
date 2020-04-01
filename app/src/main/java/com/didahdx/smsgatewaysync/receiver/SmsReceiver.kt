@@ -1,27 +1,14 @@
 package com.didahdx.smsgatewaysync.receiver
 
-import android.app.Activity
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.provider.Settings.Global.getString
 import android.telephony.SmsMessage
 import android.widget.Toast
-import androidx.core.app.ActivityCompat.startActivityForResult
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.utilities.*
 import com.mazenrashed.printooth.Printooth
-import com.mazenrashed.printooth.data.printable.Printable
-import com.mazenrashed.printooth.data.printable.RawPrintable
-import com.mazenrashed.printooth.data.printable.TextPrintable
-import com.mazenrashed.printooth.data.printer.DefaultPrinter
-import com.mazenrashed.printooth.ui.ScanningActivity
-
-import java.text.SimpleDateFormat
-import java.util.*
-
 
 
 class SmsReceiver : BroadcastReceiver() {
@@ -56,7 +43,7 @@ class SmsReceiver : BroadcastReceiver() {
                     newIntent.putExtra("messageText", messageText)
 
                     Toast.makeText(context,"display $sms",Toast.LENGTH_LONG).show()
-                    val printer= bluetoothPrinter()
+                    val printer= BluetoothPrinter()
                     val smsFilter=SmsFilter()
                     if (Printooth.hasPairedPrinter()){
                         val printMessage=smsFilter.checkSmsType(messageText)

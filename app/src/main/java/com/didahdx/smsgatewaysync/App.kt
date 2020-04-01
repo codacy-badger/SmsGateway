@@ -9,6 +9,7 @@ import androidx.multidex.MultiDexApplication
 import com.didahdx.smsgatewaysync.receiver.BatteryReceiver
 import com.didahdx.smsgatewaysync.receiver.ConnectionReceiver
 import com.didahdx.smsgatewaysync.utilities.CHANNEL_ID
+import com.didahdx.smsgatewaysync.utilities.CHANNEL_NAME
 import com.mazenrashed.printooth.Printooth
 
 class App : MultiDexApplication() {
@@ -41,7 +42,7 @@ class App : MultiDexApplication() {
     private fun createNotificationChannel() {
         if(Build.VERSION.SDK_INT>Build.VERSION_CODES.O){
             var notificationChannel=NotificationChannel(CHANNEL_ID,
-                "Sms service channel",
+                CHANNEL_NAME,
                 NotificationManager.IMPORTANCE_DEFAULT)
 
             val manager : NotificationManager?= getSystemService(NotificationManager::class.java)

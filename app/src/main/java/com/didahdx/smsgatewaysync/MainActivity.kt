@@ -4,6 +4,7 @@ package com.didahdx.smsgatewaysync
 import android.Manifest
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.os.Build
@@ -23,10 +24,7 @@ import com.didahdx.smsgatewaysync.receiver.BatteryReceiver
 import com.didahdx.smsgatewaysync.receiver.ConnectionReceiver
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.ui.*
-import com.didahdx.smsgatewaysync.utilities.AppLog
-import com.didahdx.smsgatewaysync.utilities.INPUT_EXTRAS
-import com.didahdx.smsgatewaysync.utilities.PERMISSION_FOREGROUND_SERVICES_CODE
-import com.didahdx.smsgatewaysync.utilities.toast
+import com.didahdx.smsgatewaysync.utilities.*
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.auth.FirebaseAuth
@@ -62,18 +60,18 @@ class MainActivity : AppCompatActivity(),
     lateinit var phoneStatusFragment: PhoneStatusFragment
     private var mFirebaseAnalytics: FirebaseAnalytics? = null
     var isReadyToPublish: Boolean = false
-    var mIMainActivity:IMainActivity?=null
+    var mIMainActivity: IMainActivity? = null
+    private lateinit var sharedPreferences: SharedPreferences
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         AppCenter.start(
             application, "e55e44cf-eac5-49fc-a785-d6956b386176",
             Analytics::class.java, Crashes::class.java
         )
-
 
 
         // Obtain the FirebaseAnalytics instance.
@@ -223,7 +221,7 @@ class MainActivity : AppCompatActivity(),
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
-        when(requestCode){
+        when (requestCode) {
             PERMISSION_FOREGROUND_SERVICES_CODE -> {
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
@@ -246,9 +244,12 @@ class MainActivity : AppCompatActivity(),
 
 
     private fun startServices(input: String) {
-        val serviceIntent = Intent(this, AppServices::class.java)
-        serviceIntent.putExtra(INPUT_EXTRAS, input)
-        ContextCompat.startForegroundService(this, serviceIntent)
+        val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
+        if (isServiceRunning) {
+            val serviceIntent = Intent(this, AppServices::class.java)
+            serviceIntent.putExtra(INPUT_EXTRAS, input)
+            ContextCompat.startForegroundService(this, serviceIntent)
+        }
     }
 
     private fun stopServices() {

@@ -2,61 +2,51 @@ package com.didahdx.smsgatewaysync.manager
 
 import android.util.Log
 import com.didahdx.smsgatewaysync.ui.UiUpdaterInterface
-import com.didahdx.smsgatewaysync.utilities.APP_NAME
-import com.didahdx.smsgatewaysync.utilities.GREEN_COLOR
-import com.didahdx.smsgatewaysync.utilities.RED_COLOR
-import com.rabbitmq.client.Channel
-import com.rabbitmq.client.Connection
-import com.rabbitmq.client.ConnectionFactory
-import com.rabbitmq.client.Delivery
+import com.didahdx.smsgatewaysync.utilities.*
+import com.rabbitmq.client.*
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.TimeoutException
 
 
-class RabbitmqClient(val uiUpdater: UiUpdaterInterface?) {
+class RabbitmqClient(val uiUpdater: UiUpdaterInterface?, private val email: String) {
     private val connectionFactory = ConnectionFactory()
+
+    private val queue = LinkedBlockingDeque<String>()
     var connection: Connection? = null
     var channel: Channel? = null
-    private val queue = LinkedBlockingDeque<String>()
 
-     fun connection(message: String) {
+
+    fun connection() {
 
         try {
             connectionFactory.host = "128.199.174.204"
             connectionFactory.username = "didahdx"
             connectionFactory.password = "test"
 
-            if (connection == null) {
+
+            if (connection == null && channel == null) {
 
                 connection = connectionFactory.newConnection()
                 channel = connection?.createChannel()
+
                 channel?.queueDeclare(
-                    "android-mq", false, false,
+                    email, false, false,
+                    false, null)
+
+                channel?.queueDeclare(
+                    NOTIFICATION, false, false,
+                    false, null)
+
+                channel?.queueDeclare(
+                    PUBLISH_FROM_CLIENT, false, false,
                     false, null
                 )
+                consumeMessages()
+                uiUpdater?.updateStatusViewWith("$APP_NAME is running", GREEN_COLOR)
+                uiUpdater?.isConnected(true)
             }
-
-
-
-            channel?.basicPublish(
-                "", "android-mq", false,
-                null, message.toByteArray()
-            )
-
-            channel?.basicConsume(
-                "android-mq",
-                true,
-                { consumerTag: String?, delivery: Delivery ->
-                    val m = String(delivery.body, StandardCharsets.UTF_8)
-                    println("I have received a message  $m")
-
-                    uiUpdater?.toasterMessage(m)
-                }
-            ) { consumerTag: String? -> }
-
-            Log.d("RabbitMQ", "message sent!!!")
 
         } catch (e: IOException) {
             uiUpdater?.updateStatusViewWith("Error connecting to server", RED_COLOR)
@@ -74,13 +64,56 @@ class RabbitmqClient(val uiUpdater: UiUpdaterInterface?) {
         }
     }
 
-     fun publishMessage(message: String) {
-        try {
-            queue.putLast(message)
-            Log.d("RabbitMQClient", "[q]  $message")
-        } catch (e: InterruptedException) {
-            uiUpdater?.updateStatusViewWith("Error connecting to server", RED_COLOR)
-            e.printStackTrace()
-        }
+    fun publishMessage(message: String) {
+
+        val props = AMQP.BasicProperties.Builder()
+            .correlationId(email)
+            .replyTo(email)
+            .deliveryMode(2)
+            .build()
+
+
+        channel?.basicPublish(
+            "", PUBLISH_FROM_CLIENT, false,
+            props, message.toByteArray()
+        )
+
+        Log.d("RabbitMQ", "message sent!!!")
     }
+
+
+    fun  consumeMessages() {
+        channel?.basicConsume(
+            email,
+            true,
+            { consumerTag: String?, delivery: Delivery ->
+                val m = String(delivery.body, StandardCharsets.UTF_8)
+                println("I have received a message  $m")
+
+                uiUpdater?.toasterMessage(m)
+            }
+        ) { consumerTag: String? -> }
+
+        consumeNotification()
+    }
+
+    private fun consumeNotification() {
+        channel?.basicConsume(
+            NOTIFICATION,
+            true,
+            { consumerTag: String?, delivery: Delivery ->
+                val m = String(delivery.body, StandardCharsets.UTF_8)
+                println("I have received a message  $m")
+
+                uiUpdater?.notificationMessage(m)
+            }
+        ) { consumerTag: String? -> }
+    }
+
+     fun disconnect(){
+        channel?.close()
+        connection?.close()
+        uiUpdater?.isConnected(false)
+    }
+
 }

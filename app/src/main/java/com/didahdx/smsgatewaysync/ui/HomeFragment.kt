@@ -24,16 +24,18 @@ import com.didahdx.smsgatewaysync.SmsDetailsActivity
 import com.didahdx.smsgatewaysync.adapters.MessageAdapter
 import com.didahdx.smsgatewaysync.manager.RabbitmqClient
 import com.didahdx.smsgatewaysync.model.MessageInfo
-import com.didahdx.smsgatewaysync.model.MqttConnectionParam
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.utilities.*
 import com.didahdx.smsgatewaysync.viewmodels.HomeViewModel
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.fragment_home.*
 import kotlinx.android.synthetic.main.fragment_home.view.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
@@ -47,6 +49,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
     private var messageList: ArrayList<MessageInfo> = ArrayList<MessageInfo>()
 
     val filter = IntentFilter(SMS_RECEIVED)
+    var isConnected = false
 
     val appLog = AppLog()
     lateinit var mHomeViewModel: HomeViewModel
@@ -54,6 +57,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
     var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT)
     private lateinit var sharedPreferences: SharedPreferences
     val TAG = HomeFragment::class.java.simpleName
+    lateinit var rabbitmqClient: RabbitmqClient
 
     //    var mMqttClientManager: MqttClientManager? = null
     val user = FirebaseAuth.getInstance().currentUser
@@ -61,14 +65,16 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         UiUpdaterInterface = this
-        val connectionParam = MqttConnectionParam(user?.email!!, SERVER_URI, PUBLISH_TOPIC, "", "")
         CoroutineScope(IO).launch {
-            val rabbitmqClient = RabbitmqClient(UiUpdaterInterface)
-            rabbitmqClient.connection("Test sample")
-        }
+            rabbitmqClient = RabbitmqClient(UiUpdaterInterface, user?.email!!)
+            sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+            val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
+            if (!isConnected && isServiceRunning) {
+                rabbitmqClient.connection()
+            }
 
-//        mMqttClientManager = context?.let { MqttClientManager(connectionParam, it, this) }
-//        mMqttClientManager?.connect()
+
+        }
 
     }
 
@@ -79,17 +85,23 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
         val view = inflater.inflate(R.layout.fragment_home, container, false)
         view.recycler_view_message_list.layoutManager = LinearLayoutManager(activity)
         mHomeViewModel = ViewModelProviders.of(this).get(HomeViewModel::class.java)
-        startServices()
 
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
 
         //registering the broadcast receiver for network
         context?.registerReceiver(
             mConnectionReceiver,
             IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
         )
+        val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
 
-        view.text_view_status.text = "$APP_NAME is running"
+        if (isServiceRunning) {
+            startServices()
+            view.text_view_status?.backgroundGreen()
+            view.text_view_status.text = "$APP_NAME is running"
+        } else {
+            view.text_view_status.text = "$APP_NAME is stopped"
+            view.text_view_status?.backgroundRed()
+        }
         view.refresh_layout_home.setOnRefreshListener { backgroundCoroutineCall() }
 
         backgroundCoroutineCall()
@@ -100,8 +112,9 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
     //appServices for showing notification bar
     private fun startServices() {
         val serviceIntent = Intent(activity, AppServices::class.java)
-        serviceIntent.putExtra(INPUT_EXTRAS, "SmsGateway is running")
+        serviceIntent.putExtra(INPUT_EXTRAS, "$APP_NAME is running")
         ContextCompat.startForegroundService(activity as Activity, serviceIntent)
+
     }
 
     private fun stopServices() {
@@ -113,25 +126,32 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
     //broadcast sms receiver
     private val mSmsReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent?) {
-
+            val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
             if (intent != null && intent.extras != null) {
                 val phoneNumber = intent.extras!!.getString("phoneNumber")
                 val dateString = intent.extras!!.getString("dateString")
                 val messageText = intent.extras!!.getString("messageText")
 
+                context?.toast("received message")
+                if (isServiceRunning) {
+                    if (messageText != null) {
+                        rabbitmqClient?.publishMessage(messageText)
+                        context?.toast(messageText)
+                    }
+                    if (phoneNumber != null && phoneNumber == "MPESA" && dateString != null && messageText != null) {
 
-                if (phoneNumber != null && phoneNumber.equals("MPESA") && dateString != null
-                    && messageText != null
-                ) {
+                        val mpesaId = messageText.split("\\s".toRegex()).first()
 
-                    val mpesaId = messageText.split("\\s".toRegex()).first()
-                    messageList.add(
-                        MessageInfo(
-                            messageText, dateString, phoneNumber, mpesaId,
-                            "", "", "", ""
+
+
+                        messageList.add(
+                            MessageInfo(
+                                messageText, dateString, phoneNumber, mpesaId,
+                                "", "", "", ""
+                            )
                         )
-                    )
-                    setUpAdapter()
+                        setUpAdapter()
+                    }
                 }
             }
         }
@@ -397,12 +417,16 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
 
 
     private fun startServices(input: String) {
-        try {
-            val serviceIntent = Intent(context, AppServices::class.java)
-            serviceIntent.putExtra(INPUT_EXTRAS, input)
-            context?.let { ContextCompat.startForegroundService(it, serviceIntent) }
-        } catch (e: Exception) {
-            e.printStackTrace()
+        val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
+
+        if (isServiceRunning) {
+            try {
+                val serviceIntent = Intent(context, AppServices::class.java)
+                serviceIntent.putExtra(INPUT_EXTRAS, input)
+                context?.let { ContextCompat.startForegroundService(it, serviceIntent) }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
@@ -410,14 +434,30 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
     override fun onDestroy() {
         super.onDestroy()
         activity?.unregisterReceiver(mConnectionReceiver)
+        try {
+//            rabbitmqClient.disconnect()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+    }
+
+    override fun isConnected(value: Boolean) {
+        isConnected = value
+    }
+
+    override fun notificationMessage(message: String) {
+        CoroutineScope(Main).launch {
+
+        }
     }
 
     override fun toasterMessage(message: String) {
-        Log.d("Rabbit","called $message")
-        Log.d("Rabbit","thread name ${Thread.currentThread().name}")
+        Log.d("Rabbit", "called $message")
+        Log.d("Rabbit", "thread name ${Thread.currentThread().name}")
         CoroutineScope(Main).launch {
             context?.toast(message)
-            Log.d("Rabbit","thread name ${Thread.currentThread().name}")
+            Log.d("Rabbit", "thread name ${Thread.currentThread().name}")
         }
     }
 
@@ -440,8 +480,9 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
     }
 
     override fun publish(isReadyToPublish: Boolean) {
-            if (isReadyToPublish) {
-            }
+        if (isReadyToPublish) {
+        }
     }
+
 
 }
