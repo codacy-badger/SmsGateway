@@ -157,6 +157,7 @@ class PhoneStatusFragment : Fragment() {
             val voltage= BatteryReceiver.intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE,0).toDouble()/1000
             stringBuilder.append("\nVoltage \n $voltage V\n")
 
+            context?.toast(stringBuilder.toString())
 
             text_view_phone_status.text= stringBuilder.toString()
         }

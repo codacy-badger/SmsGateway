@@ -63,7 +63,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
     var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT)
     private lateinit var sharedPreferences: SharedPreferences
     val TAG = HomeFragment::class.java.simpleName
-//    lateinit var rabbitmqClient: RabbitmqClient
+    lateinit var rabbitmqClient: RabbitmqClient
 
     val user = FirebaseAuth.getInstance().currentUser
     var UiUpdaterInterface: UiUpdaterInterface? = null
@@ -71,14 +71,12 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
         super.onCreate(savedInstanceState)
         UiUpdaterInterface = this
         CoroutineScope(IO).launch {
-//            rabbitmqClient = RabbitmqClient(UiUpdaterInterface, user?.email!!)
+            rabbitmqClient = RabbitmqClient(UiUpdaterInterface, user?.email!!)
             sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
             val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
             if (!isConnected && isServiceRunning) {
-//                rabbitmqClient.connection()
+                rabbitmqClient.connection()
             }
-
-
         }
 
     }
@@ -97,6 +95,9 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
             mConnectionReceiver,
             IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
         )
+
+        context?.registerReceiver(mSmsReceiver, IntentFilter(SMS_RECEIVED))
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
         val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
 
         if (isServiceRunning) {
@@ -136,7 +137,6 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
                 if (SMS_RECEIVED == intent.action) {
 
                     val extras = intent.extras
-                    context.toast("SMS  reecalled")
                     if (extras != null) {
                         val sms = extras.get("pdus") as Array<*>
 
@@ -152,8 +152,10 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
                             val messageText = smsMessage.messageBody.toString()
                             val sms = smsMessage.displayMessageBody
 
-//                            rabbitmqClient.publishMessage(sms)
-                            Toast.makeText(context, "display $sms", Toast.LENGTH_LONG).show()
+                            CoroutineScope(IO).launch {
+                                rabbitmqClient.publishMessage(sms)
+                            }
+
                             val printer = BluetoothPrinter()
                             val smsFilter = SmsFilter()
                             if (Printooth.hasPairedPrinter()) {
@@ -194,7 +196,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
 
 
     override fun onDestroyView() {
-        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(mSmsReceiver)
+//        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(mSmsReceiver)
         super.onDestroyView()
     }
 
@@ -231,17 +233,10 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
             )
             == PackageManager.PERMISSION_GRANTED
         ) {
-            LocalBroadcastManager
-                .getInstance(requireContext())
-                .registerReceiver(mSmsReceiver, IntentFilter(SMS_RECEIVED))
+//            LocalBroadcastManager.getInstance(requireContext()).registerReceiver(mSmsReceiver, IntentFilter(SMS_RECEIVED))
+
         }
 
-        LocalBroadcastManager
-            .getInstance(requireContext())
-            .registerReceiver(
-                mConnectionReceiver,
-                IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
-            )
     }
 
     private suspend fun passMessagesToMain(list: ArrayList<MessageInfo>) {
@@ -548,9 +543,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
                     null,
                     parts,
                     arraySendInt,
-                    arrayDelivery
-                )
-
+                    arrayDelivery)
             }
         }
     }

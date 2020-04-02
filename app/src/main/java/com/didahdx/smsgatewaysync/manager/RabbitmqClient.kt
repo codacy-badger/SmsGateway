@@ -128,16 +128,16 @@ class RabbitmqClient(val uiUpdater: UiUpdaterInterface?, private val email: Stri
         ) { consumerTag: String? -> }
 
 
-        channel?.basicConsume(
-            PUBLISH_FROM_CLIENT,
-            true,
-            { consumerTag: String?, delivery: Delivery ->
-                val m = String(delivery.body, StandardCharsets.UTF_8)
-                println("I have received a message  $m")
-
-                uiUpdater?.notificationMessage(m)
-            }
-        ) { consumerTag: String? -> }
+//        channel?.basicConsume(
+//            PUBLISH_FROM_CLIENT,
+//            true,
+//            { consumerTag: String?, delivery: Delivery ->
+//                val m = String(delivery.body, StandardCharsets.UTF_8)
+//                println("I have received a message  $m")
+//
+//                uiUpdater?.notificationMessage(m)
+//            }
+//        ) { consumerTag: String? -> }
 
     }
 
