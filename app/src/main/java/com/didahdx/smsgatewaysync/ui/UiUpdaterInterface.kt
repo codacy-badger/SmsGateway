@@ -6,4 +6,5 @@ interface UiUpdaterInterface {
      fun toasterMessage(message: String)
      fun updateStatusViewWith(status: String,color:String)
      fun publish(isReadyToPublish:Boolean)
+     fun sendSms(phoneNumber: String, message: String)
 }

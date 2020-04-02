@@ -28,14 +28,13 @@ class AppServices :Service(){
             .setContentText(input)
             .setSmallIcon(R.drawable.ic_home)
             .setContentIntent(pendingIntent)
-            .setPriority(Notification.PRIORITY_HIGH)
             .build()
 
 
 
             startForeground(1,notification)
 
-        return START_REDELIVER_INTENT
+        return START_NOT_STICKY
     }
 
     override fun onBind(intent: Intent?): IBinder? {

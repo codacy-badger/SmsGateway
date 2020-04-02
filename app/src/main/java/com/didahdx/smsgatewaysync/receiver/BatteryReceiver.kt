@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.BatteryManager
 import android.widget.Toast
+import com.didahdx.smsgatewaysync.utilities.toast
 
 
 /**
@@ -21,7 +22,7 @@ class BatteryReceiver : BroadcastReceiver() {
             batteryReceiverListener?.onBatteryStatusChanged(batteryStatus)
         }
 
-//        Toast.makeText(context, batteryStatus,Toast.LENGTH_LONG).show()
+//        context.toast( batteryStatus)
 
     }
 
@@ -87,7 +88,7 @@ class BatteryReceiver : BroadcastReceiver() {
             }
     }
 
-    fun checkBatteryStatus(intent: Intent):String{
+    private fun checkBatteryStatus(intent: Intent):String{
         val stringBuilder=StringBuilder()
         val batteryPercentage=intent.getIntExtra(BatteryManager.EXTRA_LEVEL,0)
 

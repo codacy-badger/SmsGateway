@@ -23,6 +23,7 @@ import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.receiver.BatteryReceiver
 import com.didahdx.smsgatewaysync.utilities.PERMISSION_CALL_PHONE_CODE
 import com.didahdx.smsgatewaysync.utilities.toast
+import kotlinx.android.synthetic.main.fragment_phone_status.*
 
 
 /**
@@ -36,10 +37,10 @@ class PhoneStatusFragment : Fragment() {
     ): View? {
         // Inflate the layout for this fragment
 
-            context?.registerReceiver(mBatteryReceiver,IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             checkBalance()
         }
+        context?.registerReceiver(mBatteryReceiver,IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         return inflater.inflate(R.layout.fragment_phone_status, container, false)
     }
 
@@ -101,9 +102,11 @@ class PhoneStatusFragment : Fragment() {
     }
 
 
+
+
     //broadcast sms receiver
     private val mBatteryReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent?) {
+        override fun onReceive(context: Context, intent: Intent) {
             val stringBuilder=StringBuilder()
             val batteryPercentage=
                 BatteryReceiver.intent.getIntExtra(BatteryManager.EXTRA_LEVEL,0)
@@ -155,7 +158,7 @@ class PhoneStatusFragment : Fragment() {
             stringBuilder.append("\nVoltage \n $voltage V\n")
 
 
-//            text_view_phone_status.text= stringBuilder.toString()
+            text_view_phone_status.text= stringBuilder.toString()
         }
     }
 

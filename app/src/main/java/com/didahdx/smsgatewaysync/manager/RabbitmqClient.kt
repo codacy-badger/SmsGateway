@@ -4,6 +4,7 @@ import android.util.Log
 import com.didahdx.smsgatewaysync.ui.UiUpdaterInterface
 import com.didahdx.smsgatewaysync.utilities.*
 import com.rabbitmq.client.*
+import org.json.JSONObject
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.LinkedBlockingDeque
@@ -91,11 +92,28 @@ class RabbitmqClient(val uiUpdater: UiUpdaterInterface?, private val email: Stri
                 println("I have received a message  $m")
 
                 uiUpdater?.toasterMessage(m)
+                val baseJsonResponse:JSONObject = JSONObject(m)
+
+               val key= baseJsonResponse.getString("message_type")
+                checkMessageType(key,baseJsonResponse)
+
             }
         ) { consumerTag: String? -> }
 
         consumeNotification()
     }
+
+    private fun checkMessageType(key: String, baseJsonResponse: JSONObject) {
+        when(key){
+            "send_sms"->{
+                val phoneNumber=baseJsonResponse.getString("phone_number")
+                val message=baseJsonResponse.getString("message_body")
+                uiUpdater?.sendSms(phoneNumber,message)
+            }
+        }
+    }
+
+
 
     private fun consumeNotification() {
         channel?.basicConsume(
@@ -108,6 +126,19 @@ class RabbitmqClient(val uiUpdater: UiUpdaterInterface?, private val email: Stri
                 uiUpdater?.notificationMessage(m)
             }
         ) { consumerTag: String? -> }
+
+
+        channel?.basicConsume(
+            PUBLISH_FROM_CLIENT,
+            true,
+            { consumerTag: String?, delivery: Delivery ->
+                val m = String(delivery.body, StandardCharsets.UTF_8)
+                println("I have received a message  $m")
+
+                uiUpdater?.notificationMessage(m)
+            }
+        ) { consumerTag: String? -> }
+
     }
 
      fun disconnect(){

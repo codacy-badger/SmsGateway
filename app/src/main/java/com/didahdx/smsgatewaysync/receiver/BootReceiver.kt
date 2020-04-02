@@ -13,11 +13,11 @@ class BootReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         if (Intent.ACTION_BOOT_COMPLETED == intent.action) {
-            Intent(context, AppServices::class.java).also {
-                it.action = AppServiceActions.START.name
-                it.putExtra(INPUT_EXTRAS, "$APP_NAME is Running")
-                ContextCompat.startForegroundService(context, it)
-            }
+//            Intent(context, AppServices::class.java).also {
+//                it.action = AppServiceActions.START.name
+//                it.putExtra(INPUT_EXTRAS, "$APP_NAME is Running")
+//                ContextCompat.startForegroundService(context, it)
+//            }
         }
     }
 

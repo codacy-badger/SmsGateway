@@ -2,15 +2,20 @@ package com.didahdx.smsgatewaysync.ui
 
 import android.Manifest
 import android.app.Activity
+import android.app.PendingIntent
 import android.content.*
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.telephony.SmsManager
+import android.telephony.SmsMessage
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.checkSelfPermission
@@ -28,6 +33,7 @@ import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.utilities.*
 import com.didahdx.smsgatewaysync.viewmodels.HomeViewModel
 import com.google.firebase.auth.FirebaseAuth
+import com.mazenrashed.printooth.Printooth
 import kotlinx.android.synthetic.main.fragment_home.*
 import kotlinx.android.synthetic.main.fragment_home.view.*
 import kotlinx.coroutines.CoroutineScope
@@ -48,7 +54,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
 
     private var messageList: ArrayList<MessageInfo> = ArrayList<MessageInfo>()
 
-    val filter = IntentFilter(SMS_RECEIVED)
+
     var isConnected = false
 
     val appLog = AppLog()
@@ -57,20 +63,19 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
     var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT)
     private lateinit var sharedPreferences: SharedPreferences
     val TAG = HomeFragment::class.java.simpleName
-    lateinit var rabbitmqClient: RabbitmqClient
+//    lateinit var rabbitmqClient: RabbitmqClient
 
-    //    var mMqttClientManager: MqttClientManager? = null
     val user = FirebaseAuth.getInstance().currentUser
     var UiUpdaterInterface: UiUpdaterInterface? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         UiUpdaterInterface = this
         CoroutineScope(IO).launch {
-            rabbitmqClient = RabbitmqClient(UiUpdaterInterface, user?.email!!)
+//            rabbitmqClient = RabbitmqClient(UiUpdaterInterface, user?.email!!)
             sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
             val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
             if (!isConnected && isServiceRunning) {
-                rabbitmqClient.connection()
+//                rabbitmqClient.connection()
             }
 
 
@@ -127,35 +132,42 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
     private val mSmsReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent?) {
             val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
-            if (intent != null && intent.extras != null) {
-                val phoneNumber = intent.extras!!.getString("phoneNumber")
-                val dateString = intent.extras!!.getString("dateString")
-                val messageText = intent.extras!!.getString("messageText")
+            if (intent != null && isServiceRunning) {
+                if (SMS_RECEIVED == intent.action) {
 
-                context?.toast("received message")
-                if (isServiceRunning) {
-                    if (messageText != null) {
-                        rabbitmqClient?.publishMessage(messageText)
-                        context?.toast(messageText)
-                    }
-                    if (phoneNumber != null && phoneNumber == "MPESA" && dateString != null && messageText != null) {
+                    val extras = intent.extras
+                    context.toast("SMS  reecalled")
+                    if (extras != null) {
+                        val sms = extras.get("pdus") as Array<*>
 
-                        val mpesaId = messageText.split("\\s".toRegex()).first()
+                        for (i in sms.indices) {
+                            val format = extras.getString("format")
 
+                            var smsMessage = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                SmsMessage.createFromPdu(sms[0] as ByteArray, format)
+                            } else {
+                                SmsMessage.createFromPdu(sms[0] as ByteArray)
+                            }
+                            val phoneNumber = smsMessage.originatingAddress
+                            val messageText = smsMessage.messageBody.toString()
+                            val sms = smsMessage.displayMessageBody
 
-
-                        messageList.add(
-                            MessageInfo(
-                                messageText, dateString, phoneNumber, mpesaId,
-                                "", "", "", ""
-                            )
-                        )
-                        setUpAdapter()
+//                            rabbitmqClient.publishMessage(sms)
+                            Toast.makeText(context, "display $sms", Toast.LENGTH_LONG).show()
+                            val printer = BluetoothPrinter()
+                            val smsFilter = SmsFilter()
+                            if (Printooth.hasPairedPrinter()) {
+                                val printMessage = smsFilter.checkSmsType(messageText)
+                                printer.printText(printMessage, context, APP_NAME)
+                            } else {
+                                Toast.makeText(context, "Printer not connected", Toast.LENGTH_LONG)
+                                    .show()
+                            }
+                        }
                     }
                 }
             }
         }
-
     }
 
     //broadcast connection receiver
@@ -167,10 +179,12 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
             val activeNetwork = connectionManager.activeNetworkInfo
             when ((activeNetwork != null && activeNetwork.isConnectedOrConnecting)) {
                 true -> {
+//                    context?.toast("network connected")
 //                    text_view_status.text = "${getString(R.string.app_name)} is Running"
 //                    text_view_status?.BackGroundGreen()
                 }
                 false -> {
+//                    context?.toast("network not available")
 //                    text_view_status.text = "No internet connection"
 //                    text_view_status?.BackGroundRed()
                 }
@@ -219,7 +233,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
         ) {
             LocalBroadcastManager
                 .getInstance(requireContext())
-                .registerReceiver(mSmsReceiver, filter)
+                .registerReceiver(mSmsReceiver, IntentFilter(SMS_RECEIVED))
         }
 
         LocalBroadcastManager
@@ -434,12 +448,6 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
     override fun onDestroy() {
         super.onDestroy()
         activity?.unregisterReceiver(mConnectionReceiver)
-        try {
-//            rabbitmqClient.disconnect()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-
     }
 
     override fun isConnected(value: Boolean) {
@@ -484,5 +492,67 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
         }
     }
 
+    override fun sendSms(phoneNumber: String, message: String) {
+        CoroutineScope(Main).launch {
+
+            if (context?.let {
+                    ActivityCompat.checkSelfPermission(
+                        it,
+                        Manifest.permission.SEND_SMS
+                    )
+                }
+                == PackageManager.PERMISSION_GRANTED
+            ) {
+                val smsManager = SmsManager.getDefault()
+
+                val sentPI = PendingIntent.getBroadcast(
+                    context, 0, Intent(SENT), 0
+                )
+
+                val deliveredPI = PendingIntent.getBroadcast(
+                    context, 0, Intent(DELIVERED), 0
+                )
+
+
+                //when the SMS has been sent
+                context?.registerReceiver(object : BroadcastReceiver() {
+                    override fun onReceive(arg0: Context?, arg1: Intent?) {
+                        when (resultCode) {
+                            Activity.RESULT_OK -> context?.toast("SMS sent to $phoneNumber")
+                            SmsManager.RESULT_ERROR_GENERIC_FAILURE -> context?.toast("Generic failure")
+                            SmsManager.RESULT_ERROR_NO_SERVICE -> context?.toast("No service")
+                            SmsManager.RESULT_ERROR_NULL_PDU -> context?.toast("Null PDU")
+                            SmsManager.RESULT_ERROR_RADIO_OFF -> context?.toast("Radio off")
+                        }
+                    }
+                }, IntentFilter(SENT))
+
+                //when the SMS has been delivered
+                context?.registerReceiver(object : BroadcastReceiver() {
+                    override fun onReceive(arg0: Context?, arg1: Intent?) {
+                        when (resultCode) {
+                            Activity.RESULT_OK -> context?.toast("SMS delivered")
+                            Activity.RESULT_CANCELED -> context?.toast("SMS not delivered")
+                        }
+                    }
+                }, IntentFilter(DELIVERED))
+
+                val parts = smsManager.divideMessage(message)
+
+                val arraySendInt = java.util.ArrayList<PendingIntent>()
+                arraySendInt.add(sentPI)
+                val arrayDelivery = java.util.ArrayList<PendingIntent>()
+                arrayDelivery.add(deliveredPI)
+                smsManager.sendMultipartTextMessage(
+                    phoneNumber,
+                    null,
+                    parts,
+                    arraySendInt,
+                    arrayDelivery
+                )
+
+            }
+        }
+    }
 
 }
