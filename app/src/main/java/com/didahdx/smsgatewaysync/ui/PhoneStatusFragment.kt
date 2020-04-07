@@ -101,20 +101,17 @@ class PhoneStatusFragment : Fragment() {
     }
     }
 
-
-
-
     //broadcast sms receiver
     private val mBatteryReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             val stringBuilder=StringBuilder()
             val batteryPercentage=
-                BatteryReceiver.intent.getIntExtra(BatteryManager.EXTRA_LEVEL,0)
+                intent.getIntExtra(BatteryManager.EXTRA_LEVEL,0)
 
             stringBuilder.append("Battery percentage: $batteryPercentage % \n")
             stringBuilder.append("\nBattery Condition: \n")
 
-            when(BatteryReceiver.intent.getIntExtra(BatteryManager.EXTRA_HEALTH,0)){
+            when(intent.getIntExtra(BatteryManager.EXTRA_HEALTH,0)){
                 BatteryManager.BATTERY_HEALTH_OVERHEAT-> stringBuilder.append("over heat\n")
                 BatteryManager.BATTERY_HEALTH_GOOD-> stringBuilder.append("good\n")
                 BatteryManager.BATTERY_HEALTH_COLD-> stringBuilder.append("cold\n")
@@ -126,7 +123,7 @@ class PhoneStatusFragment : Fragment() {
 
             stringBuilder.append("\nBattery Temperature: \n")
             val temperatureInCelsius=
-                BatteryReceiver.intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE,0)/10
+                intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE,0)/10
             stringBuilder.append("$temperatureInCelsius \u00B0C\n")
 
             val tempratureInFarenheit=((temperatureInCelsius*1.8)+32).toInt()
@@ -134,7 +131,7 @@ class PhoneStatusFragment : Fragment() {
 
             stringBuilder.append("\n Power Source \n")
 
-            when(BatteryReceiver.intent.getIntExtra(BatteryManager.EXTRA_PLUGGED,0)){
+            when(intent.getIntExtra(BatteryManager.EXTRA_PLUGGED,0)){
                 BatteryManager.BATTERY_PLUGGED_AC->stringBuilder.append("AC adapter\n")
                 BatteryManager.BATTERY_PLUGGED_USB->stringBuilder.append("usb connection\n")
                 BatteryManager.BATTERY_PLUGGED_WIRELESS->stringBuilder.append("Wireless connection\n")
@@ -142,7 +139,7 @@ class PhoneStatusFragment : Fragment() {
             }
 
             stringBuilder.append("\n Charging Status \n")
-            when(BatteryReceiver.intent.getIntExtra(BatteryManager.EXTRA_STATUS,-1)) {
+            when(intent.getIntExtra(BatteryManager.EXTRA_STATUS,-1)) {
                 BatteryManager.BATTERY_STATUS_CHARGING -> stringBuilder.append("charging \n")
                 BatteryManager.BATTERY_STATUS_DISCHARGING -> stringBuilder.append("discharging \n")
                 BatteryManager.BATTERY_STATUS_FULL -> stringBuilder.append("full \n")
@@ -151,15 +148,13 @@ class PhoneStatusFragment : Fragment() {
                 else->stringBuilder.append("unKnown\n")
             }
 
-            val technology= BatteryReceiver.intent.extras?.getString(BatteryManager.EXTRA_TECHNOLOGY)
+            val technology= intent.extras?.getString(BatteryManager.EXTRA_TECHNOLOGY)
             stringBuilder.append("\nTechnology \n $technology \n")
 
-            val voltage= BatteryReceiver.intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE,0).toDouble()/1000
+            val voltage= intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE,0).toDouble()/1000
             stringBuilder.append("\nVoltage \n $voltage V\n")
 
-            context?.toast(stringBuilder.toString())
-
-            text_view_phone_status.text= stringBuilder.toString()
+            text_view_phone_status?.text= stringBuilder.toString()
         }
     }
 

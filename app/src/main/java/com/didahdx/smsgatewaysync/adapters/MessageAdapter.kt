@@ -6,11 +6,11 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.didahdx.smsgatewaysync.R
-import com.didahdx.smsgatewaysync.model.MessageInfo
+import com.didahdx.smsgatewaysync.model.MpesaMessageInfo
 import kotlinx.android.synthetic.main.message_container.view.*
 
 class MessageAdapter(
-    val messageList: ArrayList<MessageInfo>,
+    val messageList: ArrayList<MpesaMessageInfo>,
     var clickListener: OnItemClickListener
 ) :
     RecyclerView.Adapter<MessageAdapter.MessageViewHolder>() {
@@ -30,7 +30,7 @@ class MessageAdapter(
         val textViewAmount: TextView=view.text_view_amount
         val textViewMpesaId:TextView=view.text_view_mpesaId
 
-        fun initialise(item:MessageInfo,action: OnItemClickListener) {
+        fun initialise(item:MpesaMessageInfo, action: OnItemClickListener) {
             itemView.setOnClickListener {
                 val position = adapterPosition
                 if (position != RecyclerView.NO_POSITION) {

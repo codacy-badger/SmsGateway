@@ -6,11 +6,10 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.didahdx.smsgatewaysync.R
-import com.didahdx.smsgatewaysync.utilities.SMS_BODY
-import com.didahdx.smsgatewaysync.utilities.SMS_DATE
-import com.didahdx.smsgatewaysync.utilities.SMS_SENDER
+import com.didahdx.smsgatewaysync.utilities.SMS_BODY_EXTRA
+import com.didahdx.smsgatewaysync.utilities.SMS_DATE_EXTRA
+import com.didahdx.smsgatewaysync.utilities.SMS_SENDER_EXTRA
 import com.didahdx.smsgatewaysync.utilities.SmsFilter
-import kotlinx.android.synthetic.main.fragment_sms_details.*
 import kotlinx.android.synthetic.main.fragment_sms_details.view.*
 
 
@@ -36,9 +35,10 @@ class SmsDetailsFragment : Fragment() {
 
 
         //Retrieve the value
-        val smsBody: String? = arguments?.getString(SMS_BODY)
-        val smsDate: String? = arguments?.getString(SMS_DATE)
-        val smsSender: String? = arguments?.getString(SMS_SENDER)
+        val smsBody: String? = arguments?.getString(SMS_BODY_EXTRA)
+        val smsDate: String? = arguments?.getString(SMS_DATE_EXTRA)
+        val smsSender: String? = arguments?.getString(SMS_SENDER_EXTRA)
+
 
         view.text_view_sender_no.text = smsSender
         view.text_view_message_body.text = smsBody

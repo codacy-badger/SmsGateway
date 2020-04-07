@@ -15,39 +15,42 @@ class RabbitmqClient(val uiUpdater: UiUpdaterInterface?, private val email: Stri
     private val connectionFactory = ConnectionFactory()
 
     private val queue = LinkedBlockingDeque<String>()
-    var connection: Connection? = null
+    private lateinit var connection: Connection
     var channel: Channel? = null
 
 
     fun connection() {
 
         try {
-            connectionFactory.host = "128.199.174.204"
-            connectionFactory.username = "didahdx"
-            connectionFactory.password = "test"
 
 
-            if (connection == null && channel == null) {
+            connection = RabbitmqConnector.connection
+            channel = RabbitmqConnector.channel
 
-                connection = connectionFactory.newConnection()
-                channel = connection?.createChannel()
+            Log.d(
+                "connectorasd",
+                "connection  ${RabbitmqConnector.connection.hashCode()}   ${connection.hashCode()} " +
+                        " channel ${RabbitmqConnector.channel.hashCode()}    ${channel.hashCode()}"
+            )
 
-                channel?.queueDeclare(
-                    email, false, false,
-                    false, null)
+            channel?.queueDeclare(
+                email, false, false,
+                false, null
+            )
 
-                channel?.queueDeclare(
-                    NOTIFICATION, false, false,
-                    false, null)
+            channel?.queueDeclare(
+                NOTIFICATION, false, false,
+                false, null
+            )
 
-                channel?.queueDeclare(
-                    PUBLISH_FROM_CLIENT, false, false,
-                    false, null
-                )
-                consumeMessages()
-                uiUpdater?.updateStatusViewWith("$APP_NAME is running", GREEN_COLOR)
-                uiUpdater?.isConnected(true)
-            }
+            channel?.queueDeclare(
+                PUBLISH_FROM_CLIENT, false, false,
+                false, null
+            )
+            consumeMessages()
+            uiUpdater?.isConnected(true)
+            uiUpdater?.updateStatusViewWith("$APP_NAME is running", GREEN_COLOR)
+
 
         } catch (e: IOException) {
             uiUpdater?.updateStatusViewWith("Error connecting to server", RED_COLOR)
@@ -70,7 +73,7 @@ class RabbitmqClient(val uiUpdater: UiUpdaterInterface?, private val email: Stri
         val props = AMQP.BasicProperties.Builder()
             .correlationId(email)
             .replyTo(email)
-            .deliveryMode(2)
+            .deliveryMode(1)
             .build()
 
 
@@ -83,34 +86,31 @@ class RabbitmqClient(val uiUpdater: UiUpdaterInterface?, private val email: Stri
     }
 
 
-    fun  consumeMessages() {
+    fun consumeMessages() {
         channel?.basicConsume(
             email,
             true,
             { consumerTag: String?, delivery: Delivery ->
                 val m = String(delivery.body, StandardCharsets.UTF_8)
                 println("I have received a message  $m")
-
+                var phoneNumber=""
+                var message=""
                 uiUpdater?.toasterMessage(m)
-                val baseJsonResponse:JSONObject = JSONObject(m)
+                val baseJsonResponse: JSONObject = JSONObject(m)
 
-               val key= baseJsonResponse.getString("message_type")
-                checkMessageType(key,baseJsonResponse)
+                when (baseJsonResponse.getString("message_type")) {
+                    "send_sms" -> {
+                        phoneNumber = baseJsonResponse.getString("phone_number")
+                         message = baseJsonResponse.getString("message_body")
+                    }
+                }
+                uiUpdater?.toasterMessage("$phoneNumber $message")
+                uiUpdater?.sendSms(phoneNumber, message)
 
             }
         ) { consumerTag: String? -> }
 
         consumeNotification()
-    }
-
-    private fun checkMessageType(key: String, baseJsonResponse: JSONObject) {
-        when(key){
-            "send_sms"->{
-                val phoneNumber=baseJsonResponse.getString("phone_number")
-                val message=baseJsonResponse.getString("message_body")
-                uiUpdater?.sendSms(phoneNumber,message)
-            }
-        }
     }
 
 
@@ -141,7 +141,7 @@ class RabbitmqClient(val uiUpdater: UiUpdaterInterface?, private val email: Stri
 
     }
 
-     fun disconnect(){
+    fun disconnect() {
         channel?.close()
         connection?.close()
         uiUpdater?.isConnected(false)

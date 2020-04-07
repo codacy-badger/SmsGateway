@@ -20,16 +20,18 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProviders
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.lifecycle.ViewModelProvider
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.SmsDetailsActivity
 import com.didahdx.smsgatewaysync.adapters.MessageAdapter
 import com.didahdx.smsgatewaysync.manager.RabbitmqClient
-import com.didahdx.smsgatewaysync.model.MessageInfo
+import com.didahdx.smsgatewaysync.model.MpesaMessageInfo
+import com.didahdx.smsgatewaysync.repository.data.IncomingMessages
+import com.didahdx.smsgatewaysync.repository.data.MessagesDatabase
 import com.didahdx.smsgatewaysync.services.AppServices
+import com.didahdx.smsgatewaysync.services.LocationGpsService
 import com.didahdx.smsgatewaysync.utilities.*
 import com.didahdx.smsgatewaysync.viewmodels.HomeViewModel
 import com.google.firebase.auth.FirebaseAuth
@@ -42,6 +44,7 @@ import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
@@ -49,14 +52,11 @@ import kotlin.collections.ArrayList
 /**
  * A simple [Fragment] subclass.
  */
-class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
+class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
     UiUpdaterInterface {
 
-    private var messageList: ArrayList<MessageInfo> = ArrayList<MessageInfo>()
-
-
+    private var messageList: ArrayList<MpesaMessageInfo> = ArrayList<MpesaMessageInfo>()
     var isConnected = false
-
     val appLog = AppLog()
     lateinit var mHomeViewModel: HomeViewModel
     var mMessageAdapter: MessageAdapter? = null
@@ -64,18 +64,26 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
     private lateinit var sharedPreferences: SharedPreferences
     val TAG = HomeFragment::class.java.simpleName
     lateinit var rabbitmqClient: RabbitmqClient
-
+    private var locationBroadcastReceiver: BroadcastReceiver? = null
+    var userLongitude: String? = " "
+    var userLatitude: String? = " "
     val user = FirebaseAuth.getInstance().currentUser
     var UiUpdaterInterface: UiUpdaterInterface? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         UiUpdaterInterface = this
+        Log.d("Log_Rabbitmq", "isConnected $isConnected")
         CoroutineScope(IO).launch {
             rabbitmqClient = RabbitmqClient(UiUpdaterInterface, user?.email!!)
+            Log.d("Log_Rabbitmq", " object ${rabbitmqClient.hashCode()}")
+
+            Log.d("Log_Rabbitmq", "isConnected $isConnected")
             sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
             val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
             if (!isConnected && isServiceRunning) {
                 rabbitmqClient.connection()
+
             }
         }
 
@@ -85,10 +93,8 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view = inflater.inflate(R.layout.fragment_home, container, false)
-        view.recycler_view_message_list.layoutManager = LinearLayoutManager(activity)
-        mHomeViewModel = ViewModelProviders.of(this).get(HomeViewModel::class.java)
-
+//        val view = inflater.inflate(R.layout.fragment_home, container, false)
+        mHomeViewModel = ViewModelProvider(this).get(HomeViewModel::class.java)
 
         //registering the broadcast receiver for network
         context?.registerReceiver(
@@ -96,23 +102,27 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
             IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
         )
 
-        context?.registerReceiver(mSmsReceiver, IntentFilter(SMS_RECEIVED))
+        checkLocationPermission()
+        val intent = Intent(activity as Activity, LocationGpsService::class.java)
+        context?.startService(intent)
+
+        context?.registerReceiver(mSmsReceiver, IntentFilter(SMS_RECEIVED_INTENT))
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
         val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
 
         if (isServiceRunning) {
             startServices()
-            view.text_view_status?.backgroundGreen()
-            view.text_view_status.text = "$APP_NAME is running"
+            text_view_status?.backgroundGreen()
+            text_view_status?.text = "$APP_NAME is running"
         } else {
-            view.text_view_status.text = "$APP_NAME is stopped"
-            view.text_view_status?.backgroundRed()
+            text_view_status?.text = "$APP_NAME is stopped"
+            text_view_status?.backgroundRed()
         }
-        view.refresh_layout_home.setOnRefreshListener { backgroundCoroutineCall() }
+        refresh_layout_home?.setOnRefreshListener { backgroundCoroutineCall() }
 
         backgroundCoroutineCall()
         // Inflate the layout for this fragment
-        return view
+        return inflater.inflate(R.layout.fragment_home, container, false)
     }
 
     //appServices for showing notification bar
@@ -134,7 +144,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
         override fun onReceive(context: Context, intent: Intent?) {
             val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
             if (intent != null && isServiceRunning) {
-                if (SMS_RECEIVED == intent.action) {
+                if (SMS_RECEIVED_INTENT == intent.action) {
 
                     val extras = intent.extras
                     if (extras != null) {
@@ -151,14 +161,70 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
                             val phoneNumber = smsMessage.originatingAddress
                             val messageText = smsMessage.messageBody.toString()
                             val sms = smsMessage.displayMessageBody
+                            val time = smsMessage.timestampMillis
+                            val date = sdf.format(Date(time.toLong())).toString()
 
                             CoroutineScope(IO).launch {
-                                rabbitmqClient.publishMessage(sms)
+                                val obj: JSONObject? = JSONObject()
+                                val smsFilter = SmsFilter(messageText)
+                                obj?.put("message_body", messageText)
+                                obj?.put("receipt_date", date)
+                                obj?.put("sender_id", phoneNumber)
+                                obj?.put("longitude", userLongitude)
+                                obj?.put("latitude", userLatitude)
+                                obj?.put("client_sender", user?.email!!)
+                                obj?.put("client_gateway_type", "android_phone")
+
+                                if (phoneNumber != null && phoneNumber == "MPESA") {
+                                    obj?.put("message_type", "mpesa")
+                                    obj?.put("voucher_number", smsFilter.mpesaId)
+                                    obj?.put("transaction_type", smsFilter.mpesaType)
+                                    obj?.put("phone_number", smsFilter.phoneNumber)
+                                    obj?.put("name", smsFilter.name)
+                                    if (smsFilter.time != NOT_AVAILABLE && smsFilter.date != NOT_AVAILABLE) {
+                                        obj?.put(
+                                            "transaction_date",
+                                            "${smsFilter.date} ${smsFilter.time}"
+                                        )
+                                    } else if (smsFilter.date != NOT_AVAILABLE) {
+                                        obj?.put("transaction_date", smsFilter.date)
+                                    } else if (smsFilter.time != NOT_AVAILABLE) {
+                                        obj?.put("transaction_date", smsFilter.time)
+                                    }
+                                    obj?.put("amount", smsFilter.amount)
+
+                                } else {
+                                    obj?.put("message_type", "recieved_sms")
+
+                                }
+
+
+                                obj?.toString()?.let {
+                                    rabbitmqClient.publishMessage(it)
+
+                                    launch {
+                                        val message = phoneNumber?.let { it1 ->
+                                            IncomingMessages(
+                                                messageText, time,
+                                                it1, true
+                                            )
+                                        }
+
+                                        context.let { tex ->
+                                            if (message != null) {
+                                                MessagesDatabase(tex).getIncomingMessageDao()
+                                                    .addMessage(message)
+                                            }
+                                        }
+
+                                    }
+                                }
                             }
 
-                            val printer = BluetoothPrinter()
-                            val smsFilter = SmsFilter()
+
                             if (Printooth.hasPairedPrinter()) {
+                                val printer = BluetoothPrinter()
+                                val smsFilter = SmsFilter()
                                 val printMessage = smsFilter.checkSmsType(messageText)
                                 printer.printText(printMessage, context, APP_NAME)
                             } else {
@@ -196,22 +262,24 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
 
 
     override fun onDestroyView() {
-//        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(mSmsReceiver)
         super.onDestroyView()
+//        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(mSmsReceiver)
+        if (locationBroadcastReceiver != null) {
+            context?.unregisterReceiver(locationBroadcastReceiver)
+        }
     }
 
     private fun setUpAdapter() {
         progress_bar?.hide()
         text_loading?.hide()
-
+        recycler_view_message_list?.layoutManager = LinearLayoutManager(activity)
         mMessageAdapter = MessageAdapter(messageList, this)
         recycler_view_message_list?.adapter = mMessageAdapter
         refresh_layout_home?.isRefreshing = false
     }
 
-
-    fun backgroundCoroutineCall() {
-
+    //used to get sms from the phone
+    private fun backgroundCoroutineCall() {
         if (checkSelfPermission(activity as Activity, Manifest.permission.READ_SMS)
             == PackageManager.PERMISSION_GRANTED
         ) {
@@ -234,20 +302,20 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
             == PackageManager.PERMISSION_GRANTED
         ) {
 //            LocalBroadcastManager.getInstance(requireContext()).registerReceiver(mSmsReceiver, IntentFilter(SMS_RECEIVED))
-
         }
-
     }
 
-    private suspend fun passMessagesToMain(list: ArrayList<MessageInfo>) {
+    //adds message to the screen
+    private suspend fun passMessagesToMain(list: ArrayList<MpesaMessageInfo>) {
         withContext(Main) {
             messageList.clear()
-            messageList = ArrayList<MessageInfo>(list)
+            messageList = ArrayList<MpesaMessageInfo>(list)
             setUpAdapter()
         }
     }
 
 
+    //updates the counter on the screen
     private suspend fun UpdateCounter(messageCount: Int) {
         withContext(Main) {
             text_loading?.text = getString(R.string.loading_messages, messageCount)
@@ -256,7 +324,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
 
     private suspend fun getDatabaseMessages() {
 
-        val messageArrayList = ArrayList<MessageInfo>()
+        val messageArrayList = ArrayList<MpesaMessageInfo>()
 
         val cursor = activity?.contentResolver?.query(
             Uri.parse("content://sms/inbox"),
@@ -268,13 +336,11 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
 
         var messageCount = 0
 
-        Log.d(TAG, "mpesa $messageCount")
-        Log.d(TAG, "mpesa $cursor")
         if (cursor != null && cursor.moveToNext()) {
             val nameId = cursor.getColumnIndex("address")
             val messageId = cursor.getColumnIndex("body")
             val dateId = cursor.getColumnIndex("date")
-            val mpesaType = sharedPreferences.getString(PREF_MPESA_TYPE, ALL)
+            val mpesaType = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
 
 
             Log.d(TAG, "mpesa sms $mpesaType ")
@@ -294,26 +360,14 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
 
 
                     when (mpesaType) {
-                        ALL -> {
-                            messageArrayList.add(
-                                MessageInfo(
-                                    cursor.getString(messageId),
-                                    sdf.format(Date(dateString.toLong())).toString(),
-                                    cursor.getString(nameId),
-                                    mpesaId, "", smsFilter.amount, "", smsFilter.name
-                                )
-                            )
-                            UpdateCounter(messageCount)
-                            messageCount++
-                        }
                         PAY_BILL -> {
                             if (smsFilter.mpesaType == PAY_BILL) {
                                 messageArrayList.add(
-                                    MessageInfo(
+                                    MpesaMessageInfo(
                                         cursor.getString(messageId),
                                         sdf.format(Date(dateString.toLong())).toString(),
                                         cursor.getString(nameId),
-                                        mpesaId, "", smsFilter.amount, "", smsFilter.name
+                                        mpesaId, "", smsFilter.amount, "", smsFilter.name,dateString.toLong()
                                     )
                                 )
                                 UpdateCounter(messageCount)
@@ -323,11 +377,11 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
                         DIRECT_MPESA -> {
                             if (smsFilter.mpesaType == DIRECT_MPESA) {
                                 messageArrayList.add(
-                                    MessageInfo(
+                                    MpesaMessageInfo(
                                         cursor.getString(messageId),
                                         sdf.format(Date(dateString.toLong())).toString(),
                                         cursor.getString(nameId),
-                                        mpesaId, "", smsFilter.amount, "", smsFilter.name
+                                        mpesaId, "", smsFilter.amount, "", smsFilter.name,dateString.toLong()
                                     )
                                 )
                                 UpdateCounter(messageCount)
@@ -338,11 +392,11 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
                         BUY_GOODS_AND_SERVICES -> {
                             if (smsFilter.mpesaType == BUY_GOODS_AND_SERVICES) {
                                 messageArrayList.add(
-                                    MessageInfo(
+                                    MpesaMessageInfo(
                                         cursor.getString(messageId),
                                         sdf.format(Date(dateString.toLong())).toString(),
                                         cursor.getString(nameId),
-                                        mpesaId, "", smsFilter.amount, "", smsFilter.name
+                                        mpesaId, "", smsFilter.amount, "", smsFilter.name,dateString.toLong()
                                     )
                                 )
                                 UpdateCounter(messageCount)
@@ -352,11 +406,11 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
 
                         else -> {
                             messageArrayList.add(
-                                MessageInfo(
+                                MpesaMessageInfo(
                                     cursor.getString(messageId),
                                     sdf.format(Date(dateString.toLong())).toString(),
                                     cursor.getString(nameId),
-                                    mpesaId, "", smsFilter.amount, "", smsFilter.name
+                                    mpesaId, "", smsFilter.amount, "", smsFilter.name,dateString.toLong()
                                 )
                             )
                             UpdateCounter(messageCount)
@@ -379,27 +433,33 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
 
 
     override fun onItemClick(position: Int) {
-        val messageInfo: MessageInfo = messageList[position]
-        //Put the value
-//        val smsDetailsFragment = SmsDetailsFragment()
-//        val args = Bundle()
-//        args.putString(SMS_BODY, messageInfo.messageBody)
-//        args.putString(SMS_DATE, messageInfo.time)
-//        args.putString(SMS_SENDER, messageInfo.sender)
-//        smsDetailsFragment.arguments = args
+        val messageInfo: MpesaMessageInfo = messageList[position]
+
+        var smsStatus = NOT_AVAILABLE
+        var incomingMessages:IncomingMessages
+
+        CoroutineScope(IO).launch {
+            context?.let {
+               val messagesList= MessagesDatabase(it).getIncomingMessageDao().getMessage(messageInfo.dateTime)
+
+                CoroutineScope(Main).launch {
+                     if (messagesList!=null && messagesList.status){
+                         smsStatus ="Uploaded"
+                    }else{
+                         smsStatus ="pending"
+                    }
+                }
+
+            }
+
+        }
 
         val intent = Intent(context, SmsDetailsActivity::class.java)
-        intent.putExtra(SMS_BODY, messageInfo.messageBody)
-        intent.putExtra(SMS_DATE, messageInfo.time)
-        intent.putExtra(SMS_SENDER, messageInfo.sender)
+        intent.putExtra(SMS_BODY_EXTRA, messageInfo.messageBody)
+        intent.putExtra(SMS_DATE_EXTRA, messageInfo.time)
+        intent.putExtra(SMS_SENDER_EXTRA, messageInfo.sender)
+        intent.putExtra(SMS_UPLOAD_STATUS_EXTRA, smsStatus)
         startActivity(intent)
-
-//        fragmentManager
-//            ?.beginTransaction()
-//            ?.replace(R.id.frame_layout, smsDetailsFragment)
-//            ?.addToBackStack("fragment_home")
-//            ?.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-//            ?.commit()
 
     }
 
@@ -445,16 +505,22 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
         activity?.unregisterReceiver(mConnectionReceiver)
     }
 
+    //used to check if the app has connected
     override fun isConnected(value: Boolean) {
-        isConnected = value
+        CoroutineScope(Main).launch {
+            isConnected = value
+            context?.toast("isConnected $isConnected  value $value")
+        }
     }
 
+    //used to show to show
     override fun notificationMessage(message: String) {
         CoroutineScope(Main).launch {
 
         }
     }
 
+    //used to show toast messages
     override fun toasterMessage(message: String) {
         Log.d("Rabbit", "called $message")
         Log.d("Rabbit", "thread name ${Thread.currentThread().name}")
@@ -464,6 +530,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
         }
     }
 
+    //used to update status bar
     override fun updateStatusViewWith(status: String, color: String) {
         CoroutineScope(Main).launch {
             text_view_status?.text = status
@@ -482,11 +549,8 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
         }
     }
 
-    override fun publish(isReadyToPublish: Boolean) {
-        if (isReadyToPublish) {
-        }
-    }
 
+    //sending out sms
     override fun sendSms(phoneNumber: String, message: String) {
         CoroutineScope(Main).launch {
 
@@ -501,11 +565,11 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
                 val smsManager = SmsManager.getDefault()
 
                 val sentPI = PendingIntent.getBroadcast(
-                    context, 0, Intent(SENT), 0
+                    context, 0, Intent(SMS_SENT_INTENT), 0
                 )
 
                 val deliveredPI = PendingIntent.getBroadcast(
-                    context, 0, Intent(DELIVERED), 0
+                    context, 0, Intent(SMS_DELIVERED_INTENT), 0
                 )
 
 
@@ -520,7 +584,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
                             SmsManager.RESULT_ERROR_RADIO_OFF -> context?.toast("Radio off")
                         }
                     }
-                }, IntentFilter(SENT))
+                }, IntentFilter(SMS_SENT_INTENT))
 
                 //when the SMS has been delivered
                 context?.registerReceiver(object : BroadcastReceiver() {
@@ -530,7 +594,7 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
                             Activity.RESULT_CANCELED -> context?.toast("SMS not delivered")
                         }
                     }
-                }, IntentFilter(DELIVERED))
+                }, IntentFilter(SMS_DELIVERED_INTENT))
 
                 val parts = smsManager.divideMessage(message)
 
@@ -543,9 +607,77 @@ class HomeFragment : Fragment(), MessageAdapter.OnItemClickListener,
                     null,
                     parts,
                     arraySendInt,
-                    arrayDelivery)
+                    arrayDelivery
+                )
             }
         }
     }
+
+
+    override fun onResume() {
+        super.onResume()
+        if (locationBroadcastReceiver == null) {
+            locationBroadcastReceiver = object : BroadcastReceiver() {
+                override fun onReceive(context: Context, intent: Intent) {
+                    if (LOCATION_UPDATE_INTENT == intent.action) {
+                        val longitude = intent.getStringExtra(LONGITUDE_EXTRA)
+                        val latitude = intent.getStringExtra(LATITUDE_EXTRA)
+                        val altitude = intent.getStringExtra(ALTITUDE_EXTRA)
+                        userLatitude = latitude
+                        userLongitude = longitude
+
+                    }
+                }
+            }
+        }
+        context?.registerReceiver(locationBroadcastReceiver, IntentFilter(LOCATION_UPDATE_INTENT))
+    }
+
+
+    private fun checkLocationPermission() {
+        if (checkSelfPermission(
+                activity as Activity,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(
+                activity as Activity,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                activity as Activity,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                PERMISSION_ACCESS_FINE_LOCATION_CODE
+            )
+            ActivityCompat.requestPermissions(
+                activity as Activity,
+                arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION),
+                PERMISSION_ACCESS_COARSE_LOCATION_CODE
+            )
+        }
+        if (ActivityCompat.checkSelfPermission(activity as Activity, Manifest.permission.READ_SMS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                activity as Activity,
+                arrayOf(Manifest.permission.READ_SMS),
+                PERMISSION_READ_SMS_CODE
+            )
+        }
+
+        if (ActivityCompat.checkSelfPermission(
+                activity as Activity,
+                Manifest.permission.RECEIVE_SMS
+            )
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                activity as Activity,
+                arrayOf(Manifest.permission.RECEIVE_SMS),
+                PERMISSION_RECEIVE_SMS_CODE
+            )
+        }
+
+    }
+
 
 }

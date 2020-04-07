@@ -40,7 +40,7 @@
         android:title="Messages"
         app:iconSpaceReserved="false">
         <ListPreference
-            android:defaultValue="All"
+            android:defaultValue="Direct Mpesa"
             android:entries="@array/mpesa_types"
             android:entryValues="@array/mpesa_types"
             android:key="mpesa_types"

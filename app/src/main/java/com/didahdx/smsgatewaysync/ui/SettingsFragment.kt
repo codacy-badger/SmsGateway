@@ -113,7 +113,7 @@ when(preference){
         hostUrl?.summary = preferenceScreen.sharedPreferences.getString(PREF_HOST_URL, "")
 
         val mpesaType = findPreference<Preference>(PREF_MPESA_TYPE)
-        mpesaType?.summary = preferenceScreen.sharedPreferences.getString(PREF_MPESA_TYPE, ALL)
+        mpesaType?.summary = preferenceScreen.sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
 
         val phoneNumber = findPreference<Preference>(PREF_PHONE_NUMBER)
         phoneNumber?.summary =

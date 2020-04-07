@@ -27,7 +27,7 @@ import kotlinx.android.synthetic.main.fragment_about.view.*
  * Use the [AboutFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
-class AboutFragment : Fragment(),BatteryReceiver.BatteryReceiverListener {
+class AboutFragment : Fragment() {
 
 
     override fun onCreateView(
@@ -49,9 +49,6 @@ class AboutFragment : Fragment(),BatteryReceiver.BatteryReceiverListener {
         return  view
     }
 
-    override fun onBatteryStatusChanged(batteryStatus: String) {
-        text_about_phone.text=batteryStatus
-    }
 
 
 

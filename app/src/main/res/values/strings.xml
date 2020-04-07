@@ -28,7 +28,6 @@
         <item>Pay Bill</item>
         <item>Buy Goods and Services</item>
         <item>Direct Mpesa</item>
-        <item>All</item>
     </string-array>
 
     <string name="host_url">https://www.server.com</string>

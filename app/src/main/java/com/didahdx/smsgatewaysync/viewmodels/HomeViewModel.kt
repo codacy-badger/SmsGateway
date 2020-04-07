@@ -3,12 +3,12 @@ package com.didahdx.smsgatewaysync.viewmodels
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.didahdx.smsgatewaysync.model.MessageInfo
+import com.didahdx.smsgatewaysync.model.MpesaMessageInfo
 
 class HomeViewModel :ViewModel(){
-    private val mMessageInfo=MutableLiveData<ArrayList<MessageInfo>>()
+    private val mMessageInfo=MutableLiveData<ArrayList<MpesaMessageInfo>>()
 
-    fun getMessages():LiveData<ArrayList<MessageInfo>>{
+    fun getMessages():LiveData<ArrayList<MpesaMessageInfo>>{
         return mMessageInfo
     }
 }

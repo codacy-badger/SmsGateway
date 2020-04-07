@@ -3,13 +3,8 @@ package com.didahdx.smsgatewaysync.utilities
 /**
  * Constants used throughout the app.
  */
-const val SMS_DATE="SMS_DATE"
-const val SMS_SENDER="SMS_SENDER"
-const val SMS_BODY="SMS_BODY"
 const val DATE_FORMAT="dd/MMM/yy hh:mm aaa"
 const val MPESA_ID_PATTERN="^[A-Z0-9]*$"
-const val SENT = "SMS_SENT"
-const val DELIVERED = "SMS_DELIVERED"
 const val RED_COLOR="RED_COLOR"
 const val GREEN_COLOR="GREEN_COLOR"
 const val NOT_AVAILABLE="N/A"
@@ -17,12 +12,27 @@ const val NOT_AVAILABLE="N/A"
 const val APP_SERVICE_KEY = "APP_SERVICE_KEY"
 const val APP_SERVICE_STATE = "APP_SERVICE_STATE"
 
-const val INPUT_EXTRAS = "inputExtras"
-const val SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED"
 const val LOG_FILE_NAME="smsLog.txt"
 const val APP_NAME="Sms Router"
 const val CHANNEL_ID="sms_services_notification"
 const val CHANNEL_NAME="$APP_NAME status"
+const val MESSAGE_DATABASE="messageDatabase"
+
+/**
+ * Intent variables
+ * */
+const val SMS_SENT_INTENT = "SMS_SENT"
+const val SMS_DELIVERED_INTENT = "SMS_DELIVERED_INTENT"
+const val SMS_RECEIVED_INTENT = "android.provider.Telephony.SMS_RECEIVED"
+const val INPUT_EXTRAS = "INPUT_EXTRAS"
+const val SMS_DATE_EXTRA="SMS_DATE_EXTRA"
+const val SMS_SENDER_EXTRA="SMS_SENDER_EXTRA"
+const val SMS_BODY_EXTRA="SMS_BODY_EXTRA"
+const val SMS_UPLOAD_STATUS_EXTRA="SMS_UPLOAD_STATUS_EXTRA"
+const val LONGITUDE_EXTRA="LONGITUDE_EXTRA"
+const val LATITUDE_EXTRA="LATITUDE_EXTRA"
+const val ALTITUDE_EXTRA="ALTITUDE_EXTRA"
+const val LOCATION_UPDATE_INTENT="LOCATION_UPDATE_INTENT"
 
 /**
  *  Queues
@@ -61,3 +71,5 @@ const val PERMISSION_WRITE_EXTERNAL_STORAGE_CODE = 400
 const val PERMISSION_CALL_PHONE_CODE=500
 const val PERMISSION_FOREGROUND_SERVICES_CODE=600
 const val PERMISSION_WRITE_CONTACTS_CODE=700
+const val PERMISSION_ACCESS_FINE_LOCATION_CODE=800
+const val PERMISSION_ACCESS_COARSE_LOCATION_CODE=900

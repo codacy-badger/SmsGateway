@@ -9,7 +9,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.didahdx.smsgatewaysync.utilities.APP_NAME
-import com.didahdx.smsgatewaysync.utilities.SMS_RECEIVED
+import com.didahdx.smsgatewaysync.utilities.SMS_RECEIVED_INTENT
 import com.didahdx.smsgatewaysync.utilities.SmsFilter
 import com.didahdx.smsgatewaysync.utilities.toast
 import com.didahdx.smsgatewaysync.utilities.BluetoothPrinter
@@ -19,7 +19,7 @@ import com.mazenrashed.printooth.Printooth
 class SmsReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (SMS_RECEIVED==intent.action) {
+        if (SMS_RECEIVED_INTENT==intent.action) {
             val extras = intent.extras
             if (extras != null) {
                 val sms = extras.get("pdus") as Array<*>
@@ -35,7 +35,7 @@ class SmsReceiver : BroadcastReceiver() {
                     val messageText = smsMessage.messageBody.toString()
                     val sms=smsMessage.displayMessageBody
 
-                    val newIntent = Intent(SMS_RECEIVED)
+                    val newIntent = Intent(SMS_RECEIVED_INTENT)
                     newIntent.putExtra("phoneNumber", phoneNumber)
                     newIntent.putExtra("messageText", messageText)
 

@@ -55,6 +55,7 @@ class SmsDetailsActivity : AppCompatActivity(), PrintingCallback {
     var smsBody: String? = null
     var smsDate: String? = null
     var smsSender: String? = null
+    var smsStatus: String? = null
     var printing: Printing? = null
     lateinit var sharedPrferences: SharedPreferences
 
@@ -69,13 +70,16 @@ class SmsDetailsActivity : AppCompatActivity(), PrintingCallback {
         if (intent.extras != null) {
             val bundle = intent.extras
             //Retrieve the value
-            smsBody = bundle?.getString(SMS_BODY)
-            smsDate = bundle?.getString(SMS_DATE)
-            smsSender = bundle?.getString(SMS_SENDER)
+            smsBody = bundle?.getString(SMS_BODY_EXTRA)
+            smsDate = bundle?.getString(SMS_DATE_EXTRA)
+            smsSender = bundle?.getString(SMS_SENDER_EXTRA)
+            smsStatus = bundle?.getString(SMS_UPLOAD_STATUS_EXTRA)
+
 
             text_view_sender_no_act.text = smsSender
             text_view_message_body_act.text = smsBody
             text_view_receipt_date_act.text = smsDate
+            text_view_status_check_act.text=smsStatus
             if (smsBody != null) {
                 val smsFilter = SmsFilter(smsBody!!)
                 text_view_voucher_no_act.text = smsFilter.mpesaId
@@ -149,11 +153,11 @@ class SmsDetailsActivity : AppCompatActivity(), PrintingCallback {
                 val smsManager = SmsManager.getDefault()
 
                 val sentPI = PendingIntent.getBroadcast(
-                    this, 0, Intent(SENT), 0
+                    this, 0, Intent(SMS_SENT_INTENT), 0
                 )
 
                 val deliveredPI = PendingIntent.getBroadcast(
-                    this, 0, Intent(DELIVERED), 0
+                    this, 0, Intent(SMS_DELIVERED_INTENT), 0
                 )
 
                 //when the SMS has been sent
@@ -167,7 +171,7 @@ class SmsDetailsActivity : AppCompatActivity(), PrintingCallback {
                             SmsManager.RESULT_ERROR_RADIO_OFF -> toast("Radio off")
                         }
                     }
-                }, IntentFilter(SENT))
+                }, IntentFilter(SMS_SENT_INTENT))
 
                 //when the SMS has been delivered
                 registerReceiver(object : BroadcastReceiver() {
@@ -177,7 +181,7 @@ class SmsDetailsActivity : AppCompatActivity(), PrintingCallback {
                             Activity.RESULT_CANCELED -> toast("SMS not delivered")
                         }
                     }
-                }, IntentFilter(DELIVERED))
+                }, IntentFilter(SMS_DELIVERED_INTENT))
 
                 val parts = smsManager.divideMessage(smsBody)
 
