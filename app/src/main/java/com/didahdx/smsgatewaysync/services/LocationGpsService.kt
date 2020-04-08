@@ -35,6 +35,7 @@ class LocationGpsService : Service() {
                 intent.putExtra(LATITUDE_EXTRA,location.latitude.toString())
                 intent.putExtra(ALTITUDE_EXTRA,location.altitude.toString())
 
+                Log.d("locaitiion","${location.longitude}  ${location.latitude}")
                 sendBroadcast(intent)
             }
 
@@ -64,7 +65,7 @@ class LocationGpsService : Service() {
         }
         locationManager!!.requestLocationUpdates(
             LocationManager.GPS_PROVIDER, 6000,
-            170f,
+            3f,
             locationListener
         )
     }

@@ -101,8 +101,7 @@ class MainActivity : AppCompatActivity(),
         )
         //registering broadcast receiver for battery
         baseContext.registerReceiver(
-            SmsReceiver(),
-            IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+            SmsReceiver(),IntentFilter(SMS_RECEIVED_INTENT)
         )
 
         App.instance.setConnectionListener(this)

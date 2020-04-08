@@ -6,7 +6,7 @@ import androidx.room.*
 interface IncomingMessagesDao {
 
  @Insert
- suspend fun addMessage(incomingMessages: IncomingMessages)
+ suspend fun addMessage(incomingMessages:IncomingMessages)
 
  @Update
  suspend fun updateMessage(incomingMessages: IncomingMessages)
@@ -17,7 +17,7 @@ interface IncomingMessagesDao {
  @Query("SELECT * FROM incomingMessages ORDER BY id DESC")
  suspend fun getAllMessages():List<IncomingMessages>
 
- @Query("SELECT * FROM incomingmessages WHERE date=:time;")
- suspend fun getMessage(time:Long):IncomingMessages
+ @Query("SELECT * FROM incomingMessages WHERE date=:time")
+ suspend fun getMessage(time:Long):List<IncomingMessages>
 
  }

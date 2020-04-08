@@ -6,7 +6,6 @@ import android.content.Context
 import android.os.Build
 import androidx.multidex.MultiDex
 import androidx.multidex.MultiDexApplication
-import com.didahdx.smsgatewaysync.receiver.BatteryReceiver
 import com.didahdx.smsgatewaysync.receiver.ConnectionReceiver
 import com.didahdx.smsgatewaysync.utilities.CHANNEL_ID
 import com.didahdx.smsgatewaysync.utilities.CHANNEL_NAME

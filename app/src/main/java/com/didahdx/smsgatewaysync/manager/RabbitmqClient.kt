@@ -47,6 +47,8 @@ class RabbitmqClient(val uiUpdater: UiUpdaterInterface?, private val email: Stri
                 PUBLISH_FROM_CLIENT, false, false,
                 false, null
             )
+
+
             consumeMessages()
             uiUpdater?.isConnected(true)
             uiUpdater?.updateStatusViewWith("$APP_NAME is running", GREEN_COLOR)
@@ -60,11 +62,10 @@ class RabbitmqClient(val uiUpdater: UiUpdaterInterface?, private val email: Stri
             Log.d("RabbitMQ", "$e  ${e.localizedMessage}")
             uiUpdater?.updateStatusViewWith("Error connecting to server", RED_COLOR)
             e.printStackTrace()
-            Log.d("RabbitMQ", "$e")
         } catch (e: Exception) {
+            e.printStackTrace()
             uiUpdater?.updateStatusViewWith("Error connecting to server", RED_COLOR)
             Log.d("RabbitMQ", "$e  ${e.localizedMessage}")
-            Log.d("RabbitMQ", "$e")
         }
     }
 

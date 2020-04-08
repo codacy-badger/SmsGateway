@@ -10,6 +10,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.didahdx.smsgatewaysync.utilities.*
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.auth.AuthResult
@@ -68,7 +69,6 @@ class LoginActivity : AppCompatActivity(), View.OnClickListener {
                     arrayOf(Manifest.permission.FOREGROUND_SERVICE),
                     PERMISSION_FOREGROUND_SERVICES_CODE
                 )
-
             }
         }
     }

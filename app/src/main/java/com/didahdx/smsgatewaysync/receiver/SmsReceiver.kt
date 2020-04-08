@@ -8,21 +8,18 @@ import android.telephony.SmsMessage
 import android.util.Log
 import android.widget.Toast
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.didahdx.smsgatewaysync.utilities.APP_NAME
-import com.didahdx.smsgatewaysync.utilities.SMS_RECEIVED_INTENT
-import com.didahdx.smsgatewaysync.utilities.SmsFilter
-import com.didahdx.smsgatewaysync.utilities.toast
-import com.didahdx.smsgatewaysync.utilities.BluetoothPrinter
+import com.didahdx.smsgatewaysync.utilities.*
 import com.mazenrashed.printooth.Printooth
 
 
 class SmsReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (SMS_RECEIVED_INTENT==intent.action) {
+        if (SMS_RECEIVED_INTENT == intent.action) {
             val extras = intent.extras
             if (extras != null) {
                 val sms = extras.get("pdus") as Array<*>
+                var messageBuilder=StringBuilder()
 
                 for (i in sms.indices) {
                     val format = extras.getString("format")
@@ -32,29 +29,34 @@ class SmsReceiver : BroadcastReceiver() {
                         SmsMessage.createFromPdu(sms[0] as ByteArray)
                     }
                     val phoneNumber = smsMessage.originatingAddress
-                    val messageText = smsMessage.messageBody.toString()
-                    val sms=smsMessage.displayMessageBody
+                    var messageText = smsMessage.messageBody.toString()
+                    val time = smsMessage.timestampMillis
+                    val sms = smsMessage.displayMessageBody.toString()
+                    messageBuilder.append(smsMessage.displayMessageBody.toString())
 
-                    val newIntent = Intent(SMS_RECEIVED_INTENT)
+
+                    val newIntent = Intent(SMS_LOCAL_BROADCAST_RECEIVER)
                     newIntent.putExtra("phoneNumber", phoneNumber)
                     newIntent.putExtra("messageText", messageText)
 
-                    Toast.makeText(context,"display $sms",Toast.LENGTH_LONG).show()
-                    Log.d("tpoiuytr"," $sms   $phoneNumber ")
-                    context?.toast(" $sms   $phoneNumber ")
-                    print(" $sms   $phoneNumber ")
-                    val printer= BluetoothPrinter()
-                    val smsFilter= SmsFilter()
-                    if (Printooth.hasPairedPrinter()){
-                        val printMessage=smsFilter.checkSmsType(messageText)
-                        printer.printText(printMessage,context, APP_NAME)
-                    }else{
-                        context?.toast("Printer not connected")
+                    Log.d("tpoiuytr", "   $phoneNumber sms $sms messageText $messageText ")
+
+
+                    val printer = BluetoothPrinter()
+                    val smsFilter = SmsFilter()
+                    if (Printooth.hasPairedPrinter()) {
+                        val printMessage = smsFilter.checkSmsType(messageText)
+                        printer.printText(printMessage, context, APP_NAME)
+                    } else {
+                        context?.toast("Printer not connected  ")
                     }
+
+                    println("$phoneNumber \n sms : \t $sms  \n  messageText :\t $messageText ")
                     LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
-
-
                 }
+
+
+//                context?.toast("message ${messageBuilder.toString()}")
             }
 
 
