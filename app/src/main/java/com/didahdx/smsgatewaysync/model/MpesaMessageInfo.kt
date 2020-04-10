@@ -1,6 +1,7 @@
 package com.didahdx.smsgatewaysync.model
 
 data class MpesaMessageInfo(
+    val id:Int,
     val messageBody: String,
     val time: String,
     val sender: String,
@@ -9,5 +10,6 @@ data class MpesaMessageInfo(
     val amount: String,
     val accountNumber: String,
     val name: String,
-    val dateTime:Long
+    val dateTime:Long,
+    val status:Boolean
 )

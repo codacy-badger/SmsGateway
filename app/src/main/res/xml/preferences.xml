@@ -71,6 +71,15 @@
             android:title="Auto Delete messages"
             app:iconSpaceReserved="false" />
 
+        <ListPreference
+            android:entries="@array/sim_cards"
+            android:entryValues="@array/sim_cards"
+            android:key="sim_card"
+            android:summary="Choose your default sim card to use for the application"
+            android:title="Set Sim card"
+            app:iconSpaceReserved="false"
+            />
+
 
     </PreferenceCategory>
 

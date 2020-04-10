@@ -30,6 +30,14 @@
         <item>Direct Mpesa</item>
     </string-array>
 
+    <string name="sim_card_one">Sim Card 1</string>
+    <string name="sim_card_two">Sim Card 2</string>
+
+    <string-array name="sim_cards">
+        <item>@string/sim_card_one</item>
+        <item>@string/sim_card_two</item>
+    </string-array>
+
     <string name="host_url">https://www.server.com</string>
     <string name="phone_number">Add a phone number to forward sms to with the forward icon</string>
     <string name="loading_messages">Loading Messages… %1$d </string>

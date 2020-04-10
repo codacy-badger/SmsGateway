@@ -22,7 +22,6 @@ import androidx.fragment.app.FragmentTransaction
 import androidx.preference.PreferenceManager
 import com.didahdx.smsgatewaysync.receiver.BatteryReceiver
 import com.didahdx.smsgatewaysync.receiver.ConnectionReceiver
-import com.didahdx.smsgatewaysync.receiver.SmsReceiver
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.ui.*
 import com.didahdx.smsgatewaysync.utilities.*
@@ -99,10 +98,7 @@ class MainActivity : AppCompatActivity(),
             BatteryReceiver(),
             IntentFilter(Intent.ACTION_BATTERY_CHANGED)
         )
-        //registering broadcast receiver for battery
-        baseContext.registerReceiver(
-            SmsReceiver(),IntentFilter(SMS_RECEIVED_INTENT)
-        )
+
 
         App.instance.setConnectionListener(this)
         //registering broadcast receiver for internet connection

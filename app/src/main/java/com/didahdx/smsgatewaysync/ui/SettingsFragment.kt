@@ -33,7 +33,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.preferences, rootKey)
 
-       onPreferenceClickListener=this
+        onPreferenceClickListener = this
         onSharedPreferenceChangeListener = this
     }
 
@@ -59,6 +59,11 @@ class SettingsFragment : PreferenceFragmentCompat(),
                     preferenceScreen.sharedPreferences.getString(PREF_PHONE_NUMBER, "")
             }
 
+            PREF_SIM_CARD -> {
+                val simCard: Preference? = findPreference<Preference>(key)
+                simCard?.summary = preferenceScreen.sharedPreferences.getString(PREF_SIM_CARD, "")
+            }
+
             PREF_CONNECT_PRINTER -> {
                 val connectPrinter = findPreference<Preference>(key)
                 val isPrinterConnected = preferenceScreen.sharedPreferences
@@ -71,33 +76,34 @@ class SettingsFragment : PreferenceFragmentCompat(),
                 }
             }
 
-         PREF_SERVICES_KEY->{
-             val connectPrinter = findPreference<Preference>(key)
-             val isServiceRunning = preferenceScreen.sharedPreferences
-                 .getBoolean(PREF_SERVICES_KEY, true)
+            PREF_SERVICES_KEY -> {
+                val connectPrinter = findPreference<Preference>(key)
+                val isServiceRunning = preferenceScreen.sharedPreferences
+                    .getBoolean(PREF_SERVICES_KEY, true)
 
-             if (isServiceRunning){
-                 startServices("$APP_NAME is Running")
-                 context?.toast("Services is running")
-             }else{
-                 context?.toast("Services is stopped")
-                 stopServices()
-             }
-         }
+                if (isServiceRunning) {
+                    startServices("$APP_NAME is Running")
+                    context?.toast("Services is running")
+                } else {
+                    context?.toast("Services is stopped")
+                    stopServices()
+                }
+            }
 
-            PREF_FEEDBACK->{
+            PREF_FEEDBACK -> {
 
             }
         }
     }
+
     override fun onPreferenceClick(preference: Preference?): Boolean {
         val feedBack =
             findPreference(PREF_FEEDBACK) as Preference?
-when(preference){
-    feedBack->{
+        when (preference) {
+            feedBack -> {
 
-    }
-}
+            }
+        }
 
         return false
     }
@@ -113,11 +119,15 @@ when(preference){
         hostUrl?.summary = preferenceScreen.sharedPreferences.getString(PREF_HOST_URL, "")
 
         val mpesaType = findPreference<Preference>(PREF_MPESA_TYPE)
-        mpesaType?.summary = preferenceScreen.sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
+        mpesaType?.summary =
+            preferenceScreen.sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
 
         val phoneNumber = findPreference<Preference>(PREF_PHONE_NUMBER)
         phoneNumber?.summary =
             preferenceScreen.sharedPreferences.getString(PREF_PHONE_NUMBER, "+2547xxxxxxxx")
+
+        val simCard=findPreference<Preference>(PREF_SIM_CARD)
+        simCard?.summary=preferenceScreen.sharedPreferences.getString(PREF_SIM_CARD,"Choose your default sim card to use for the application")
     }
 
     override fun onPause() {
@@ -168,6 +178,7 @@ when(preference){
                 .show()
         }
     }
+
     private fun startServices(input: String) {
         val serviceIntent = Intent(activity as Activity, AppServices::class.java)
         serviceIntent.putExtra(INPUT_EXTRAS, input)
@@ -223,8 +234,6 @@ when(preference){
     override fun printingOrderSentSuccessfully() {
         Toast.makeText(activity, "Order sent to printer", Toast.LENGTH_SHORT).show()
     }
-
-
 
 
     /***************************************************************************************************************************/

@@ -61,6 +61,7 @@ const val PREF_PHONE_NUMBER="forward_sms_number"
 const val PREF_ENABLE_FORWARD_SMS="enable_forward_sms"
 const val PREF_SERVICES_KEY="services_key"
 const val PREF_FEEDBACK="feedback"
+const val PREF_SIM_CARD="sim_card"
 
 /**
  *  user permission codes
@@ -74,3 +75,4 @@ const val PERMISSION_FOREGROUND_SERVICES_CODE=6066
 const val PERMISSION_WRITE_CONTACTS_CODE=7077
 const val PERMISSION_ACCESS_FINE_LOCATION_CODE=8088
 const val PERMISSION_ACCESS_COARSE_LOCATION_CODE=9099
+const val PERMISSION_READ_PHONE_STATE_CODE=2011

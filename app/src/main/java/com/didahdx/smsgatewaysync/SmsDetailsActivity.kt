@@ -6,8 +6,11 @@ import android.app.PendingIntent
 import android.content.*
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.telephony.SmsManager
+import android.telephony.SubscriptionInfo
+import android.telephony.SubscriptionManager
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
@@ -137,6 +140,10 @@ class SmsDetailsActivity : AppCompatActivity(), PrintingCallback {
 
     private fun forwardSms() {
         checkSendSmsPermission()
+        checkPhoneStatusPermission()
+        lateinit var smsManager:SmsManager
+        val defaultSim = sharedPrferences.getString(PREF_SIM_CARD, "")
+        val localSubscriptionManager = SubscriptionManager.from(this)
         val phoneNumber = sharedPrferences.getString(PREF_PHONE_NUMBER, "")
         val usePhoneNumber = sharedPrferences.getBoolean(PREF_ENABLE_FORWARD_SMS, false)
         if (usePhoneNumber && phoneNumber != null && !phoneNumber.isNullOrEmpty() && phoneNumber.indexOf(
@@ -150,7 +157,41 @@ class SmsDetailsActivity : AppCompatActivity(), PrintingCallback {
                 )
                 == PackageManager.PERMISSION_GRANTED
             ) {
-                val smsManager = SmsManager.getDefault()
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                    if (ActivityCompat.checkSelfPermission(
+                            this,
+                            Manifest.permission.READ_PHONE_STATE
+                        ) == PackageManager.PERMISSION_GRANTED
+                    ) {
+                        if (localSubscriptionManager.activeSubscriptionInfoCount > 1) {
+                            val localList: List<*> = localSubscriptionManager.activeSubscriptionInfoList
+                            val simInfo1 = localList[0] as SubscriptionInfo
+                            val simInfo2 = localList[1] as SubscriptionInfo
+
+                            smsManager = when(defaultSim){
+                                getString(R.string.sim_card_one)->{
+                                    //SendSMS From SIM One
+                                    SmsManager.getSmsManagerForSubscriptionId(simInfo1.subscriptionId)
+                                }
+                                getString(R.string.sim_card_two)->{
+                                    //SendSMS From SIM Two
+                                    SmsManager.getSmsManagerForSubscriptionId(simInfo2.subscriptionId)
+                                }
+                                else->{
+                                    SmsManager.getDefault()
+                                }
+                            }
+                        }else{
+                            smsManager = SmsManager.getDefault()
+                        }
+                    }else{
+                        smsManager = SmsManager.getDefault()
+                    }
+                }else{
+                    smsManager = SmsManager.getDefault()
+                }
+
 
                 val sentPI = PendingIntent.getBroadcast(
                     this, 0, Intent(SMS_SENT_INTENT), 0
@@ -289,7 +330,29 @@ class SmsDetailsActivity : AppCompatActivity(), PrintingCallback {
                     toast("Permission denied  to send sms")
                 }
             }
+            PERMISSION_READ_PHONE_STATE_CODE->{
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
+                }else{
+
+                }
+            }
+
+        }
+    }
+
+
+    fun checkPhoneStatusPermission(){
+        if (ActivityCompat.checkSelfPermission(
+               this,
+                Manifest.permission.READ_PHONE_STATE
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.READ_PHONE_STATE),
+                PERMISSION_READ_PHONE_STATE_CODE
+            )
         }
     }
 }

@@ -56,7 +56,6 @@
             android:windowSoftInputMode="adjustNothing">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -69,14 +68,6 @@
                 <action android:name="android.net.conn.CONNECTVITY_CHANGE" />
             </intent-filter>
         </receiver>
-        <receiver
-            android:name=".receiver.SmsReceiver"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
-            </intent-filter>
-        </receiver>
 
         <activity
             android:name=".MainActivity"
@@ -86,7 +77,7 @@
         <service
             android:name=".services.AppServices"
             android:exported="false" />
-        <service android:name=".services.LocationServices" />
+
     </application>
 
 </manifest>

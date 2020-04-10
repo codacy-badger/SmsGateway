@@ -3,15 +3,19 @@ package com.didahdx.smsgatewaysync
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.IntentFilter
 import android.os.Build
 import androidx.multidex.MultiDex
 import androidx.multidex.MultiDexApplication
 import com.didahdx.smsgatewaysync.receiver.ConnectionReceiver
+import com.didahdx.smsgatewaysync.receiver.SmsReceiver
 import com.didahdx.smsgatewaysync.utilities.CHANNEL_ID
 import com.didahdx.smsgatewaysync.utilities.CHANNEL_NAME
+import com.didahdx.smsgatewaysync.utilities.SMS_RECEIVED_INTENT
 import com.mazenrashed.printooth.Printooth
 
 class App : MultiDexApplication() {
+
 
      override fun attachBaseContext(context: Context) {
         super.attachBaseContext(context)
@@ -23,19 +27,21 @@ class App : MultiDexApplication() {
         instance=this
         createNotificationChannel()
         Printooth.init(this)
+
+        //registering broadcast receiver for battery
+        applicationContext.registerReceiver(
+            SmsReceiver(), IntentFilter(SMS_RECEIVED_INTENT)
+        )
     }
 
     fun setConnectionListener(listener: ConnectionReceiver.ConnectionReceiverListener){
         ConnectionReceiver.connectionReceiverListener=listener
     }
-    
-
 
     companion object{
         @get:Synchronized
         lateinit var instance:App
     }
-
 
 
     private fun createNotificationChannel() {

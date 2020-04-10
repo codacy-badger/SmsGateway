@@ -16,6 +16,7 @@ class SmsReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         if (SMS_RECEIVED_INTENT == intent.action) {
+            Log.d("sms_rece","action original ${intent.action}")
             val extras = intent.extras
             if (extras != null) {
                 val sms = extras.get("pdus") as Array<*>
@@ -38,6 +39,7 @@ class SmsReceiver : BroadcastReceiver() {
                     val newIntent = Intent(SMS_LOCAL_BROADCAST_RECEIVER)
                     newIntent.putExtra("phoneNumber", phoneNumber)
                     newIntent.putExtra("messageText", messageText)
+                    newIntent.putExtra("date",time)
 
                     Log.d("tpoiuytr", "   $phoneNumber sms $sms messageText $messageText ")
 
@@ -55,8 +57,6 @@ class SmsReceiver : BroadcastReceiver() {
                     LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
                 }
 
-
-//                context?.toast("message ${messageBuilder.toString()}")
             }
 
 

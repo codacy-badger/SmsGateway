@@ -6,16 +6,15 @@ import android.app.PendingIntent
 import android.content.*
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.telephony.SmsManager
-import android.telephony.SmsMessage
+import android.telephony.SubscriptionInfo
+import android.telephony.SubscriptionManager
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.checkSelfPermission
@@ -36,7 +35,6 @@ import com.didahdx.smsgatewaysync.services.LocationGpsService
 import com.didahdx.smsgatewaysync.utilities.*
 import com.didahdx.smsgatewaysync.viewmodels.HomeViewModel
 import com.google.firebase.auth.FirebaseAuth
-import com.mazenrashed.printooth.Printooth
 import kotlinx.android.synthetic.main.fragment_home.*
 import kotlinx.android.synthetic.main.fragment_home.view.*
 import kotlinx.coroutines.CoroutineScope
@@ -88,6 +86,10 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
             }
         }
 
+        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
+            mSmsReceiver,
+            IntentFilter(SMS_LOCAL_BROADCAST_RECEIVER)
+        )
     }
 
     override fun onCreateView(
@@ -102,12 +104,8 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
             IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
         )
 
-        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
-            mSmsReceiver,
-            IntentFilter(SMS_LOCAL_BROADCAST_RECEIVER)
-        )
-
         checkLocationPermission()
+        checkPhoneStatusPermission()
         val intent = Intent(activity as Activity, LocationGpsService::class.java)
         context?.startService(intent)
 
@@ -122,11 +120,18 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
             text_view_status?.text = "$APP_NAME is stopped"
             text_view_status?.backgroundRed()
         }
-        refresh_layout_home?.setOnRefreshListener { backgroundCoroutineCall() }
 
-        backgroundCoroutineCall()
+
+
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_home, container, false)
+    }
+
+
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+        refresh_layout_home?.setOnRefreshListener { backgroundCoroutineCall() }
+        backgroundCoroutineCall()
     }
 
     //appServices for showing notification bar
@@ -147,78 +152,78 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
     private val mSmsReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent?) {
             val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
-            if (intent != null && isServiceRunning) {
+            if (intent != null && isServiceRunning && SMS_LOCAL_BROADCAST_RECEIVER == intent.action) {
+                Log.d("sms_rece", "action local ${intent.action}")
+                if (intent.extras != null) {
+                    val phoneNumber = intent.extras!!.getString("phoneNumber")
+                    val dateTimeStamp = intent.extras!!.getLong("date")
+                    val messageText = intent.extras!!.getString("messageText")
+                    val date = sdf.format(Date(dateTimeStamp)).toString()
 
-                    val date = ""
-                    val time = 12L
+                    context?.toast(" local receiver \n $phoneNumber $messageText ")
 
-                    if (intent.extras != null) {
-                        val phoneNumber = intent.extras!!.getString("phoneNumber")
-                        val dateString = intent.extras!!.getString("dateString")
-                        val messageText = intent.extras!!.getString("messageText")
-//                        val date = sdf.format(Date(time.toLong())).toString()
+                    CoroutineScope(IO).launch {
+                        val obj: JSONObject? = JSONObject()
+                        val smsFilter = messageText?.let { SmsFilter(it) }
+                        obj?.put("message_body", messageText)
+                        obj?.put("receipt_date", date)
+                        obj?.put("sender_id", phoneNumber)
+                        obj?.put("longitude", userLongitude)
+                        obj?.put("latitude", userLatitude)
+                        obj?.put("client_sender", user?.email!!)
+                        obj?.put("client_gateway_type", "android_phone")
 
-                        context?.toast(" local receiver \n $phoneNumber $messageText ")
-
-                        CoroutineScope(IO).launch {
-                            val obj: JSONObject? = JSONObject()
-                            val smsFilter = messageText?.let { SmsFilter(it) }
-                            obj?.put("message_body", messageText)
-                            obj?.put("receipt_date", date)
-                            obj?.put("sender_id", phoneNumber)
-                            obj?.put("longitude", userLongitude)
-                            obj?.put("latitude", userLatitude)
-                            obj?.put("client_sender", user?.email!!)
-                            obj?.put("client_gateway_type", "android_phone")
-
-                            if (phoneNumber != null && phoneNumber == "MPESA") {
-                                obj?.put("message_type", "mpesa")
-                                obj?.put("voucher_number", smsFilter?.mpesaId)
-                                obj?.put("transaction_type", smsFilter?.mpesaType)
-                                obj?.put("phone_number", smsFilter?.phoneNumber)
-                                obj?.put("name", smsFilter?.name)
-                                if (smsFilter?.time != NOT_AVAILABLE && smsFilter?.date != NOT_AVAILABLE) {
-                                    obj?.put(
-                                        "transaction_date",
-                                        "${smsFilter?.date} ${smsFilter?.time}"
-                                    )
-                                } else if (smsFilter?.date != NOT_AVAILABLE) {
-                                    obj?.put("transaction_date", smsFilter?.date)
-                                } else if (smsFilter?.time !=
-                                    NOT_AVAILABLE
-                                ) {
-                                    obj?.put("transaction_date", smsFilter?.time)
-                                }
-                                obj?.put("amount", smsFilter?.amount)
-
-                            } else {
-                                obj?.put("message_type", "recieved_sms")
-
+                        if (phoneNumber != null && phoneNumber == "MPESA") {
+                            obj?.put("message_type", "mpesa")
+                            obj?.put("voucher_number", smsFilter?.mpesaId)
+                            obj?.put("transaction_type", smsFilter?.mpesaType)
+                            obj?.put("phone_number", smsFilter?.phoneNumber)
+                            obj?.put("name", smsFilter?.name)
+                            if (smsFilter?.time != NOT_AVAILABLE && smsFilter?.date != NOT_AVAILABLE) {
+                                obj?.put(
+                                    "transaction_date",
+                                    "${smsFilter?.date} ${smsFilter?.time}"
+                                )
+                            } else if (smsFilter?.date != NOT_AVAILABLE) {
+                                obj?.put("transaction_date", smsFilter?.date)
+                            } else if (smsFilter?.time !=
+                                NOT_AVAILABLE
+                            ) {
+                                obj?.put("transaction_date", smsFilter?.time)
                             }
+                            obj?.put("amount", smsFilter?.amount)
+
+                        } else {
+                            obj?.put("message_type", "recieved_sms")
+
+                        }
 
 
-                            obj?.toString()?.let {
-                                rabbitmqClient.publishMessage(it)
+                        obj?.toString()?.let {
+                            rabbitmqClient.publishMessage(it)
 
-                                launch {
-                                    var message2: IncomingMessages? = null
-                                    if (messageText != null) {
-                                        message2 = IncomingMessages(
-                                            messageText, time,
-                                            phoneNumber!!, true
-                                        )
-                                    } else {
-                                        message2 = null
+                            launch {
+                                var message2: IncomingMessages? = null
+                                if (messageText != null) {
+                                    message2 = IncomingMessages(
+                                        messageText, dateTimeStamp,
+                                        phoneNumber!!, true
+                                    )
+                                } else {
+                                    message2 = null
+                                }
+
+                                context.let { tex ->
+                                    if (message2 != null) {
+                                        MessagesDatabase(tex).getIncomingMessageDao()
+                                            .addMessage(message2)
                                     }
-
-                                    context.let { tex ->
-                                        if (message2 != null) {
-                                            MessagesDatabase(tex).getIncomingMessageDao()
-                                                .addMessage(message2)
-                                        }
-                                    }
-                                } } }
-                    } }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -300,79 +305,60 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
 
     private suspend fun getDatabaseMessages() {
 
-        val messageArrayList = ArrayList<MpesaMessageInfo>()
-
-        val cursor = activity?.contentResolver?.query(
-            Uri.parse("content://sms/inbox"),
-            null,
-            null,
-            null,
-            null
-        )
-
+        var messageArrayList = ArrayList<MpesaMessageInfo>()
+        var incomingMessages = ArrayList<IncomingMessages>()
         var messageCount = 0
-
-        if (cursor != null && cursor.moveToNext()) {
-            val nameId = cursor.getColumnIndex("address")
-            val messageId = cursor.getColumnIndex("body")
-            val dateId = cursor.getColumnIndex("date")
-            val mpesaType = " "
+        context?.let {
+            incomingMessages.addAll(MessagesDatabase(it).getIncomingMessageDao().getAllMessages())
+        }
+        val mpesaType = " "
             sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
 
 
-            Log.d(TAG, "mpesa sms $mpesaType ")
-
-            do {
-                val dateString = cursor.getString(dateId)
-
-//                if (cursor.getString(nameId) == "MPESA") {
-
-                var mpesaId: String =
-                    cursor.getString(messageId).split("\\s".toRegex()).first().trim()
-                if (!MPESA_ID_PATTERN.toRegex().matches(mpesaId)) {
-                    mpesaId = NOT_AVAILABLE
-                }
-
-                var smsFilter = SmsFilter(cursor.getString(messageId))
-
+        if (incomingMessages.size > 0) {
+            for (i in incomingMessages.indices) {
+                val smsFilter = SmsFilter(incomingMessages[i].messageBody)
 
                 when (mpesaType) {
                     PAY_BILL -> {
                         if (smsFilter.mpesaType == PAY_BILL) {
                             messageArrayList.add(
                                 MpesaMessageInfo(
-                                    cursor.getString(messageId),
-                                    sdf.format(Date(dateString.toLong())).toString(),
-                                    cursor.getString(nameId),
-                                    mpesaId,
-                                    "",
+                                    incomingMessages[i].id,
+                                    incomingMessages[i].messageBody,
+                                    sdf.format(Date(incomingMessages[i].date)).toString(),
+                                    incomingMessages[i].sender,
+                                    smsFilter.mpesaId,
+                                    smsFilter.phoneNumber,
                                     smsFilter.amount,
-                                    "",
+                                    smsFilter.accountNumber,
                                     smsFilter.name,
-                                    dateString.toLong()
+                                    incomingMessages[i].date,
+                                    incomingMessages[i].status
                                 )
                             )
-                            UpdateCounter(messageCount)
-                            messageCount++
+                            UpdateCounter(i)
                         }
                     }
+
                     DIRECT_MPESA -> {
                         if (smsFilter.mpesaType == DIRECT_MPESA) {
                             messageArrayList.add(
                                 MpesaMessageInfo(
-                                    cursor.getString(messageId),
-                                    sdf.format(Date(dateString.toLong())).toString(),
-                                    cursor.getString(nameId),
-                                    mpesaId,
-                                    "",
+                                    incomingMessages[i].id,
+                                    incomingMessages[i].messageBody,
+                                    sdf.format(Date(incomingMessages[i].date)).toString(),
+                                    incomingMessages[i].sender,
+                                    smsFilter.mpesaId,
+                                    smsFilter.phoneNumber,
                                     smsFilter.amount,
-                                    "",
+                                    smsFilter.accountNumber,
                                     smsFilter.name,
-                                    dateString.toLong()
+                                    incomingMessages[i].date,
+                                    incomingMessages[i].status
                                 )
                             )
-                            UpdateCounter(messageCount)
-                            messageCount++
+                            UpdateCounter(i)
                         }
                     }
 
@@ -380,44 +366,44 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                         if (smsFilter.mpesaType == BUY_GOODS_AND_SERVICES) {
                             messageArrayList.add(
                                 MpesaMessageInfo(
-                                    cursor.getString(messageId),
-                                    sdf.format(Date(dateString.toLong())).toString(),
-                                    cursor.getString(nameId),
-                                    mpesaId,
-                                    "",
+                                    incomingMessages[i].id,
+                                    incomingMessages[i].messageBody,
+                                    sdf.format(Date(incomingMessages[i].date)).toString(),
+                                    incomingMessages[i].sender,
+                                    smsFilter.mpesaId,
+                                    smsFilter.phoneNumber,
                                     smsFilter.amount,
-                                    "",
+                                    smsFilter.accountNumber,
                                     smsFilter.name,
-                                    dateString.toLong()
+                                    incomingMessages[i].date,
+                                    incomingMessages[i].status
                                 )
                             )
-                            UpdateCounter(messageCount)
-                            messageCount++
+                            UpdateCounter(i)
                         }
                     }
-
                     else -> {
+
                         messageArrayList.add(
                             MpesaMessageInfo(
-                                cursor.getString(messageId),
-                                sdf.format(Date(dateString.toLong())).toString(),
-                                cursor.getString(nameId),
-                                mpesaId,
-                                "",
+                                incomingMessages[i].id,
+                                incomingMessages[i].messageBody,
+                                sdf.format(Date(incomingMessages[i].date)).toString(),
+                                incomingMessages[i].sender,
+                                smsFilter.mpesaId,
+                                smsFilter.phoneNumber,
                                 smsFilter.amount,
-                                "",
+                                smsFilter.accountNumber,
                                 smsFilter.name,
-                                dateString.toLong()
+                                incomingMessages[i].date,
+                                incomingMessages[i].status
                             )
                         )
-                        UpdateCounter(messageCount)
-                        messageCount++
+                        UpdateCounter(i)
                     }
                 }
-//                }
-            } while (cursor.moveToNext())
 
-            cursor.close()
+            }
         }
 
         passMessagesToMain(messageArrayList)
@@ -524,6 +510,9 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
     override fun onDestroy() {
         super.onDestroy()
         activity?.unregisterReceiver(mConnectionReceiver)
+        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(
+            mSmsReceiver
+        )
     }
 
     //used to check if the app has connected
@@ -573,7 +562,9 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
     //sending out sms
     override fun sendSms(phoneNumber: String, message: String) {
         CoroutineScope(Main).launch {
-
+            lateinit var smsManager:SmsManager
+            val defaultSim = sharedPreferences.getString(PREF_SIM_CARD, "")
+            val localSubscriptionManager = SubscriptionManager.from(activity as Activity)
             if (context?.let {
                     ActivityCompat.checkSelfPermission(
                         it,
@@ -582,7 +573,40 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                 }
                 == PackageManager.PERMISSION_GRANTED
             ) {
-                val smsManager = SmsManager.getDefault()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                    if (ActivityCompat.checkSelfPermission(
+                            activity as Activity,
+                            Manifest.permission.READ_PHONE_STATE
+                        ) == PackageManager.PERMISSION_GRANTED
+                    ) {
+                        if (localSubscriptionManager.activeSubscriptionInfoCount > 1) {
+                            val localList: List<*> = localSubscriptionManager.activeSubscriptionInfoList
+                            val simInfo1 = localList[0] as SubscriptionInfo
+                            val simInfo2 = localList[1] as SubscriptionInfo
+
+                            smsManager = when(defaultSim){
+                                getString(R.string.sim_card_one)->{
+                                    //SendSMS From SIM One
+                                    SmsManager.getSmsManagerForSubscriptionId(simInfo1.subscriptionId)
+                                }
+                                getString(R.string.sim_card_two)->{
+                                    //SendSMS From SIM Two
+                                    SmsManager.getSmsManagerForSubscriptionId(simInfo2.subscriptionId)
+                                }
+                                else->{
+                                    SmsManager.getDefault()
+                                }
+                            }
+                        }else{
+                            smsManager = SmsManager.getDefault()
+                        }
+                    }else{
+                        smsManager = SmsManager.getDefault()
+                    }
+                }else{
+                    smsManager = SmsManager.getDefault()
+                }
+
 
                 val sentPI = PendingIntent.getBroadcast(
                     context, 0, Intent(SMS_SENT_INTENT), 0
@@ -654,6 +678,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
     }
 
 
+
     private fun checkLocationPermission() {
         if (checkSelfPermission(
                 activity as Activity,
@@ -697,6 +722,20 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
             )
         }
 
+    }
+
+    fun checkPhoneStatusPermission(){
+        if (ActivityCompat.checkSelfPermission(
+                activity as Activity,
+                Manifest.permission.READ_PHONE_STATE
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                activity as Activity,
+                arrayOf(Manifest.permission.READ_PHONE_STATE),
+                PERMISSION_READ_PHONE_STATE_CODE
+            )
+        }
     }
 
 
