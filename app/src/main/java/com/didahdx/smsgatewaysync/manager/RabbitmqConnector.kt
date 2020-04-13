@@ -18,7 +18,8 @@ object RabbitmqConnector {
         connectionFactory.newConnection()
     }
 
-   val channel:Channel by lazy{
-       connection.createChannel()
-   }
+
+    val channel: Channel by lazy {
+        connection.createChannel()
+    }
 }

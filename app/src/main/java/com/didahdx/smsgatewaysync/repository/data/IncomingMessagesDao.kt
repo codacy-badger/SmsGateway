@@ -1,5 +1,6 @@
 package com.didahdx.smsgatewaysync.repository.data
 
+import androidx.lifecycle.LiveData
 import androidx.room.*
 
 @Dao
@@ -18,6 +19,6 @@ interface IncomingMessagesDao {
  suspend fun getAllMessages():List<IncomingMessages>
 
  @Query("SELECT * FROM incomingMessages WHERE date=:time")
- suspend fun getMessage(time:Long):List<IncomingMessages>
+  suspend fun getMessage(time:Long):List<IncomingMessages>
 
  }

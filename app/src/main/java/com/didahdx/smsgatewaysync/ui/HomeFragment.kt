@@ -27,6 +27,7 @@ import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.SmsDetailsActivity
 import com.didahdx.smsgatewaysync.adapters.MessageAdapter
 import com.didahdx.smsgatewaysync.manager.RabbitmqClient
+import com.didahdx.smsgatewaysync.model.MessageInfo
 import com.didahdx.smsgatewaysync.model.MpesaMessageInfo
 import com.didahdx.smsgatewaysync.repository.data.IncomingMessages
 import com.didahdx.smsgatewaysync.repository.data.MessagesDatabase
@@ -62,12 +63,16 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
     var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT)
     private lateinit var sharedPreferences: SharedPreferences
     val TAG = HomeFragment::class.java.simpleName
+    @Volatile
     lateinit var rabbitmqClient: RabbitmqClient
     private var locationBroadcastReceiver: BroadcastReceiver? = null
     var userLongitude: String? = " "
     var userLatitude: String? = " "
     val user = FirebaseAuth.getInstance().currentUser
     var UiUpdaterInterface: UiUpdaterInterface? = null
+    var outgoingMessages: Queue<MessageInfo> = LinkedList()
+    var messageCount = 0
+    var lastMessageSentTime = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,7 +86,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
             sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
             val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
             if (!isConnected && isServiceRunning) {
-                rabbitmqClient.connection()
+                rabbitmqClient.connection(activity as Activity)
 
             }
         }
@@ -120,7 +125,6 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
             text_view_status?.text = "$APP_NAME is stopped"
             text_view_status?.backgroundRed()
         }
-
 
 
         // Inflate the layout for this fragment
@@ -216,7 +220,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                                 context.let { tex ->
                                     if (message2 != null) {
                                         MessagesDatabase(tex).getIncomingMessageDao()
-                                            .addMessage(message2)
+                                            .updateMessage(message2)
                                     }
                                 }
                             }
@@ -297,7 +301,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
 
 
     //updates the counter on the screen
-    private suspend fun UpdateCounter(messageCount: Int) {
+    private suspend fun updateCounter(messageCount: Int) {
         withContext(Main) {
             text_loading?.text = getString(R.string.loading_messages, messageCount)
         }
@@ -307,12 +311,11 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
 
         var messageArrayList = ArrayList<MpesaMessageInfo>()
         var incomingMessages = ArrayList<IncomingMessages>()
-        var messageCount = 0
         context?.let {
+
             incomingMessages.addAll(MessagesDatabase(it).getIncomingMessageDao().getAllMessages())
         }
-        val mpesaType = " "
-            sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
+        val mpesaType = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
 
 
         if (incomingMessages.size > 0) {
@@ -337,7 +340,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                                     incomingMessages[i].status
                                 )
                             )
-                            UpdateCounter(i)
+                            updateCounter(i)
                         }
                     }
 
@@ -358,7 +361,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                                     incomingMessages[i].status
                                 )
                             )
-                            UpdateCounter(i)
+                            updateCounter(i)
                         }
                     }
 
@@ -379,7 +382,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                                     incomingMessages[i].status
                                 )
                             )
-                            UpdateCounter(i)
+                            updateCounter(i)
                         }
                     }
                     else -> {
@@ -399,7 +402,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                                 incomingMessages[i].status
                             )
                         )
-                        UpdateCounter(i)
+                        updateCounter(i)
                     }
                 }
 
@@ -434,27 +437,13 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                 CoroutineScope(Main).launch {
                     context?.toast("${messagesList2?.size}")
 
-                    context?.toast(
-                        "count sms ${messagesList2?.size}  ${messagesList2[i]?.messageBody}  ${sdf.format(
-                            Date(messagesList2[i]?.date)
-                        )}  ${messagesList2[i]?.date} ${messagesList2[i]?.status} " +
-                                " mlist  ${messagesList?.size} $date  ${sdf.format(
-                                    Date(date)
-                                )}"
-                    )
-
-
                     if (!messagesList.isNullOrEmpty() && messagesList[0].status) {
-                        smsStatus = if (messagesList[0].status) {
+                        smsStatus = if (messageInfo.status) {
                             "Uploaded"
                         } else {
                             "pending"
                         }
                     }
-
-
-//                    context?.toast("${messagesList.size}")
-//                    context?.toast(smsStatus)
                     val intent = Intent(context, SmsDetailsActivity::class.java)
                     intent.putExtra(SMS_BODY_EXTRA, messageInfo.messageBody)
                     intent.putExtra(SMS_DATE_EXTRA, messageInfo.time)
@@ -562,7 +551,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
     //sending out sms
     override fun sendSms(phoneNumber: String, message: String) {
         CoroutineScope(Main).launch {
-            lateinit var smsManager:SmsManager
+            lateinit var smsManager: SmsManager
             val defaultSim = sharedPreferences.getString(PREF_SIM_CARD, "")
             val localSubscriptionManager = SubscriptionManager.from(activity as Activity)
             if (context?.let {
@@ -573,6 +562,9 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                 }
                 == PackageManager.PERMISSION_GRANTED
             ) {
+
+
+                context?.toast("called $phoneNumber")
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
                     if (ActivityCompat.checkSelfPermission(
                             activity as Activity,
@@ -580,30 +572,31 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                         ) == PackageManager.PERMISSION_GRANTED
                     ) {
                         if (localSubscriptionManager.activeSubscriptionInfoCount > 1) {
-                            val localList: List<*> = localSubscriptionManager.activeSubscriptionInfoList
+                            val localList: List<*> =
+                                localSubscriptionManager.activeSubscriptionInfoList
                             val simInfo1 = localList[0] as SubscriptionInfo
                             val simInfo2 = localList[1] as SubscriptionInfo
 
-                            smsManager = when(defaultSim){
-                                getString(R.string.sim_card_one)->{
+                            smsManager = when (defaultSim) {
+                                getString(R.string.sim_card_one) -> {
                                     //SendSMS From SIM One
                                     SmsManager.getSmsManagerForSubscriptionId(simInfo1.subscriptionId)
                                 }
-                                getString(R.string.sim_card_two)->{
+                                getString(R.string.sim_card_two) -> {
                                     //SendSMS From SIM Two
                                     SmsManager.getSmsManagerForSubscriptionId(simInfo2.subscriptionId)
                                 }
-                                else->{
+                                else -> {
                                     SmsManager.getDefault()
                                 }
                             }
-                        }else{
+                        } else {
                             smsManager = SmsManager.getDefault()
                         }
-                    }else{
+                    } else {
                         smsManager = SmsManager.getDefault()
                     }
-                }else{
+                } else {
                     smsManager = SmsManager.getDefault()
                 }
 
@@ -640,19 +633,42 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                     }
                 }, IntentFilter(SMS_DELIVERED_INTENT))
 
-                val parts = smsManager.divideMessage(message)
 
                 val arraySendInt = java.util.ArrayList<PendingIntent>()
                 arraySendInt.add(sentPI)
                 val arrayDelivery = java.util.ArrayList<PendingIntent>()
                 arrayDelivery.add(deliveredPI)
-                smsManager.sendMultipartTextMessage(
-                    phoneNumber,
-                    null,
-                    parts,
-                    arraySendInt,
-                    arrayDelivery
-                )
+
+                outgoingMessages.add(MessageInfo(phoneNumber, message))
+
+                synchronized(outgoingMessages) {
+                    for (`object` in outgoingMessages) {
+                        val element = `object` as MessageInfo
+                        val parts = smsManager.divideMessage(element.messageBody)
+
+                        CoroutineScope(IO).launch {
+                            try {
+                                Thread.sleep(30000)
+                            } catch (e: InterruptedException) {
+                                e.printStackTrace()
+                            }
+                        }
+
+                        smsManager.sendMultipartTextMessage(
+                            element.phoneNumber,
+                            null,
+                            parts,
+                            arraySendInt,
+                            arrayDelivery
+                        )
+                        messageCount++
+                        outgoingMessages.remove()
+                        Log.d(
+                            "teretg",
+                            "message count $messageCount queue size ${outgoingMessages.size}"
+                        )
+                    }
+                }
             }
         }
     }
@@ -678,7 +694,6 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
     }
 
 
-
     private fun checkLocationPermission() {
         if (checkSelfPermission(
                 activity as Activity,
@@ -686,18 +701,25 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
             ) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(
                 activity as Activity,
                 Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                activity as Activity,
+                Manifest.permission.READ_SMS
+            )
+            != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                activity as Activity,
+                Manifest.permission.READ_PHONE_STATE
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             ActivityCompat.requestPermissions(
                 activity as Activity,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.READ_SMS,Manifest.permission.READ_PHONE_STATE
+                ),
                 PERMISSION_ACCESS_FINE_LOCATION_CODE
             )
-            ActivityCompat.requestPermissions(
-                activity as Activity,
-                arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION),
-                PERMISSION_ACCESS_COARSE_LOCATION_CODE
-            )
+
         }
         if (ActivityCompat.checkSelfPermission(activity as Activity, Manifest.permission.READ_SMS)
             != PackageManager.PERMISSION_GRANTED
@@ -724,7 +746,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
 
     }
 
-    fun checkPhoneStatusPermission(){
+    private fun checkPhoneStatusPermission() {
         if (ActivityCompat.checkSelfPermission(
                 activity as Activity,
                 Manifest.permission.READ_PHONE_STATE

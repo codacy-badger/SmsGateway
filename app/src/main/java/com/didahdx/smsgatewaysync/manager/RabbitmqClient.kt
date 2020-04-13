@@ -1,5 +1,6 @@
 package com.didahdx.smsgatewaysync.manager
 
+import android.content.Context
 import android.util.Log
 import com.didahdx.smsgatewaysync.ui.UiUpdaterInterface
 import com.didahdx.smsgatewaysync.utilities.*
@@ -15,23 +16,24 @@ class RabbitmqClient(val uiUpdater: UiUpdaterInterface?, private val email: Stri
     private val connectionFactory = ConnectionFactory()
 
     private val queue = LinkedBlockingDeque<String>()
-    private lateinit var connection: Connection
+    @Volatile private lateinit var connection: Connection
     var channel: Channel? = null
 
+    var count=0
 
-    fun connection() {
+    fun connection(context: Context) {
 
         try {
-
-
-            connection = RabbitmqConnector.connection
+            connection =RabbitmqConnector.connection
             channel = RabbitmqConnector.channel
-
+            count += 1
             Log.d(
                 "connectorasd",
                 "connection  ${RabbitmqConnector.connection.hashCode()}   ${connection.hashCode()} " +
-                        " channel ${RabbitmqConnector.channel.hashCode()}    ${channel.hashCode()}"
+                        " channel ${RabbitmqConnector.channel.hashCode()}    ${channel.hashCode()}  count $count"
             )
+
+            count += 1
 
             channel?.queueDeclare(
                 email, false, false,
@@ -94,26 +96,29 @@ class RabbitmqClient(val uiUpdater: UiUpdaterInterface?, private val email: Stri
             { consumerTag: String?, delivery: Delivery ->
                 val m = String(delivery.body, StandardCharsets.UTF_8)
                 println("I have received a message  $m")
-                var phoneNumber=""
-                var message=""
-                uiUpdater?.toasterMessage(m)
+                var phoneNumber = ""
+                var message = ""
+//                uiUpdater?.toasterMessage(m)
                 val baseJsonResponse: JSONObject = JSONObject(m)
 
                 when (baseJsonResponse.getString("message_type")) {
                     "send_sms" -> {
                         phoneNumber = baseJsonResponse.getString("phone_number")
-                         message = baseJsonResponse.getString("message_body")
+                        message = baseJsonResponse.getString("message_body")
                     }
                 }
                 uiUpdater?.toasterMessage("$phoneNumber $message")
                 uiUpdater?.sendSms(phoneNumber, message)
+                println("$phoneNumber  $message")
+                Log.d("teretg", "$phoneNumber  $message")
 
             }
-        ) { consumerTag: String? -> }
+        )
+
+        { consumerTag: String? -> }
 
         consumeNotification()
     }
-
 
 
     private fun consumeNotification() {

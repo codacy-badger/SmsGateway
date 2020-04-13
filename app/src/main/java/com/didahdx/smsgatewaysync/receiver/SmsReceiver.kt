@@ -8,8 +8,13 @@ import android.telephony.SmsMessage
 import android.util.Log
 import android.widget.Toast
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.didahdx.smsgatewaysync.repository.data.IncomingMessages
+import com.didahdx.smsgatewaysync.repository.data.MessagesDatabase
 import com.didahdx.smsgatewaysync.utilities.*
 import com.mazenrashed.printooth.Printooth
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.launch
 
 
 class SmsReceiver : BroadcastReceiver() {
@@ -43,6 +48,18 @@ class SmsReceiver : BroadcastReceiver() {
 
                     Log.d("tpoiuytr", "   $phoneNumber sms $sms messageText $messageText ")
 
+                    CoroutineScope(IO).launch{
+                        var message2: IncomingMessages?
+                        message2 = IncomingMessages(
+                            messageText, time,
+                            phoneNumber!!, true
+                        )
+
+                        context.let { tex ->
+                            MessagesDatabase(tex).getIncomingMessageDao()
+                                .addMessage(message2)
+                        }
+                    }
 
                     val printer = BluetoothPrinter()
                     val smsFilter = SmsFilter()
