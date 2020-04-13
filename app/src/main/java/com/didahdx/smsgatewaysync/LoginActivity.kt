@@ -81,12 +81,13 @@ class LoginActivity : AppCompatActivity(), View.OnClickListener {
         } else if (v == button_login) {
 
             if (validateEmail() && validatePassword()) {
-                checkSmsPermission()
-                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_SMS)
-                    == PackageManager.PERMISSION_GRANTED
-                ) {
-                    loginUser()
-                }
+                loginUser()
+//                checkSmsPermission()
+//                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_SMS)
+//                    == PackageManager.PERMISSION_GRANTED
+//                ) {
+//
+//                }
             }
 
         }

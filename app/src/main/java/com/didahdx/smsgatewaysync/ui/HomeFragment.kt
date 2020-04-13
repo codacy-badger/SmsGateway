@@ -15,6 +15,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.checkSelfPermission
@@ -38,12 +39,9 @@ import com.didahdx.smsgatewaysync.viewmodels.HomeViewModel
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.fragment_home.*
 import kotlinx.android.synthetic.main.fragment_home.view.*
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
@@ -63,6 +61,10 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
     var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT)
     private lateinit var sharedPreferences: SharedPreferences
     val TAG = HomeFragment::class.java.simpleName
+    private val appPermissions= arrayOf(  Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.READ_SMS,
+         Manifest.permission.READ_PHONE_STATE)
+
     @Volatile
     lateinit var rabbitmqClient: RabbitmqClient
     private var locationBroadcastReceiver: BroadcastReceiver? = null
@@ -109,8 +111,10 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
             IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
         )
 
-        checkLocationPermission()
-        checkPhoneStatusPermission()
+        if (checkAndRequest()){
+            checkLocationPermission()
+            checkPhoneStatusPermission()
+        }
         val intent = Intent(activity as Activity, LocationGpsService::class.java)
         context?.startService(intent)
 
@@ -643,16 +647,16 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
 
                 synchronized(outgoingMessages) {
                     for (`object` in outgoingMessages) {
-                        val element = `object` as MessageInfo
-                        val parts = smsManager.divideMessage(element.messageBody)
 
                         CoroutineScope(IO).launch {
                             try {
-                                Thread.sleep(30000)
+                                delay(30000)
                             } catch (e: InterruptedException) {
                                 e.printStackTrace()
                             }
                         }
+                        val element = `object` as MessageInfo
+                        val parts = smsManager.divideMessage(element.messageBody)
 
                         smsManager.sendMultipartTextMessage(
                             element.phoneNumber,
@@ -701,22 +705,15 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
             ) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(
                 activity as Activity,
                 Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                activity as Activity,
-                Manifest.permission.READ_SMS
-            )
-            != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+            ) != PackageManager.PERMISSION_GRANTED &&  ActivityCompat.checkSelfPermission(
                 activity as Activity,
                 Manifest.permission.READ_PHONE_STATE
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             ActivityCompat.requestPermissions(
                 activity as Activity,
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION,
-                    Manifest.permission.READ_SMS,Manifest.permission.READ_PHONE_STATE
-                ),
+                appPermissions
+                ,
                 PERMISSION_ACCESS_FINE_LOCATION_CODE
             )
 
@@ -758,7 +755,31 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                 PERMISSION_READ_PHONE_STATE_CODE
             )
         }
+
+
     }
 
 
+    public fun checkAndRequest():Boolean{
+
+        var listPermissionsNeeded= ArrayList<String>()
+
+        for(perm in appPermissions){
+
+            if(checkSelfPermission( activity as Activity,perm) !=PackageManager.PERMISSION_GRANTED){
+                listPermissionsNeeded.add(perm);
+            }
+
+        }
+
+        if(!listPermissionsNeeded.isEmpty()){
+            ActivityCompat.requestPermissions(
+                activity as Activity,
+                listPermissionsNeeded.toArray(arrayOf(listPermissionsNeeded.size.toString()))
+                ,PERMISSION_ACCESS_FINE_LOCATION_CODE)
+            return false;
+        }
+
+        return true;
+    }
 }

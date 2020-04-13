@@ -66,6 +66,7 @@ const val PREF_SIM_CARD="sim_card"
 /**
  *  user permission codes
  */
+const val PERMISSION_REQUEST_ALL_CODE=1011
 const val PERMISSION_RECEIVE_SMS_CODE = 1011
 const val PERMISSION_READ_SMS_CODE = 2022
 const val PERMISSION_SEND_SMS_CODE = 3033
