@@ -6,8 +6,10 @@ import android.app.PendingIntent
 import android.content.*
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.telephony.SmsManager
 import android.telephony.SubscriptionInfo
 import android.telephony.SubscriptionManager
@@ -17,6 +19,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
+import androidx.core.app.ActivityCompat.requestPermissions
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.fragment.app.Fragment
@@ -111,10 +114,6 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
             IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
         )
 
-        if (checkAndRequest()){
-            checkLocationPermission()
-            checkPhoneStatusPermission()
-        }
         val intent = Intent(activity as Activity, LocationGpsService::class.java)
         context?.startService(intent)
 
@@ -138,6 +137,9 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
+        if (checkAndRequestPermissions()){
+
+        }
         refresh_layout_home?.setOnRefreshListener { backgroundCoroutineCall() }
         backgroundCoroutineCall()
     }
@@ -273,6 +275,11 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
         mMessageAdapter = MessageAdapter(messageList, this)
         recycler_view_message_list?.adapter = mMessageAdapter
         refresh_layout_home?.isRefreshing = false
+
+        if (messageList.size<=0){
+            text_loading?.show()
+            text_loading?.text="No messages available at the moment"
+        }
     }
 
     //used to get sms from the phone
@@ -287,8 +294,8 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                 getDatabaseMessages()
             }
         } else {
-            progress_bar?.hide()
-            text_loading?.hide()
+            view?.progress_bar?.hide()
+            view?.text_loading?.hide()
             setUpAdapter()
         }
 
@@ -698,88 +705,105 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
     }
 
 
-    private fun checkLocationPermission() {
-        if (checkSelfPermission(
-                activity as Activity,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(
-                activity as Activity,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED &&  ActivityCompat.checkSelfPermission(
-                activity as Activity,
-                Manifest.permission.READ_PHONE_STATE
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                activity as Activity,
-                appPermissions
-                ,
-                PERMISSION_ACCESS_FINE_LOCATION_CODE
-            )
-
-        }
-        if (ActivityCompat.checkSelfPermission(activity as Activity, Manifest.permission.READ_SMS)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                activity as Activity,
-                arrayOf(Manifest.permission.READ_SMS),
-                PERMISSION_READ_SMS_CODE
-            )
-        }
-
-        if (ActivityCompat.checkSelfPermission(
-                activity as Activity,
-                Manifest.permission.RECEIVE_SMS
-            )
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                activity as Activity,
-                arrayOf(Manifest.permission.RECEIVE_SMS),
-                PERMISSION_RECEIVE_SMS_CODE
-            )
-        }
-
-    }
-
-    private fun checkPhoneStatusPermission() {
-        if (ActivityCompat.checkSelfPermission(
-                activity as Activity,
-                Manifest.permission.READ_PHONE_STATE
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                activity as Activity,
-                arrayOf(Manifest.permission.READ_PHONE_STATE),
-                PERMISSION_READ_PHONE_STATE_CODE
-            )
-        }
-
-
-    }
-
-
-    public fun checkAndRequest():Boolean{
-
-        var listPermissionsNeeded= ArrayList<String>()
+    private fun checkAndRequestPermissions():Boolean{
+        val listPermissionsNeeded= ArrayList<String>()
 
         for(perm in appPermissions){
-
             if(checkSelfPermission( activity as Activity,perm) !=PackageManager.PERMISSION_GRANTED){
                 listPermissionsNeeded.add(perm);
             }
-
         }
 
-        if(!listPermissionsNeeded.isEmpty()){
-            ActivityCompat.requestPermissions(
-                activity as Activity,
+        if(listPermissionsNeeded.isNotEmpty()){
+            requestPermissions(
                 listPermissionsNeeded.toArray(arrayOf(listPermissionsNeeded.size.toString()))
-                ,PERMISSION_ACCESS_FINE_LOCATION_CODE)
+                , PERMISSION_REQUEST_ALL_CODE)
             return false;
         }
-
         return true;
     }
+
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if(requestCode== PERMISSION_REQUEST_ALL_CODE){
+            val permissionResults: HashMap<String, Int> = HashMap()
+            var deniedCount=0
+
+            for(i in grantResults){
+                context?.toast("$i")
+                if (i>=0 && grantResults.isNotEmpty() && grantResults[i]== PackageManager.PERMISSION_DENIED){
+                    permissionResults.put(permissions[i],grantResults[i])
+                    deniedCount++
+                }
+            }
+
+            if (deniedCount==0){
+                //initialise app
+            }else{
+                for (entry in permissionResults) {
+                    var permName=entry.key
+                    var permResult=entry.value
+
+                    if(shouldShowRequestPermissionRationale(permName)){
+                        showDialog("","This app needs $permName to work properly",
+                            "Grant Permission"
+                        ,DialogInterface.OnClickListener { dialog, which ->
+                                dialog.dismiss()
+                                checkAndRequestPermissions()
+                              },
+                            "Exit App",DialogInterface.OnClickListener { dialog, which ->
+                                dialog.dismiss()
+                                activity?.finish()
+                            }
+                            ,false)
+                    }else{
+                        showDialog("","You have denied some permissions. Allow all permissions at [Setting] > Permission",
+                            "Go to Settings"
+                            ,DialogInterface.OnClickListener { dialog, which ->
+                                dialog.dismiss()
+                                val intent=Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                    Uri.fromParts("package",context?.packageName,null))
+                                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                                startActivity(intent)
+                                activity?.finish()
+
+                            },
+                            "Exit App",DialogInterface.OnClickListener { dialog, which ->
+                                dialog.dismiss()
+                                activity?.finish()
+                            }
+                            ,false)
+                        break
+                    }
+                }
+            }
+        }
+    }
+
+
+
+    private fun showDialog(
+        title: String, msg: String, postiveLabel: String,
+        postiveOnClick: DialogInterface.OnClickListener,
+        negativeLabel: String, negativeOnClick: DialogInterface.OnClickListener,
+        isCancelable: Boolean
+    ): AlertDialog {
+
+        val builder = AlertDialog.Builder(activity as Activity)
+        builder.setTitle(title)
+        builder.setCancelable(isCancelable)
+        builder.setMessage(msg)
+        builder.setPositiveButton(postiveLabel, postiveOnClick)
+        builder.setNegativeButton(negativeLabel, negativeOnClick)
+        val alert = builder.create()
+        alert.show()
+        return alert;
+    }
+
+
 }

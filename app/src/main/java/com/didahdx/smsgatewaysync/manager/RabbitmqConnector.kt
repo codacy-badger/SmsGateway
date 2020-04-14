@@ -12,6 +12,7 @@ object RabbitmqConnector {
         connectionFactory.host = "128.199.174.204"
         connectionFactory.username = "didahdx"
         connectionFactory.password = "test"
+        connectionFactory.requestedHeartbeat=15
     }
 
     val connection: Connection by lazy {

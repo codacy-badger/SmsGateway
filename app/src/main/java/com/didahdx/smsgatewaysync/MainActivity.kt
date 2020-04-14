@@ -222,17 +222,6 @@ class MainActivity : AppCompatActivity(),
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
-        when (requestCode) {
-            PERMISSION_FOREGROUND_SERVICES_CODE -> {
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                } else {
-                    toast("Permission denied")
-                }
-            }
-        }
-
-
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         val fragments: List<Fragment> = supportFragmentManager.fragments
         if (fragments != null) {
@@ -241,6 +230,15 @@ class MainActivity : AppCompatActivity(),
             }
         }
 
+//        when (requestCode) {
+//            PERMISSION_FOREGROUND_SERVICES_CODE -> {
+//                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//
+//                } else {
+//                    toast("Permission denied")
+//                }
+//            }
+//        }
     }
 
 
