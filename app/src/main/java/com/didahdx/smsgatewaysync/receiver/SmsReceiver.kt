@@ -64,8 +64,10 @@ class SmsReceiver : BroadcastReceiver() {
                     val printer = BluetoothPrinter()
                     val smsFilter = SmsFilter()
                     if (Printooth.hasPairedPrinter()) {
-                        val printMessage = smsFilter.checkSmsType(messageText)
-                        printer.printText(printMessage, context, APP_NAME)
+                        if("MPESA"==phoneNumber){
+                            val printMessage = smsFilter.checkSmsType(messageText)
+                            printer.printText(printMessage, context, APP_NAME)
+                        }
                     } else {
                         context?.toast("Printer not connected  ")
                     }

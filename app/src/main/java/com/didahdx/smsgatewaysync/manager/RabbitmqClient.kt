@@ -12,38 +12,32 @@ import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.TimeoutException
 
 
-class RabbitmqClient(val uiUpdater: UiUpdaterInterface?, private val email: String) {
+class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val email: String){
     private val connectionFactory = ConnectionFactory()
 
     private val queue = LinkedBlockingDeque<String>()
     @Volatile private lateinit var connection: Connection
-    var channel: Channel? = null
-
-    var count=0
+    @Volatile private var channel: Channel? = null
 
     fun connection(context: Context) {
 
         try {
-            connection =RabbitmqConnector.connection
-            channel = RabbitmqConnector.channel
-            count += 1
+
+                connection =RabbitmqConnector.connection
+                channel = RabbitmqConnector.channel
+
             Log.d(
                 "connectorasd",
                 "connection  ${RabbitmqConnector.connection.hashCode()}   ${connection.hashCode()} " +
-                        " channel ${RabbitmqConnector.channel.hashCode()}    ${channel.hashCode()}  count $count"
-            )
-
-            count += 1
+                        " channel ${RabbitmqConnector.channel.hashCode()}    ${channel.hashCode()} ")
 
             channel?.queueDeclare(
                 email, false, false,
-                false, null
-            )
+                false, null)
 
             channel?.queueDeclare(
                 NOTIFICATION, false, false,
-                false, null
-            )
+                false, null)
 
             channel?.queueDeclare(
                 PUBLISH_FROM_CLIENT, false, false,
@@ -152,5 +146,6 @@ class RabbitmqClient(val uiUpdater: UiUpdaterInterface?, private val email: Stri
         connection?.close()
         uiUpdater?.isConnected(false)
     }
+
 
 }

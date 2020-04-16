@@ -12,6 +12,7 @@ import com.didahdx.smsgatewaysync.receiver.SmsReceiver
 import com.didahdx.smsgatewaysync.utilities.CHANNEL_ID
 import com.didahdx.smsgatewaysync.utilities.CHANNEL_NAME
 import com.didahdx.smsgatewaysync.utilities.SMS_RECEIVED_INTENT
+import com.didahdx.smsgatewaysync.utilities.toast
 import com.mazenrashed.printooth.Printooth
 
 class App : MultiDexApplication() {
@@ -22,16 +23,13 @@ class App : MultiDexApplication() {
         MultiDex.install(this)
     }
 
+
     override fun onCreate() {
         super.onCreate()
         instance=this
         createNotificationChannel()
         Printooth.init(this)
 
-        //registering broadcast receiver for battery
-        applicationContext.registerReceiver(
-            SmsReceiver(), IntentFilter(SMS_RECEIVED_INTENT)
-        )
     }
 
     fun setConnectionListener(listener: ConnectionReceiver.ConnectionReceiverListener){

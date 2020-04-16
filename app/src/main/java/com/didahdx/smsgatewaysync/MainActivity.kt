@@ -20,8 +20,7 @@ import androidx.core.view.GravityCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
 import androidx.preference.PreferenceManager
-import com.didahdx.smsgatewaysync.receiver.BatteryReceiver
-import com.didahdx.smsgatewaysync.receiver.ConnectionReceiver
+import com.didahdx.smsgatewaysync.receiver.*
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.ui.*
 import com.didahdx.smsgatewaysync.utilities.*
@@ -73,7 +72,6 @@ class MainActivity : AppCompatActivity(),
             Analytics::class.java, Crashes::class.java
         )
 
-
         // Obtain the FirebaseAnalytics instance.
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this)
         setSupportActionBar(toolbar)
@@ -93,11 +91,6 @@ class MainActivity : AppCompatActivity(),
 
         settingUpDefaultFragment()
 
-        //registering broadcast receiver for battery
-        baseContext.registerReceiver(
-            BatteryReceiver(),
-            IntentFilter(Intent.ACTION_BATTERY_CHANGED)
-        )
 
 
         App.instance.setConnectionListener(this)
@@ -107,6 +100,29 @@ class MainActivity : AppCompatActivity(),
             IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
         )
 
+        //registering broadcast receiver for battery
+        baseContext.registerReceiver(
+            BatteryReceiver(),
+            IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+        )
+
+        //registering broadcast receiver for smsReceiver
+        baseContext.registerReceiver(
+            SmsReceiver(), IntentFilter(SMS_RECEIVED_INTENT)
+        )
+
+        val callFilter=IntentFilter("android.intent.action.NEW_OUTGOING_CALL")
+        callFilter.addAction("android.intent.action.PHONE_STATE")
+
+        //registering broadcast receiver for callReceiver
+        baseContext.registerReceiver(
+            PhoneCallReceiver(), callFilter
+        )
+
+        //registering broadcast receiver for callReceiver
+        baseContext.registerReceiver(
+            CallReceiver(),callFilter
+        )
 
         //saving apps preference
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false)

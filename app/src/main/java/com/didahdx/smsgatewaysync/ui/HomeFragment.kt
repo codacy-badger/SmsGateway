@@ -5,10 +5,13 @@ import android.app.Activity
 import android.app.PendingIntent
 import android.content.*
 import android.content.pm.PackageManager
+import android.database.Cursor
+import android.location.Location
 import android.net.ConnectivityManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.CallLog
 import android.provider.Settings
 import android.telephony.SmsManager
 import android.telephony.SubscriptionInfo
@@ -19,7 +22,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
-import androidx.core.app.ActivityCompat.requestPermissions
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.fragment.app.Fragment
@@ -39,12 +41,18 @@ import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.services.LocationGpsService
 import com.didahdx.smsgatewaysync.utilities.*
 import com.didahdx.smsgatewaysync.viewmodels.HomeViewModel
+import com.google.android.gms.location.*
+import com.google.android.gms.tasks.OnFailureListener
+import com.google.android.gms.tasks.OnSuccessListener
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.fragment_home.*
 import kotlinx.android.synthetic.main.fragment_home.view.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
@@ -64,9 +72,20 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
     var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT)
     private lateinit var sharedPreferences: SharedPreferences
     val TAG = HomeFragment::class.java.simpleName
-    private val appPermissions= arrayOf(  Manifest.permission.ACCESS_FINE_LOCATION,
-        Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.READ_SMS,
-         Manifest.permission.READ_PHONE_STATE)
+
+    private val appPermissions = arrayOf(
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACCESS_COARSE_LOCATION,
+        Manifest.permission.RECEIVE_SMS,
+        Manifest.permission.READ_SMS,
+        Manifest.permission.BLUETOOTH,
+        Manifest.permission.BLUETOOTH_ADMIN,
+        Manifest.permission.READ_PHONE_STATE,
+        Manifest.permission.READ_CALL_LOG,
+        Manifest.permission.CALL_PHONE,
+        Manifest.permission.SEND_SMS,
+        Manifest.permission.READ_PHONE_STATE
+    )
 
     @Volatile
     lateinit var rabbitmqClient: RabbitmqClient
@@ -78,6 +97,13 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
     var outgoingMessages: Queue<MessageInfo> = LinkedList()
     var messageCount = 0
     var lastMessageSentTime = 0
+    private val UPDATE_INTERVAL = 5000 // 5 seconds
+
+
+    private lateinit var locationProviderClient: FusedLocationProviderClient
+    private lateinit var locationRequest: LocationRequest
+    private lateinit var locationCallback: LocationCallback
+    private lateinit var currentLocation: Location
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -92,13 +118,38 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
             val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
             if (!isConnected && isServiceRunning) {
                 rabbitmqClient.connection(activity as Activity)
+            }
+        }
 
+        locationProviderClient =
+            LocationServices.getFusedLocationProviderClient(activity as Activity)
+        locationRequest = LocationRequest.create()
+        locationRequest?.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        locationRequest?.interval = UPDATE_INTERVAL.toLong()
+        locationCallback = object : LocationCallback() {
+            override fun onLocationAvailability(locationAvailability: LocationAvailability) {
+                super.onLocationAvailability(locationAvailability)
+                if (locationAvailability.isLocationAvailable) {
+                    Log.i(TAG, "Location is available")
+                } else {
+                    Log.i(TAG, "Location is unavailable")
+                }
+            }
+
+            override fun onLocationResult(locationResult: LocationResult) {
+                super.onLocationResult(locationResult)
+                Log.i(TAG, "Location result is available")
             }
         }
 
         LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
             mSmsReceiver,
             IntentFilter(SMS_LOCAL_BROADCAST_RECEIVER)
+        )
+
+        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
+            callReceiver,
+            IntentFilter(CALL_LOCAL_BROADCAST_RECEIVER)
         )
     }
 
@@ -137,11 +188,12 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        if (checkAndRequestPermissions()){
+        if (checkAndRequestPermissions()) {
 
         }
         refresh_layout_home?.setOnRefreshListener { backgroundCoroutineCall() }
         backgroundCoroutineCall()
+        startGettingLocation()
     }
 
     //appServices for showing notification bar
@@ -157,6 +209,39 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
 //       stopService(serviceIntent)
     }
 
+    //broadcast call receiver
+    private val callReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
+            if (intent != null && isServiceRunning && CALL_LOCAL_BROADCAST_RECEIVER == intent.action) {
+                if (intent.extras != null) {
+                    var phoneNumber:String? = " "
+                    phoneNumber = intent.extras!!.getString(PHONE_NUMBER_EXTRA)
+                    val callType = intent.extras!!.getString(CALL_TYPE_EXTRA)
+                    val startTime = intent.extras!!.getString(START_TIME_EXTRA)
+                    val endTime = intent.extras!!.getString(END_TIME_EXTRA)
+                    startGettingLocation()
+                    val obj: JSONObject? = JSONObject()
+                    obj?.put("type", "calls")
+                    obj?.put("longitude", userLongitude)
+                    obj?.put("latitude", userLatitude)
+                    obj?.put("client_sender", user?.email!!)
+                    obj?.put("client_gateway_type", "android_phone")
+                    obj?.put("call_type", callType)
+                    obj?.put("phone_number", phoneNumber)
+                    obj?.put("start_time", startTime)
+                    obj?.put("end_time", endTime)
+
+                    obj?.toString()?.let { context?.toast(it) }
+                    CoroutineScope(IO).launch {
+                        obj?.toString()?.let {
+                            rabbitmqClient.publishMessage(it)
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     //broadcast sms receiver
     private val mSmsReceiver = object : BroadcastReceiver() {
@@ -170,64 +255,62 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                     val messageText = intent.extras!!.getString("messageText")
                     val date = sdf.format(Date(dateTimeStamp)).toString()
 
-                    context?.toast(" local receiver \n $phoneNumber $messageText ")
+//                    context?.toast(" local receiver \n $phoneNumber $messageText ")
+                    startGettingLocation()
+
+                    val obj: JSONObject? = JSONObject()
+                    val smsFilter = messageText?.let { SmsFilter(it) }
+                    obj?.put("type", "message")
+                    obj?.put("message_body", messageText)
+                    obj?.put("receipt_date", date)
+                    obj?.put("sender_id", phoneNumber)
+                    obj?.put("longitude", userLongitude)
+                    obj?.put("latitude", userLatitude)
+                    obj?.put("client_sender", user?.email!!)
+                    obj?.put("client_gateway_type", "android_phone")
+
+
+                    if (phoneNumber != null && phoneNumber == "MPESA") {
+                        obj?.put("message_type", "mpesa")
+                        obj?.put("voucher_number", smsFilter?.mpesaId)
+                        obj?.put("transaction_type", smsFilter?.mpesaType)
+                        obj?.put("phone_number", smsFilter?.phoneNumber)
+                        obj?.put("name", smsFilter?.name)
+                        if (smsFilter?.time != NOT_AVAILABLE && smsFilter?.date != NOT_AVAILABLE) {
+                            obj?.put(
+                                "transaction_date",
+                                "${smsFilter?.date} ${smsFilter?.time}"
+                            )
+                        } else if (smsFilter?.date != NOT_AVAILABLE) {
+                            obj?.put("transaction_date", smsFilter?.date)
+                        } else if (smsFilter?.time !=
+                            NOT_AVAILABLE
+                        ) {
+                            obj?.put("transaction_date", smsFilter?.time)
+                        }
+                        obj?.put("amount", smsFilter?.amount)
+
+                    } else {
+                        obj?.put("message_type", "recieved_sms")
+                    }
 
                     CoroutineScope(IO).launch {
-                        val obj: JSONObject? = JSONObject()
-                        val smsFilter = messageText?.let { SmsFilter(it) }
-                        obj?.put("message_body", messageText)
-                        obj?.put("receipt_date", date)
-                        obj?.put("sender_id", phoneNumber)
-                        obj?.put("longitude", userLongitude)
-                        obj?.put("latitude", userLatitude)
-                        obj?.put("client_sender", user?.email!!)
-                        obj?.put("client_gateway_type", "android_phone")
-
-                        if (phoneNumber != null && phoneNumber == "MPESA") {
-                            obj?.put("message_type", "mpesa")
-                            obj?.put("voucher_number", smsFilter?.mpesaId)
-                            obj?.put("transaction_type", smsFilter?.mpesaType)
-                            obj?.put("phone_number", smsFilter?.phoneNumber)
-                            obj?.put("name", smsFilter?.name)
-                            if (smsFilter?.time != NOT_AVAILABLE && smsFilter?.date != NOT_AVAILABLE) {
-                                obj?.put(
-                                    "transaction_date",
-                                    "${smsFilter?.date} ${smsFilter?.time}"
-                                )
-                            } else if (smsFilter?.date != NOT_AVAILABLE) {
-                                obj?.put("transaction_date", smsFilter?.date)
-                            } else if (smsFilter?.time !=
-                                NOT_AVAILABLE
-                            ) {
-                                obj?.put("transaction_date", smsFilter?.time)
-                            }
-                            obj?.put("amount", smsFilter?.amount)
-
-                        } else {
-                            obj?.put("message_type", "recieved_sms")
-
-                        }
-
-
                         obj?.toString()?.let {
                             rabbitmqClient.publishMessage(it)
 
-                            launch {
-                                var message2: IncomingMessages? = null
-                                if (messageText != null) {
-                                    message2 = IncomingMessages(
-                                        messageText, dateTimeStamp,
-                                        phoneNumber!!, true
-                                    )
-                                } else {
-                                    message2 = null
-                                }
-
-                                context.let { tex ->
-                                    if (message2 != null) {
-                                        MessagesDatabase(tex).getIncomingMessageDao()
-                                            .updateMessage(message2)
-                                    }
+                            var message2: IncomingMessages? = null
+                            if (messageText != null) {
+                                message2 = IncomingMessages(
+                                    messageText, dateTimeStamp,
+                                    phoneNumber!!, true
+                                )
+                            } else {
+                                message2 = null
+                            }
+                            context.let { tex ->
+                                if (message2 != null) {
+                                    MessagesDatabase(tex).getIncomingMessageDao()
+                                        .updateMessage(message2)
                                 }
                             }
                         }
@@ -276,9 +359,9 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
         recycler_view_message_list?.adapter = mMessageAdapter
         refresh_layout_home?.isRefreshing = false
 
-        if (messageList.size<=0){
+        if (messageList.size <= 0) {
             text_loading?.show()
-            text_loading?.text="No messages available at the moment"
+            text_loading?.text = "No messages available at the moment"
         }
     }
 
@@ -446,7 +529,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                 val i = 0
 
                 CoroutineScope(Main).launch {
-                    context?.toast("${messagesList2?.size}")
+//                    context?.toast("${messagesList2?.size}")
 
                     if (!messagesList.isNullOrEmpty() && messagesList[0].status) {
                         smsStatus = if (messageInfo.status) {
@@ -513,6 +596,10 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
         LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(
             mSmsReceiver
         )
+
+        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(
+            callReceiver
+        )
     }
 
     //used to check if the app has connected
@@ -522,7 +609,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
         }
     }
 
-    //used to show to show
+    //used to show to notification
     override fun notificationMessage(message: String) {
         CoroutineScope(Main).launch {
 
@@ -575,7 +662,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
             ) {
 
 
-                context?.toast("called $phoneNumber")
+//                context?.toast("called $phoneNumber")
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
                     if (ActivityCompat.checkSelfPermission(
                             activity as Activity,
@@ -652,33 +739,28 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
 
                 outgoingMessages.add(MessageInfo(phoneNumber, message))
 
-                synchronized(outgoingMessages) {
-                    for (`object` in outgoingMessages) {
+                for (`object` in outgoingMessages) {
 
-                        CoroutineScope(IO).launch {
-                            try {
-                                delay(30000)
-                            } catch (e: InterruptedException) {
-                                e.printStackTrace()
-                            }
+                    CoroutineScope(IO).launch {
+                        try {
+//                                delay(30000)
+                        } catch (e: InterruptedException) {
+                            e.printStackTrace()
                         }
-                        val element = `object` as MessageInfo
-                        val parts = smsManager.divideMessage(element.messageBody)
-
-                        smsManager.sendMultipartTextMessage(
-                            element.phoneNumber,
-                            null,
-                            parts,
-                            arraySendInt,
-                            arrayDelivery
-                        )
-                        messageCount++
-                        outgoingMessages.remove()
-                        Log.d(
-                            "teretg",
-                            "message count $messageCount queue size ${outgoingMessages.size}"
-                        )
                     }
+                    val element = `object` as MessageInfo
+                    val parts = smsManager.divideMessage(element.messageBody)
+
+                    smsManager.sendMultipartTextMessage(
+                        element.phoneNumber,
+                        null,
+                        parts,
+                        arraySendInt,
+                        arrayDelivery
+                    )
+                    messageCount++
+                    outgoingMessages.remove()
+
                 }
             }
         }
@@ -704,80 +786,90 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
         context?.registerReceiver(locationBroadcastReceiver, IntentFilter(LOCATION_UPDATE_INTENT))
     }
 
+    //check and requests the permission which are required
+    private fun checkAndRequestPermissions(): Boolean {
+        val listPermissionsNeeded = ArrayList<String>()
 
-    private fun checkAndRequestPermissions():Boolean{
-        val listPermissionsNeeded= ArrayList<String>()
-
-        for(perm in appPermissions){
-            if(checkSelfPermission( activity as Activity,perm) !=PackageManager.PERMISSION_GRANTED){
+        for (perm in appPermissions) {
+            if (checkSelfPermission(
+                    activity as Activity,
+                    perm
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
                 listPermissionsNeeded.add(perm);
             }
         }
 
-        if(listPermissionsNeeded.isNotEmpty()){
+        if (listPermissionsNeeded.isNotEmpty()) {
             requestPermissions(
                 listPermissionsNeeded.toArray(arrayOf(listPermissionsNeeded.size.toString()))
-                , PERMISSION_REQUEST_ALL_CODE)
+                , PERMISSION_REQUEST_ALL_CODE
+            )
             return false;
         }
         return true;
     }
 
-
+    //getting permission results
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if(requestCode== PERMISSION_REQUEST_ALL_CODE){
+        if (requestCode == PERMISSION_REQUEST_ALL_CODE) {
             val permissionResults: HashMap<String, Int> = HashMap()
-            var deniedCount=0
+            var deniedCount = 0
 
-            for(i in grantResults){
-                context?.toast("$i")
-                if (i>=0 && grantResults.isNotEmpty() && grantResults[i]== PackageManager.PERMISSION_DENIED){
-                    permissionResults.put(permissions[i],grantResults[i])
+            for (i in grantResults) {
+                if (i >= 0 && grantResults.isNotEmpty() && grantResults[i] == PackageManager.PERMISSION_DENIED) {
+                    permissionResults.put(permissions[i], grantResults[i])
                     deniedCount++
                 }
             }
 
-            if (deniedCount==0){
+            if (deniedCount == 0) {
                 //initialise app
-            }else{
+            } else {
                 for (entry in permissionResults) {
-                    var permName=entry.key
-                    var permResult=entry.value
+                    var permName = entry.key
+                    var permResult = entry.value
 
-                    if(shouldShowRequestPermissionRationale(permName)){
-                        showDialog("","This app needs $permName to work properly",
+                    if (shouldShowRequestPermissionRationale(permName)) {
+                        showDialog("", "This app needs $permName to work properly",
                             "Grant Permission"
-                        ,DialogInterface.OnClickListener { dialog, which ->
+                            , DialogInterface.OnClickListener { dialog, which ->
                                 dialog.dismiss()
                                 checkAndRequestPermissions()
-                              },
-                            "Exit App",DialogInterface.OnClickListener { dialog, which ->
+                            },
+                            "Exit App", DialogInterface.OnClickListener { dialog, which ->
                                 dialog.dismiss()
                                 activity?.finish()
                             }
-                            ,false)
-                    }else{
-                        showDialog("","You have denied some permissions. Allow all permissions at [Setting] > Permission",
+                            , false)
+                    } else {
+                        showDialog("",
+                            "You have denied some permissions. Allow all permissions at [Setting] > Permission",
                             "Go to Settings"
-                            ,DialogInterface.OnClickListener { dialog, which ->
+                            ,
+                            DialogInterface.OnClickListener { dialog, which ->
                                 dialog.dismiss()
-                                val intent=Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                                    Uri.fromParts("package",context?.packageName,null))
+                                val intent = Intent(
+                                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                    Uri.fromParts("package", context?.packageName, null)
+                                )
                                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
                                 startActivity(intent)
                                 activity?.finish()
 
                             },
-                            "Exit App",DialogInterface.OnClickListener { dialog, which ->
+                            "Exit App",
+                            DialogInterface.OnClickListener { dialog, which ->
                                 dialog.dismiss()
                                 activity?.finish()
                             }
-                            ,false)
+                            ,
+                            false)
                         break
                     }
                 }
@@ -785,8 +877,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
         }
     }
 
-
-
+    //used to display alert dialog box
     private fun showDialog(
         title: String, msg: String, postiveLabel: String,
         postiveOnClick: DialogInterface.OnClickListener,
@@ -805,5 +896,55 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
         return alert;
     }
 
+    //getting location of user using location api
+    private fun startGettingLocation() {
+        if (checkSelfPermission(
+                activity as Activity,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED &&
+            checkSelfPermission(
+                activity as Activity,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            locationProviderClient?.requestLocationUpdates(
+                locationRequest,
+                locationCallback,
+                activity?.mainLooper
+            )
+            locationProviderClient?.lastLocation
+                ?.addOnSuccessListener(OnSuccessListener<Location> { location ->
+                    currentLocation = location
+                    userLongitude = currentLocation?.longitude?.toString()
+                    userLatitude = currentLocation?.latitude?.toString()
+
+//                    context?.toast(" long $userLongitude  lati $userLatitude")
+
+                })
+
+            locationProviderClient?.lastLocation
+                ?.addOnFailureListener(OnFailureListener { e ->
+                    Log.i(
+                        TAG,
+                        "Exception while getting the location: " + e.message
+                    )
+                })
+        } else {
+            if (shouldShowRequestPermissionRationale(
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                )
+            ) {
+                context?.toast("Permission needed")
+            } else {
+                requestPermissions(
+                    arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    ),
+                    PERMISSION_ACCESS_FINE_LOCATION_CODE
+                )
+            }
+        }
+    }
 
 }

@@ -15,7 +15,7 @@ class BatteryReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val batteryStatus: String=checkBatteryStatus(intent)
-
+//        context?.toast(batteryStatus)
     }
 
     private fun checkBatteryStatus(intent: Intent):String{
