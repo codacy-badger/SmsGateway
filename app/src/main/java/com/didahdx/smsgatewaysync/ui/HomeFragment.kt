@@ -97,9 +97,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
     var outgoingMessages: Queue<MessageInfo> = LinkedList()
     var messageCount = 0
     var lastMessageSentTime = 0
-    private val UPDATE_INTERVAL = 5000 // 5 seconds
-
-
+    private val UPDATE_INTERVAL = 5000 * 20 // 5 seconds*20
     private lateinit var locationProviderClient: FusedLocationProviderClient
     private lateinit var locationRequest: LocationRequest
     private lateinit var locationCallback: LocationCallback
@@ -150,6 +148,10 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
         LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
             callReceiver,
             IntentFilter(CALL_LOCAL_BROADCAST_RECEIVER)
+        )
+        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
+            batteryReceiver,
+            IntentFilter(BATTERY_LOCAL_BROADCAST_RECEIVER)
         )
     }
 
@@ -208,6 +210,45 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
         val serviceIntent = Intent(activity, AppServices::class.java)
 //       stopService(serviceIntent)
     }
+    private val batteryReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
+            if (intent != null && isServiceRunning && BATTERY_LOCAL_BROADCAST_RECEIVER == intent.action) {
+                if (intent.extras != null) {
+                    val batteryVoltage = intent.extras!!.getString(BATTERY_VOLTAGE_EXTRA)
+                    val batteryPercentage = intent.extras!!.getString(BATTERY_PERCENTAGE_EXTRA)
+                    val batteryCondition = intent.extras!!.getString(BATTERY_CONDITION_EXTRA)
+                    val batteryTemperature = intent.extras!!.getString(BATTERY_TEMPERATURE_EXTRA)
+                    val batteryPowerSource = intent.extras!!.getString(BATTERY_POWER_SOURCE_EXTRA)
+                    val batteryChargingStatus = intent.extras!!.getString(BATTERY_CHARGING_STATUS_EXTRA)
+                    val batteryTechnology = intent.extras!!.getString(BATTERY_TECHNOLOGY_EXTRA)
+
+
+                    val obj: JSONObject? = JSONObject()
+                    obj?.put("type", "phoneStatus")
+                    obj?.put("batteryPercentage", batteryPercentage)
+                    obj?.put("batteryCondition", batteryCondition)
+                    obj?.put("batteryTemperature", batteryTemperature)
+                    obj?.put("batteryPowerSource", batteryPowerSource)
+                    obj?.put("batteryChargingStatus", batteryChargingStatus)
+                    obj?.put("batteryTechnology", batteryTechnology)
+                    obj?.put("batteryVoltage", batteryVoltage)
+                    obj?.put("longitude", userLongitude)
+                    obj?.put("latitude", userLatitude)
+                    obj?.put("client_sender", user?.email!!)
+                    obj?.put("client_gateway_type", "android_phone")
+
+                    obj?.toString()?.let { context?.toast(it) }
+                    CoroutineScope(IO).launch {
+                        obj?.toString()?.let {
+                            rabbitmqClient.publishMessage(it)
+                        }
+                    }
+                }
+            }
+        }
+
+    }
 
     //broadcast call receiver
     private val callReceiver = object : BroadcastReceiver() {
@@ -215,7 +256,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
             val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
             if (intent != null && isServiceRunning && CALL_LOCAL_BROADCAST_RECEIVER == intent.action) {
                 if (intent.extras != null) {
-                    var phoneNumber:String? = " "
+                    var phoneNumber: String? = " "
                     phoneNumber = intent.extras!!.getString(PHONE_NUMBER_EXTRA)
                     val callType = intent.extras!!.getString(CALL_TYPE_EXTRA)
                     val startTime = intent.extras!!.getString(START_TIME_EXTRA)
@@ -232,7 +273,6 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                     obj?.put("start_time", startTime)
                     obj?.put("end_time", endTime)
 
-                    obj?.toString()?.let { context?.toast(it) }
                     CoroutineScope(IO).launch {
                         obj?.toString()?.let {
                             rabbitmqClient.publishMessage(it)
@@ -253,7 +293,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                     val phoneNumber = intent.extras!!.getString("phoneNumber")
                     val dateTimeStamp = intent.extras!!.getLong("date")
                     val messageText = intent.extras!!.getString("messageText")
-                    val date = sdf.format(Date(dateTimeStamp)).toString()
+                    val date = Date(dateTimeStamp).toString()
 
 //                    context?.toast(" local receiver \n $phoneNumber $messageText ")
                     startGettingLocation()
@@ -345,7 +385,6 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
 
     override fun onDestroyView() {
         super.onDestroyView()
-//        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(mSmsReceiver)
         if (locationBroadcastReceiver != null) {
             context?.unregisterReceiver(locationBroadcastReceiver)
         }
@@ -599,6 +638,9 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
 
         LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(
             callReceiver
+        )
+        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(
+            batteryReceiver
         )
     }
 

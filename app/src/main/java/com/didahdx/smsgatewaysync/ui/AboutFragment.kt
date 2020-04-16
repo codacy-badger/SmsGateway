@@ -5,8 +5,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import com.didahdx.smsgatewaysync.BuildConfig
 import com.didahdx.smsgatewaysync.R
+import com.didahdx.smsgatewaysync.utilities.APP_NAME
+import kotlinx.android.synthetic.main.fragment_about.*
 import kotlinx.android.synthetic.main.fragment_about.view.*
+import kotlinx.android.synthetic.main.fragment_about.view.text_about_phone
 
 
 /**
@@ -32,8 +36,11 @@ class AboutFragment : Fragment() {
         return  view
     }
 
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
 
+       val versionName = BuildConfig.VERSION_NAME
 
-
-
+        text_network.text="\nApp name: $APP_NAME  \n\nVersion number: $versionName "
+    }
 }

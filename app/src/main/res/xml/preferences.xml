@@ -100,6 +100,16 @@
             android:summary="Allow automatic printing on incoming sms"
             android:title="Auto Printing"
             app:iconSpaceReserved="false" />
+
+        <ListPreference
+            android:defaultValue="Direct Mpesa"
+            android:entries="@array/print_types"
+            android:entryValues="@array/print_types"
+            android:key="print_types"
+            android:summary="Types of mpesa transaction to be printed"
+            android:title="Messages Types to Print"
+            app:iconSpaceReserved="false" />
+
     </PreferenceCategory>
 
 

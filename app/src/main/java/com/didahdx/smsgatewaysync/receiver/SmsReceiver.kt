@@ -3,11 +3,13 @@ package com.didahdx.smsgatewaysync.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Build
 import android.telephony.SmsMessage
 import android.util.Log
 import android.widget.Toast
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.preference.PreferenceManager
 import com.didahdx.smsgatewaysync.repository.data.IncomingMessages
 import com.didahdx.smsgatewaysync.repository.data.MessagesDatabase
 import com.didahdx.smsgatewaysync.utilities.*
@@ -18,14 +20,15 @@ import kotlinx.coroutines.launch
 
 
 class SmsReceiver : BroadcastReceiver() {
+    private lateinit var sharedPreferences: SharedPreferences
 
     override fun onReceive(context: Context, intent: Intent) {
         if (SMS_RECEIVED_INTENT == intent.action) {
-            Log.d("sms_rece","action original ${intent.action}")
+            Log.d("sms_rece", "action original ${intent.action}")
             val extras = intent.extras
             if (extras != null) {
                 val sms = extras.get("pdus") as Array<*>
-                var messageBuilder=StringBuilder()
+                var messageBuilder = StringBuilder()
 
                 for (i in sms.indices) {
                     val format = extras.getString("format")
@@ -44,11 +47,13 @@ class SmsReceiver : BroadcastReceiver() {
                     val newIntent = Intent(SMS_LOCAL_BROADCAST_RECEIVER)
                     newIntent.putExtra("phoneNumber", phoneNumber)
                     newIntent.putExtra("messageText", messageText)
-                    newIntent.putExtra("date",time)
+                    newIntent.putExtra("date", time)
 
-                    Log.d("tpoiuytr", "   $phoneNumber sms $sms messageText $messageText ")
+                    sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+                    val printingReference =
+                        sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
 
-                    CoroutineScope(IO).launch{
+                    CoroutineScope(IO).launch {
                         var message2: IncomingMessages?
                         message2 = IncomingMessages(
                             messageText, time,
@@ -63,13 +68,17 @@ class SmsReceiver : BroadcastReceiver() {
 
                     val printer = BluetoothPrinter()
                     val smsFilter = SmsFilter()
-                    if (Printooth.hasPairedPrinter()) {
-                        if("MPESA"==phoneNumber){
-                            val printMessage = smsFilter.checkSmsType(messageText)
-                            printer.printText(printMessage, context, APP_NAME)
+
+                    if ("MPESA" == phoneNumber) {
+                        val printMessage = smsFilter.checkSmsType(messageText)
+                        if (printingReference == smsFilter.mpesaType) {
+                            context?.toast(" test ${smsFilter.mpesaType}")
+                            if (Printooth.hasPairedPrinter()) {
+                                printer.printText(printMessage, context, APP_NAME)
+                            } else {
+                                context?.toast("Printer not connected  ")
+                            }
                         }
-                    } else {
-                        context?.toast("Printer not connected  ")
                     }
 
                     println("$phoneNumber \n sms : \t $sms  \n  messageText :\t $messageText ")

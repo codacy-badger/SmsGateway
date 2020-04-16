@@ -31,6 +31,12 @@
         <item>All</item>
     </string-array>
 
+    <string-array name="print_types">
+        <item>Pay Bill</item>
+        <item>Buy Goods and Services</item>
+        <item>Direct Mpesa</item>
+    </string-array>
+
     <string name="sim_card_one">Sim Card 1</string>
     <string name="sim_card_two">Sim Card 2</string>
 

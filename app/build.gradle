@@ -82,7 +82,7 @@ dependencies {
 
 
     // Kotlin preference settings
-    implementation "androidx.preference:preference-ktx:1.1.0"
+    implementation "androidx.preference:preference-ktx:1.1.1"
 
     //rabbitmq client
     implementation 'com.rabbitmq:amqp-client:5.8.0'

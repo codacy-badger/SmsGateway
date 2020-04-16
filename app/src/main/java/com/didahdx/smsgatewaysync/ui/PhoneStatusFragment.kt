@@ -2,41 +2,48 @@ package com.didahdx.smsgatewaysync.ui
 
 import android.Manifest
 import android.app.Activity
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.*
+import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.*
+import android.provider.Settings
 import android.telephony.TelephonyManager
 import android.telephony.TelephonyManager.UssdResponseCallback
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat.getSystemService
+import androidx.core.content.PermissionChecker.checkSelfPermission
 import androidx.fragment.app.Fragment
 import com.didahdx.smsgatewaysync.R
-import com.didahdx.smsgatewaysync.receiver.BatteryReceiver
-import com.didahdx.smsgatewaysync.utilities.PERMISSION_CALL_PHONE_CODE
+import com.didahdx.smsgatewaysync.utilities.PERMISSION_REQUEST_ALL_CODE
 import com.didahdx.smsgatewaysync.utilities.toast
 import kotlinx.android.synthetic.main.fragment_phone_status.*
+
 
 
 /**
  * A simple [Fragment] subclass.
  */
 class PhoneStatusFragment : Fragment() {
-
+    private val appPermissions = arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.READ_PHONE_STATE,
+            Manifest.permission.READ_CALL_LOG,
+            Manifest.permission.CALL_PHONE,
+            Manifest.permission.READ_PHONE_STATE
+    )
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
-
+        checkAndRequestPermissions()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             checkBalance()
         }
@@ -45,8 +52,6 @@ class PhoneStatusFragment : Fragment() {
     }
 
     private fun checkBalance() {
-        checkCallPhonePermission()
-
         val telephonyManager: TelephonyManager? =
             activity?.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager?
         val handler: Handler = object : Handler(Looper.getMainLooper()) {
@@ -129,7 +134,7 @@ class PhoneStatusFragment : Fragment() {
             val tempratureInFarenheit=((temperatureInCelsius*1.8)+32).toInt()
             stringBuilder.append("$tempratureInFarenheit \u00B0F\n")
 
-            stringBuilder.append("\n Power Source \n")
+            stringBuilder.append("\n Power Source: \n")
 
             when(intent.getIntExtra(BatteryManager.EXTRA_PLUGGED,0)){
                 BatteryManager.BATTERY_PLUGGED_AC->stringBuilder.append("AC adapter\n")
@@ -158,33 +163,113 @@ class PhoneStatusFragment : Fragment() {
         }
     }
 
-    private fun checkCallPhonePermission() {
-        if (ActivityCompat.checkSelfPermission(
-                activity as Activity,
-                Manifest.permission.CALL_PHONE
-            )
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                activity as Activity,
-                arrayOf(Manifest.permission.CALL_PHONE),
-                PERMISSION_CALL_PHONE_CODE
-            )
+
+
+
+    //check and requests the permission which are required
+    private fun checkAndRequestPermissions(): Boolean {
+        val listPermissionsNeeded = ArrayList<String>()
+
+        for (perm in appPermissions) {
+            if (checkSelfPermission(activity as Activity, perm)
+                != PackageManager.PERMISSION_GRANTED) {
+                listPermissionsNeeded.add(perm)
+            } }
+
+        if (listPermissionsNeeded.isNotEmpty()) {
+            requestPermissions(
+                    listPermissionsNeeded.toArray(arrayOf(listPermissionsNeeded.size.toString()))
+                , PERMISSION_REQUEST_ALL_CODE)
+            return false;
+        }
+        return true;
+    }
+
+
+    //getting permission results
+    override fun onRequestPermissionsResult(
+            requestCode: Int,
+            permissions: Array<out String>,
+            grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == PERMISSION_REQUEST_ALL_CODE) {
+            val permissionResults: HashMap<String, Int> = HashMap()
+            var deniedCount = 0
+
+            for (i in grantResults) {
+                if (i >= 0 && grantResults.isNotEmpty() && grantResults[i] == PackageManager.PERMISSION_DENIED) {
+                    permissionResults.put(permissions[i], grantResults[i])
+                    deniedCount++
+                }
+            }
+
+            if (deniedCount == 0) {
+                //initialise app
+            } else {
+                for (entry in permissionResults) {
+                    var permName = entry.key
+                    var permResult = entry.value
+
+                    if (shouldShowRequestPermissionRationale(permName)) {
+                        showDialog("", "This app needs $permName to work properly",
+                                "Grant Permission"
+                                , DialogInterface.OnClickListener { dialog, which ->
+                            dialog.dismiss()
+                            checkAndRequestPermissions()
+                        },
+                                "Exit App", DialogInterface.OnClickListener { dialog, which ->
+                            dialog.dismiss()
+                            activity?.finish()
+                        }
+                                , false)
+                    } else {
+                        showDialog("",
+                                "You have denied some permissions. Allow all permissions at [Setting] > Permission",
+                                "Go to Settings"
+                                ,
+                                DialogInterface.OnClickListener { dialog, which ->
+                                    dialog.dismiss()
+                                    val intent = Intent(
+                                            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                            Uri.fromParts("package", context?.packageName, null)
+                                    )
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                                    startActivity(intent)
+                                    activity?.finish()
+
+                                },
+                                "Exit App",
+                                DialogInterface.OnClickListener { dialog, which ->
+                                    dialog.dismiss()
+                                    activity?.finish()
+                                }
+                                ,
+                                false)
+                        break
+                    }
+                }
+            }
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
+    //used to display alert dialog box
+    private fun showDialog(
+            title: String, msg: String, postiveLabel: String,
+            postiveOnClick: DialogInterface.OnClickListener,
+            negativeLabel: String, negativeOnClick: DialogInterface.OnClickListener,
+            isCancelable: Boolean
+    ): AlertDialog {
 
-        when (requestCode) {
-            PERMISSION_CALL_PHONE_CODE -> {
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        val builder = AlertDialog.Builder(activity as Activity)
+        builder.setTitle(title)
+        builder.setCancelable(isCancelable)
+        builder.setMessage(msg)
+        builder.setPositiveButton(postiveLabel, postiveOnClick)
+        builder.setNegativeButton(negativeLabel, negativeOnClick)
+        val alert = builder.create()
+        alert.show()
+        return alert;
+    }
 
-                } else {
-                    Toast.makeText(activity, "Permission denied", Toast.LENGTH_SHORT).show()
-                }
-            }}}
 }
