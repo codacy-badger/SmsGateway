@@ -1,13 +1,11 @@
 package com.didahdx.smsgatewaysync.services
 
-import android.app.Notification
-import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
-import com.didahdx.smsgatewaysync.MainActivity
+import com.didahdx.smsgatewaysync.ui.activities.MainActivity
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.utilities.CHANNEL_ID
 import com.didahdx.smsgatewaysync.utilities.INPUT_EXTRAS

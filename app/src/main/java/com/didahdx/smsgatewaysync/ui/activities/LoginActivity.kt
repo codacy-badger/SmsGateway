@@ -1,7 +1,6 @@
-package com.didahdx.smsgatewaysync
+package com.didahdx.smsgatewaysync.ui.activities
 
 import android.Manifest
-import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -10,10 +9,8 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
+import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.utilities.*
-import com.google.android.gms.tasks.OnCompleteListener
-import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.android.synthetic.main.activity_login.*
@@ -157,7 +154,7 @@ class LoginActivity : AppCompatActivity(), View.OnClickListener {
 
         val user: FirebaseUser? = auth.currentUser
         if (user != null) {
-            startActivity(Intent(this,MainActivity::class.java))
+            startActivity(Intent(this, MainActivity::class.java))
             finish()
         }
 
@@ -178,7 +175,8 @@ class LoginActivity : AppCompatActivity(), View.OnClickListener {
                     ).show()
                     val user: FirebaseUser? = auth.currentUser
                     if (user != null) {
-                        startActivity(Intent(this,MainActivity::class.java))
+                        startActivity(Intent(this,
+                            MainActivity::class.java))
                         finish()
                     }
                 } else { // If sign in fails, display a message to the user.

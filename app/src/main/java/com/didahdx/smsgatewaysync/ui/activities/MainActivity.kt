@@ -1,4 +1,4 @@
-package com.didahdx.smsgatewaysync
+package com.didahdx.smsgatewaysync.ui.activities
 
 
 import android.Manifest
@@ -20,9 +20,12 @@ import androidx.core.view.GravityCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
 import androidx.preference.PreferenceManager
+import com.didahdx.smsgatewaysync.App
+import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.receiver.*
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.ui.*
+import com.didahdx.smsgatewaysync.ui.fragments.*
 import com.didahdx.smsgatewaysync.utilities.*
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.analytics.FirebaseAnalytics
@@ -78,7 +81,9 @@ class MainActivity : AppCompatActivity(),
 
         val drawerToggle: ActionBarDrawerToggle = object : ActionBarDrawerToggle(
             this,
-            drawer_layout, toolbar, R.string.open, R.string.close
+            drawer_layout, toolbar,
+            R.string.open,
+            R.string.close
         ) {
 
         }
@@ -125,7 +130,8 @@ class MainActivity : AppCompatActivity(),
         )
 
         //saving apps preference
-        PreferenceManager.setDefaultValues(this, R.xml.preferences, false)
+        PreferenceManager.setDefaultValues(this,
+            R.xml.preferences, false)
 
         val headView: View = navigation_view.getHeaderView(0)
         val navUser: TextView = headView.findViewById<TextView>(R.id.text_view_user_loggedIn)
@@ -167,7 +173,8 @@ class MainActivity : AppCompatActivity(),
     override fun onNavigationItemSelected(menu: MenuItem): Boolean {
         when (menu.itemId) {
             R.id.nav_home -> {
-                homeFragment = HomeFragment()
+                homeFragment =
+                    HomeFragment()
                 supportFragmentManager
                     .beginTransaction()
                     .replace(R.id.frame_layout, homeFragment)
@@ -176,7 +183,8 @@ class MainActivity : AppCompatActivity(),
             }
 
             R.id.nav_about -> {
-                aboutFragment = AboutFragment()
+                aboutFragment =
+                    AboutFragment()
                 supportFragmentManager
                     .beginTransaction()
                     .replace(R.id.frame_layout, aboutFragment)
@@ -185,7 +193,8 @@ class MainActivity : AppCompatActivity(),
             }
 
             R.id.nav_phone_status -> {
-                phoneStatusFragment = PhoneStatusFragment()
+                phoneStatusFragment =
+                    PhoneStatusFragment()
                 supportFragmentManager
                     .beginTransaction()
                     .replace(R.id.frame_layout, phoneStatusFragment)
@@ -194,7 +203,8 @@ class MainActivity : AppCompatActivity(),
             }
 
             R.id.nav_log -> {
-                logFragment = LogFragment()
+                logFragment =
+                    LogFragment()
                 supportFragmentManager
                     .beginTransaction()
                     .replace(R.id.frame_layout, logFragment)
@@ -203,7 +213,8 @@ class MainActivity : AppCompatActivity(),
             }
 
             R.id.nav_settings -> {
-                settingsFragment = SettingsFragment()
+                settingsFragment =
+                    SettingsFragment()
                 supportFragmentManager
                     .beginTransaction()
                     .replace(R.id.frame_layout, settingsFragment)

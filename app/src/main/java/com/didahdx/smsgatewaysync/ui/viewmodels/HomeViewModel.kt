@@ -1,4 +1,4 @@
-package com.didahdx.smsgatewaysync.viewmodels
+package com.didahdx.smsgatewaysync.ui.viewmodels
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

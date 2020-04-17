@@ -1,9 +1,8 @@
-package com.didahdx.smsgatewaysync.ui
+package com.didahdx.smsgatewaysync.ui.fragments
 
 import android.Manifest
 import android.app.Activity
 import android.content.*
-import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.*
@@ -16,7 +15,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.content.PermissionChecker.checkSelfPermission
 import androidx.fragment.app.Fragment
 import com.didahdx.smsgatewaysync.R

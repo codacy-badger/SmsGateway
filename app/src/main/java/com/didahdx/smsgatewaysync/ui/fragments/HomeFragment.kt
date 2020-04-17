@@ -1,17 +1,15 @@
-package com.didahdx.smsgatewaysync.ui
+package com.didahdx.smsgatewaysync.ui.fragments
 
 import android.Manifest
 import android.app.Activity
 import android.app.PendingIntent
 import android.content.*
 import android.content.pm.PackageManager
-import android.database.Cursor
 import android.location.Location
 import android.net.ConnectivityManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.CallLog
 import android.provider.Settings
 import android.telephony.SmsManager
 import android.telephony.SubscriptionInfo
@@ -30,8 +28,8 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.didahdx.smsgatewaysync.R
-import com.didahdx.smsgatewaysync.SmsDetailsActivity
-import com.didahdx.smsgatewaysync.adapters.MessageAdapter
+import com.didahdx.smsgatewaysync.ui.activities.SmsDetailsActivity
+import com.didahdx.smsgatewaysync.ui.adapters.MessageAdapter
 import com.didahdx.smsgatewaysync.manager.RabbitmqClient
 import com.didahdx.smsgatewaysync.model.MessageInfo
 import com.didahdx.smsgatewaysync.model.MpesaMessageInfo
@@ -39,8 +37,9 @@ import com.didahdx.smsgatewaysync.repository.data.IncomingMessages
 import com.didahdx.smsgatewaysync.repository.data.MessagesDatabase
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.services.LocationGpsService
+import com.didahdx.smsgatewaysync.ui.UiUpdaterInterface
 import com.didahdx.smsgatewaysync.utilities.*
-import com.didahdx.smsgatewaysync.viewmodels.HomeViewModel
+import com.didahdx.smsgatewaysync.ui.viewmodels.HomeViewModel
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.OnFailureListener
 import com.google.android.gms.tasks.OnSuccessListener

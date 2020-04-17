@@ -48,7 +48,7 @@
             android:enabled="true"
             android:exported="true" />
 
-        <activity android:name=".SmsDetailsActivity" />
+        <activity android:name=".ui.activities.SmsDetailsActivity" />
 
         <receiver
             android:name=".receiver.BootReceiver"
@@ -66,10 +66,10 @@
             android:enabled="true"
             android:exported="false" />
 
-        <activity android:name=".ForgotPasswordActivity" />
-        <activity android:name=".SignUpActivity" />
+        <activity android:name=".ui.activities.ForgotPasswordActivity" />
+        <activity android:name=".ui.activities.SignUpActivity" />
         <activity
-            android:name=".LoginActivity"
+            android:name=".ui.activities.LoginActivity"
             android:windowSoftInputMode="adjustNothing">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -88,7 +88,7 @@
         </receiver>
 
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.activities.MainActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar" />
 

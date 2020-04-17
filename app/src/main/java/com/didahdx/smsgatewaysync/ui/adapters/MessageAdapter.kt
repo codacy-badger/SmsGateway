@@ -1,4 +1,4 @@
-package com.didahdx.smsgatewaysync.adapters;
+package com.didahdx.smsgatewaysync.ui.adapters;
 
 import android.view.LayoutInflater
 import android.view.View

@@ -1,4 +1,4 @@
-package com.didahdx.smsgatewaysync
+package com.didahdx.smsgatewaysync.ui.activities
 
 import android.Manifest
 import android.app.Activity
@@ -16,6 +16,7 @@ import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.preference.PreferenceManager
+import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.utilities.*
 import com.mazenrashed.printooth.Printooth
 import com.mazenrashed.printooth.ui.ScanningActivity

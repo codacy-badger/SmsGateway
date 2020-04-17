@@ -1,4 +1,4 @@
-package com.didahdx.smsgatewaysync.ui
+package com.didahdx.smsgatewaysync.ui.fragments
 
 import android.os.Bundle
 import androidx.fragment.app.Fragment

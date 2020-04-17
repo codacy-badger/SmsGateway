@@ -1,10 +1,11 @@
-package com.didahdx.smsgatewaysync
+package com.didahdx.smsgatewaysync.ui.activities
 
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.utilities.Validation
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.activity_forgot_password.*
