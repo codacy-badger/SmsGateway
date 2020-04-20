@@ -1,5 +1,6 @@
 package com.didahdx.smsgatewaysync.manager
 
+import com.rabbitmq.client.Address
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
@@ -9,6 +10,8 @@ object RabbitmqConnector {
     private val connectionFactory = ConnectionFactory()
 
     init {
+        val addresses: Array<Address> =
+            arrayOf<Address>(Address("128.199.174.204"))
         connectionFactory.host = "128.199.174.204"
         connectionFactory.username = "didahdx"
         connectionFactory.password = "test"

@@ -1,4 +1,4 @@
-package com.didahdx.smsgatewaysync.repository.data
+package com.didahdx.smsgatewaysync.data.db.entities
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity

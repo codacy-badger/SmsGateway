@@ -23,7 +23,7 @@ class BatteryReceiver : BroadcastReceiver() {
         val batteryPercentage=intent.getIntExtra(BatteryManager.EXTRA_LEVEL,0)
 
         stringBuilder.append("Battery percentage: $batteryPercentage % \n")
-        newIntent.putExtra(BATTERY_PERCENTAGE_EXTRA,batteryPercentage)
+        newIntent.putExtra(BATTERY_PERCENTAGE_EXTRA, batteryPercentage.toString())
 
 
         stringBuilder.append("\nBattery Condition: \n")
@@ -46,7 +46,7 @@ class BatteryReceiver : BroadcastReceiver() {
 
         val tempratureInFarenheit=((temperatureInCelsius*1.8)+32).toInt()
         stringBuilder.append("$tempratureInFarenheit \u00B0F\n")
-        newIntent.putExtra(BATTERY_TEMPERATURE_EXTRA,"$temperatureInCelsius  °C\n $tempratureInFarenheit °F\n")
+        newIntent.putExtra(BATTERY_TEMPERATURE_EXTRA,"$temperatureInCelsius °C")
 
         stringBuilder.append("\n Power Source \n")
 

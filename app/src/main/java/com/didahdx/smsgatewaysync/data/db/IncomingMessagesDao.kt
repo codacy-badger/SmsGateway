@@ -1,13 +1,13 @@
-package com.didahdx.smsgatewaysync.repository.data
+package com.didahdx.smsgatewaysync.data.db
 
-import androidx.lifecycle.LiveData
 import androidx.room.*
+import com.didahdx.smsgatewaysync.data.db.entities.IncomingMessages
 
 @Dao
 interface IncomingMessagesDao {
 
  @Insert
- suspend fun addMessage(incomingMessages:IncomingMessages)
+ suspend fun addMessage(incomingMessages: IncomingMessages)
 
  @Update
  suspend fun updateMessage(incomingMessages: IncomingMessages)

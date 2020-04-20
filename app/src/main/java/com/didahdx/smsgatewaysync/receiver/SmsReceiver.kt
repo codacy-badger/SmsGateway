@@ -7,11 +7,10 @@ import android.content.SharedPreferences
 import android.os.Build
 import android.telephony.SmsMessage
 import android.util.Log
-import android.widget.Toast
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
-import com.didahdx.smsgatewaysync.repository.data.IncomingMessages
-import com.didahdx.smsgatewaysync.repository.data.MessagesDatabase
+import com.didahdx.smsgatewaysync.data.db.entities.IncomingMessages
+import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
 import com.didahdx.smsgatewaysync.utilities.*
 import com.mazenrashed.printooth.Printooth
 import kotlinx.coroutines.CoroutineScope
@@ -21,69 +20,74 @@ import kotlinx.coroutines.launch
 
 class SmsReceiver : BroadcastReceiver() {
     private lateinit var sharedPreferences: SharedPreferences
+    private val newIntent = Intent(SMS_LOCAL_BROADCAST_RECEIVER)
+    var phoneNumber:String?=" "
+    var messageText:String?=""
+    var time:Long?=null
+    var sms:String?=" "
+    private val printer = BluetoothPrinter()
+    private val smsFilter = SmsFilter()
 
     override fun onReceive(context: Context, intent: Intent) {
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+        val printingReference = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
+
         if (SMS_RECEIVED_INTENT == intent.action) {
             Log.d("sms_rece", "action original ${intent.action}")
             val extras = intent.extras
             if (extras != null) {
                 val sms = extras.get("pdus") as Array<*>
-                var messageBuilder = StringBuilder()
+                val messageBuilder = StringBuilder()
 
                 for (i in sms.indices) {
                     val format = extras.getString("format")
                     var smsMessage = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        SmsMessage.createFromPdu(sms[0] as ByteArray, format)
+                        SmsMessage.createFromPdu(sms[i] as ByteArray, format)
                     } else {
-                        SmsMessage.createFromPdu(sms[0] as ByteArray)
+                        SmsMessage.createFromPdu(sms[i] as ByteArray)
                     }
-                    val phoneNumber = smsMessage.originatingAddress
-                    var messageText = smsMessage.messageBody.toString()
-                    val time = smsMessage.timestampMillis
-                    val sms = smsMessage.displayMessageBody.toString()
-                    messageBuilder.append(smsMessage.displayMessageBody.toString())
+                    phoneNumber = smsMessage.originatingAddress
+                     time = smsMessage.timestampMillis
+                    messageBuilder.append(smsMessage.messageBody.toString())
 
+                    println("$phoneNumber \n sms : \t $sms  \n  messageText :\t $messageText ")
+                }
 
-                    val newIntent = Intent(SMS_LOCAL_BROADCAST_RECEIVER)
-                    newIntent.putExtra("phoneNumber", phoneNumber)
-                    newIntent.putExtra("messageText", messageText)
-                    newIntent.putExtra("date", time)
+                messageText=messageBuilder.toString()
 
-                    sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-                    val printingReference =
-                        sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
+                newIntent.putExtra("phoneNumber", phoneNumber)
+                newIntent.putExtra("messageText", messageText)
+                newIntent.putExtra("date", time)
 
-                    CoroutineScope(IO).launch {
-                        var message2: IncomingMessages?
-                        message2 = IncomingMessages(
-                            messageText, time,
+                CoroutineScope(IO).launch {
+                    var message2: IncomingMessages?
+                    message2 =
+                        IncomingMessages(
+                            messageText!!, time!!,
                             phoneNumber!!, true
                         )
 
-                        context.let { tex ->
-                            MessagesDatabase(tex).getIncomingMessageDao()
-                                .addMessage(message2)
-                        }
+                    context.let { tex ->
+                        MessagesDatabase(
+                            tex
+                        ).getIncomingMessageDao()
+                            .addMessage(message2)
                     }
-
-                    val printer = BluetoothPrinter()
-                    val smsFilter = SmsFilter()
-
-                    if ("MPESA" == phoneNumber) {
-                        val printMessage = smsFilter.checkSmsType(messageText)
-                        if (printingReference == smsFilter.mpesaType) {
-                            context?.toast(" test ${smsFilter.mpesaType}")
-                            if (Printooth.hasPairedPrinter()) {
-                                printer.printText(printMessage, context, APP_NAME)
-                            } else {
-                                context?.toast("Printer not connected  ")
-                            }
-                        }
-                    }
-
-                    println("$phoneNumber \n sms : \t $sms  \n  messageText :\t $messageText ")
-                    LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
                 }
+
+                LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
+                if ("MPESA" == phoneNumber) {
+                    val printMessage = smsFilter.checkSmsType(messageText!!)
+                    if (printingReference == smsFilter.mpesaType) {
+                        context?.toast(" test ${smsFilter.mpesaType}")
+                        if (Printooth.hasPairedPrinter()) {
+                            printer.printText(printMessage, context, APP_NAME)
+                        } else {
+                            context?.toast("Printer not connected  ")
+                        }
+                    }
+                }
+
 
             }
 

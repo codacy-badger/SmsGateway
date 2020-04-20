@@ -33,8 +33,8 @@ import com.didahdx.smsgatewaysync.ui.adapters.MessageAdapter
 import com.didahdx.smsgatewaysync.manager.RabbitmqClient
 import com.didahdx.smsgatewaysync.model.MessageInfo
 import com.didahdx.smsgatewaysync.model.MpesaMessageInfo
-import com.didahdx.smsgatewaysync.repository.data.IncomingMessages
-import com.didahdx.smsgatewaysync.repository.data.MessagesDatabase
+import com.didahdx.smsgatewaysync.data.db.entities.IncomingMessages
+import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.services.LocationGpsService
 import com.didahdx.smsgatewaysync.ui.UiUpdaterInterface
@@ -215,7 +215,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
             if (intent != null && isServiceRunning && BATTERY_LOCAL_BROADCAST_RECEIVER == intent.action) {
                 if (intent.extras != null) {
                     val batteryVoltage = intent.extras!!.getString(BATTERY_VOLTAGE_EXTRA)
-                    val batteryPercentage = intent.extras!!.getString(BATTERY_PERCENTAGE_EXTRA)
+                    var batteryPercentage =intent.extras!!.getString(BATTERY_PERCENTAGE_EXTRA).toString()
                     val batteryCondition = intent.extras!!.getString(BATTERY_CONDITION_EXTRA)
                     val batteryTemperature = intent.extras!!.getString(BATTERY_TEMPERATURE_EXTRA)
                     val batteryPowerSource = intent.extras!!.getString(BATTERY_POWER_SOURCE_EXTRA)
@@ -235,9 +235,10 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                     obj?.put("longitude", userLongitude)
                     obj?.put("latitude", userLatitude)
                     obj?.put("client_sender", user?.email!!)
+                    obj?.put("date", Date().toString())
                     obj?.put("client_gateway_type", "android_phone")
 
-                    obj?.toString()?.let { context?.toast(it) }
+//                    obj?.toString()?.let { context?.toast(it) }
                     CoroutineScope(IO).launch {
                         obj?.toString()?.let {
                             rabbitmqClient.publishMessage(it)
@@ -339,16 +340,19 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
 
                             var message2: IncomingMessages? = null
                             if (messageText != null) {
-                                message2 = IncomingMessages(
-                                    messageText, dateTimeStamp,
-                                    phoneNumber!!, true
-                                )
+                                message2 =
+                                    IncomingMessages(
+                                        messageText, dateTimeStamp,
+                                        phoneNumber!!, true
+                                    )
                             } else {
                                 message2 = null
                             }
                             context.let { tex ->
                                 if (message2 != null) {
-                                    MessagesDatabase(tex).getIncomingMessageDao()
+                                    MessagesDatabase(
+                                        tex
+                                    ).getIncomingMessageDao()
                                         .updateMessage(message2)
                                 }
                             }
@@ -445,7 +449,10 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
         var incomingMessages = ArrayList<IncomingMessages>()
         context?.let {
 
-            incomingMessages.addAll(MessagesDatabase(it).getIncomingMessageDao().getAllMessages())
+            incomingMessages.addAll(
+                MessagesDatabase(
+                    it
+                ).getIncomingMessageDao().getAllMessages())
         }
         val mpesaType = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
 
@@ -561,8 +568,12 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
             context?.let {
 
 
-                val messagesList = MessagesDatabase(it).getIncomingMessageDao().getMessage(date)
-                val messagesList2 = MessagesDatabase(it).getIncomingMessageDao().getAllMessages()
+                val messagesList = MessagesDatabase(
+                    it
+                ).getIncomingMessageDao().getMessage(date)
+                val messagesList2 = MessagesDatabase(
+                    it
+                ).getIncomingMessageDao().getAllMessages()
 
                 val i = 0
 
@@ -596,21 +607,6 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
 
     }
 
-    //used to check for write to external storage permission
-    private fun checkWriteExternalStoragePermission() {
-        if (ActivityCompat.checkSelfPermission(
-                context as Activity,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-            )
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                activity as Activity,
-                arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-                PERMISSION_WRITE_EXTERNAL_STORAGE_CODE
-            )
-        }
-    }
 
 
     private fun startServices(input: String) {
