@@ -2,10 +2,13 @@ package com.didahdx.smsgatewaysync.ui.fragments
 
 import android.Manifest
 import android.app.Activity
+import android.app.usage.UsageStats
+import android.app.usage.UsageStatsManager
 import android.content.*
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.*
+import android.provider.CalendarContract.Instances.BEGIN
 import android.provider.Settings
 import android.telephony.TelephonyManager
 import android.telephony.TelephonyManager.UssdResponseCallback
@@ -14,14 +17,16 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
-import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.content.PermissionChecker.checkSelfPermission
 import androidx.fragment.app.Fragment
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.utilities.PERMISSION_REQUEST_ALL_CODE
 import com.didahdx.smsgatewaysync.utilities.toast
 import kotlinx.android.synthetic.main.fragment_phone_status.*
-
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 
 /**
@@ -45,8 +50,17 @@ class PhoneStatusFragment : Fragment() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             checkBalance()
         }
-        context?.registerReceiver(mBatteryReceiver,IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         return inflater.inflate(R.layout.fragment_phone_status, container, false)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        context?.registerReceiver(mBatteryReceiver,IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+    }
+
+    override fun onPause() {
+        super.onPause()
+        context?.unregisterReceiver(mBatteryReceiver)
     }
 
     private fun checkBalance() {
@@ -67,7 +81,12 @@ class PhoneStatusFragment : Fragment() {
                         response: CharSequence
                     ) {
                         super.onReceiveUssdResponse(telephonyManager, request, response)
-                        context?.toast("ussd response: $response")
+
+                        val bal=response.substring(response.indexOf("Bal:")+4,response.indexOf("KSH"))
+
+                        text_view_phone_status?.append("\n Airtime Balance KSh: $bal")
+
+//                        context?.toast("ussd response: $response")
                         Log.e("ussd", "Success with response : $response  ")
                     }
 
@@ -83,7 +102,7 @@ class PhoneStatusFragment : Fragment() {
                 }
         }
 
-        if (ActivityCompat.checkSelfPermission(activity as Activity, Manifest.permission.CALL_PHONE)
+        if (checkSelfPermission(requireContext(), Manifest.permission.CALL_PHONE)
             == PackageManager.PERMISSION_GRANTED
         ) {
         try {
@@ -111,8 +130,8 @@ class PhoneStatusFragment : Fragment() {
             val batteryPercentage=
                 intent.getIntExtra(BatteryManager.EXTRA_LEVEL,0)
 
-            stringBuilder.append("Battery percentage: $batteryPercentage % \n")
-            stringBuilder.append("\nBattery Condition: \n")
+            stringBuilder.append("Battery percentage:  $batteryPercentage % \n")
+            stringBuilder.append("\nBattery Condition : ")
 
             when(intent.getIntExtra(BatteryManager.EXTRA_HEALTH,0)){
                 BatteryManager.BATTERY_HEALTH_OVERHEAT-> stringBuilder.append("over heat\n")
@@ -124,15 +143,15 @@ class PhoneStatusFragment : Fragment() {
                 else->stringBuilder.append("unknown")
             }
 
-            stringBuilder.append("\nBattery Temperature: \n")
+            stringBuilder.append("\nBattery Temperature : ")
             val temperatureInCelsius=
                 intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE,0)/10
-            stringBuilder.append("$temperatureInCelsius \u00B0C\n")
+            stringBuilder.append("$temperatureInCelsius \u00B0C \t\t")
 
             val tempratureInFarenheit=((temperatureInCelsius*1.8)+32).toInt()
             stringBuilder.append("$tempratureInFarenheit \u00B0F\n")
 
-            stringBuilder.append("\n Power Source: \n")
+            stringBuilder.append("\nPower Source  : ")
 
             when(intent.getIntExtra(BatteryManager.EXTRA_PLUGGED,0)){
                 BatteryManager.BATTERY_PLUGGED_AC->stringBuilder.append("AC adapter\n")
@@ -141,7 +160,7 @@ class PhoneStatusFragment : Fragment() {
                 else->stringBuilder.append("no power sources\n")
             }
 
-            stringBuilder.append("\n Charging Status \n")
+            stringBuilder.append("\nCharging Status : ")
             when(intent.getIntExtra(BatteryManager.EXTRA_STATUS,-1)) {
                 BatteryManager.BATTERY_STATUS_CHARGING -> stringBuilder.append("charging \n")
                 BatteryManager.BATTERY_STATUS_DISCHARGING -> stringBuilder.append("discharging \n")
@@ -152,10 +171,14 @@ class PhoneStatusFragment : Fragment() {
             }
 
             val technology= intent.extras?.getString(BatteryManager.EXTRA_TECHNOLOGY)
-            stringBuilder.append("\nTechnology \n $technology \n")
+            stringBuilder.append("\nTechnology : $technology \n")
 
             val voltage= intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE,0).toDouble()/1000
-            stringBuilder.append("\nVoltage \n $voltage V\n")
+            stringBuilder.append("\nVoltage : $voltage V\n")
+
+            stringBuilder.append("\nPhone manufacturer : ${Build.MANUFACTURER} \n  ")
+            stringBuilder.append("\nPhone model : ${Build.MODEL} \n")
+            stringBuilder.append("\nPhone brand : ${Build.BRAND} \n")
 
             text_view_phone_status?.text= stringBuilder.toString()
         }
@@ -169,7 +192,7 @@ class PhoneStatusFragment : Fragment() {
         val listPermissionsNeeded = ArrayList<String>()
 
         for (perm in appPermissions) {
-            if (checkSelfPermission(activity as Activity, perm)
+            if (checkSelfPermission(requireContext(), perm)
                 != PackageManager.PERMISSION_GRANTED) {
                 listPermissionsNeeded.add(perm)
             } }
@@ -250,6 +273,7 @@ class PhoneStatusFragment : Fragment() {
             }
         }
     }
+
 
     //used to display alert dialog box
     private fun showDialog(

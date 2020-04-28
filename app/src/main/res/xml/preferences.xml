@@ -20,7 +20,7 @@
         android:title="Url Configuration"
         app:iconSpaceReserved="false">
         <SwitchPreferenceCompat
-            android:defaultValue="true"
+            android:defaultValue="false"
             android:key="push_url"
             android:summary="Enable forwarding to a custom Host url"
             android:title="Enable Host Url"
@@ -76,7 +76,7 @@
             android:entryValues="@array/sim_cards"
             android:key="sim_card"
             android:summary="Choose your default sim card to use for the application"
-            android:title="Set Sim card"
+            android:title="Sending Out Sms Sim"
             app:iconSpaceReserved="false"
             />
 

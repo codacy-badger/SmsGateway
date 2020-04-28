@@ -25,6 +25,7 @@ class AppServices :Service(){
             .setContentTitle(getString(R.string.app_name))
             .setContentText(input)
             .setSmallIcon(R.drawable.ic_home)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .setContentIntent(pendingIntent)
             .build()
 

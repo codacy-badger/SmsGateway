@@ -15,7 +15,9 @@ const val APP_SERVICE_STATE = "APP_SERVICE_STATE"
 const val LOG_FILE_NAME="smsLog.txt"
 const val APP_NAME="Sms Router"
 const val CHANNEL_ID="sms_services_notification"
-const val CHANNEL_NAME="$APP_NAME status"
+const val CHANNEL_SMS_SERVICE_NAME="$APP_NAME status"
+const val CHANNEL_ID_2="update_services"
+const val CHANNEL_CLIENT_NOTIFICATION_NAME="update messages"
 const val MESSAGE_DATABASE="messageDatabase"
 
 /**

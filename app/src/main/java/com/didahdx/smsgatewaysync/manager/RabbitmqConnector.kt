@@ -10,12 +10,10 @@ object RabbitmqConnector {
     private val connectionFactory = ConnectionFactory()
 
     init {
-        val addresses: Array<Address> =
-            arrayOf<Address>(Address("128.199.174.204"))
         connectionFactory.host = "128.199.174.204"
         connectionFactory.username = "didahdx"
         connectionFactory.password = "test"
-        connectionFactory.networkRecoveryInterval=10000
+//        connectionFactory.networkRecoveryInterval=10000
 //        connectionFactory.connectionTimeout=10000
         connectionFactory.isAutomaticRecoveryEnabled=true
 //        connectionFactory.isTopologyRecoveryEnabled = false

@@ -2,9 +2,8 @@ package com.didahdx.smsgatewaysync.ui.activities
 
 
 import android.Manifest
-import android.content.Intent
-import android.content.IntentFilter
-import android.content.SharedPreferences
+import android.app.NotificationManager
+import android.content.*
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.os.Build
@@ -13,6 +12,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -20,11 +20,13 @@ import androidx.core.view.GravityCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
 import androidx.preference.PreferenceManager
-import com.didahdx.smsgatewaysync.App
 import com.didahdx.smsgatewaysync.R
-import com.didahdx.smsgatewaysync.receiver.*
+import com.didahdx.smsgatewaysync.receiver.BatteryReceiver
+import com.didahdx.smsgatewaysync.receiver.ConnectionReceiver
+import com.didahdx.smsgatewaysync.receiver.PhoneCallReceiver
+import com.didahdx.smsgatewaysync.receiver.SmsReceiver
 import com.didahdx.smsgatewaysync.services.AppServices
-import com.didahdx.smsgatewaysync.ui.*
+import com.didahdx.smsgatewaysync.ui.IMainActivity
 import com.didahdx.smsgatewaysync.ui.fragments.*
 import com.didahdx.smsgatewaysync.utilities.*
 import com.google.android.material.navigation.NavigationView
@@ -35,23 +37,22 @@ import com.microsoft.appcenter.analytics.Analytics
 import com.microsoft.appcenter.crashes.Crashes
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_layout.*
-import java.util.*
 
 
 class MainActivity : AppCompatActivity(),
-    NavigationView.OnNavigationItemSelectedListener, ConnectionReceiver.ConnectionReceiverListener {
+    NavigationView.OnNavigationItemSelectedListener {
 
-    //checks on network connectivity to update the notification bar
-    override fun onNetworkConnectionChanged(isConnected: Boolean) {
-        val time = Date()
-        if (!isConnected) {
-//            startServices("No internet connection")
-            appLog.writeToLog(this, "\n\n $time \n No internet Connection")
-        } else {
-//            startServices("${getString(R.string.app_name)} is Running")
-            appLog.writeToLog(this, "\n\n $time \n Connected to Internet ")
-        }
-    }
+//    //checks on network connectivity to update the notification bar
+//    override fun onNetworkConnectionChanged(isConnected: Boolean) {
+//        val time = Date()
+//        if (!isConnected) {
+////            startServices("No internet connection")
+//            appLog.writeToLog(this, "\n\n $time \n No internet Connection")
+//        } else {
+////            startServices("${getString(R.string.app_name)} is Running")
+//            appLog.writeToLog(this, "\n\n $time \n Connected to Internet ")
+//        }
+//    }
 
 
     val appLog = AppLog()
@@ -97,23 +98,22 @@ class MainActivity : AppCompatActivity(),
         settingUpDefaultFragment()
 
 
-
-        App.instance.setConnectionListener(this)
-        //registering broadcast receiver for internet connection
-        baseContext.registerReceiver(
-            ConnectionReceiver(),
-            IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
-        )
+//        App.instance.setConnectionListener(this)
 
         //registering broadcast receiver for battery
-        baseContext.registerReceiver(
+        this.registerReceiver(
             BatteryReceiver(),
             IntentFilter(Intent.ACTION_BATTERY_CHANGED)
         )
 
         //registering broadcast receiver for smsReceiver
-        baseContext.registerReceiver(
+        this.registerReceiver(
             SmsReceiver(), IntentFilter(SMS_RECEIVED_INTENT)
+        )
+
+   //registering broadcast receiver for connection
+        this.registerReceiver(
+            ConnectionReceiver(), IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
         )
 
         val callFilter=IntentFilter("android.intent.action.NEW_OUTGOING_CALL")
@@ -122,11 +122,6 @@ class MainActivity : AppCompatActivity(),
         //registering broadcast receiver for callReceiver
         baseContext.registerReceiver(
             PhoneCallReceiver(), callFilter
-        )
-
-        //registering broadcast receiver for callReceiver
-        baseContext.registerReceiver(
-            CallReceiver(),callFilter
         )
 
         //saving apps preference
@@ -223,10 +218,21 @@ class MainActivity : AppCompatActivity(),
             }
 
             R.id.nav_logout -> {
-                FirebaseAuth.getInstance().signOut()
-                startActivity(Intent(this, LoginActivity::class.java))
-                stopServices()
-                finish()
+
+                showDialog("Logout", "Do you want to logout?",
+                    "Yes"
+                    , DialogInterface.OnClickListener { dialog, which ->
+                        dialog.dismiss()
+                        FirebaseAuth.getInstance().signOut()
+                        startActivity(Intent(this, LoginActivity::class.java))
+                        stopServices()
+                        finish()
+
+                    },
+                    "No", DialogInterface.OnClickListener { dialog, which ->
+                        dialog.dismiss()
+                    }
+                    , false)
             }
         }
 
@@ -285,6 +291,30 @@ class MainActivity : AppCompatActivity(),
 
     override fun onDestroy() {
         super.onDestroy()
+        val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
+        if(isServiceRunning){
+            stopServices()
+        }
+
+//        this.unregisterReceiver(SmsReceiver())
+    }
+    //used to display alert dialog box
+    private fun showDialog(
+        title: String, msg: String, postiveLabel: String,
+        postiveOnClick: DialogInterface.OnClickListener,
+        negativeLabel: String, negativeOnClick: DialogInterface.OnClickListener,
+        isCancelable: Boolean
+    ): AlertDialog {
+
+        val builder = AlertDialog.Builder(this )
+        builder.setTitle(title)
+        builder.setCancelable(isCancelable)
+        builder.setMessage(msg)
+        builder.setPositiveButton(postiveLabel, postiveOnClick)
+        builder.setNegativeButton(negativeLabel, negativeOnClick)
+        val alert = builder.create()
+        alert.show()
+        return alert;
     }
 
 }

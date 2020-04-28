@@ -8,7 +8,7 @@ import com.didahdx.smsgatewaysync.data.db.entities.IncomingMessages
 import com.didahdx.smsgatewaysync.utilities.MESSAGE_DATABASE
 
 @Database(
-    entities = [IncomingMessages::class],
+    entities = [IncomingMessages::class],exportSchema = false,
     version = 1
 )
 abstract class MessagesDatabase:RoomDatabase() {

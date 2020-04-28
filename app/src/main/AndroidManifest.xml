@@ -35,14 +35,6 @@
             </intent-filter>
         </receiver>
 
-        <receiver android:name=".receiver.CallReceiver"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.PHONE_STATE" />
-            </intent-filter>
-        </receiver>
-
         <service
             android:name=".services.LocationGpsService"
             android:enabled="true"
@@ -61,10 +53,10 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>
-        <receiver
-            android:name=".receiver.BatteryReceiver"
-            android:enabled="true"
-            android:exported="false" />
+<!--        <receiver-->
+<!--            android:name=".receiver.BatteryReceiver"-->
+<!--            android:enabled="true"-->
+<!--            android:exported="false" />-->
 
         <activity android:name=".ui.activities.ForgotPasswordActivity" />
         <activity android:name=".ui.activities.SignUpActivity" />
@@ -77,15 +69,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <receiver
-            android:name=".receiver.ConnectionReceiver"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.net.conn.CONNECTVITY_CHANGE" />
-            </intent-filter>
-        </receiver>
 
         <activity
             android:name=".ui.activities.MainActivity"

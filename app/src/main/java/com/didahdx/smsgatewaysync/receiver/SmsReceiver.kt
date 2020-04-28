@@ -24,7 +24,6 @@ class SmsReceiver : BroadcastReceiver() {
     var phoneNumber:String?=" "
     var messageText:String?=""
     var time:Long?=null
-    var sms:String?=" "
     private val printer = BluetoothPrinter()
     private val smsFilter = SmsFilter()
 
@@ -60,17 +59,13 @@ class SmsReceiver : BroadcastReceiver() {
                 newIntent.putExtra("date", time)
 
                 CoroutineScope(IO).launch {
-                    var message2: IncomingMessages?
-                    message2 =
-                        IncomingMessages(
+                    val message2: IncomingMessages?
+                    message2 = IncomingMessages(
                             messageText!!, time!!,
-                            phoneNumber!!, true
-                        )
+                            phoneNumber!!, true)
 
                     context.let { tex ->
-                        MessagesDatabase(
-                            tex
-                        ).getIncomingMessageDao()
+                        MessagesDatabase(tex).getIncomingMessageDao()
                             .addMessage(message2)
                     }
                 }
@@ -79,7 +74,6 @@ class SmsReceiver : BroadcastReceiver() {
                 if ("MPESA" == phoneNumber) {
                     val printMessage = smsFilter.checkSmsType(messageText!!)
                     if (printingReference == smsFilter.mpesaType) {
-                        context?.toast(" test ${smsFilter.mpesaType}")
                         if (Printooth.hasPairedPrinter()) {
                             printer.printText(printMessage, context, APP_NAME)
                         } else {
@@ -87,7 +81,6 @@ class SmsReceiver : BroadcastReceiver() {
                         }
                     }
                 }
-
 
             }
 

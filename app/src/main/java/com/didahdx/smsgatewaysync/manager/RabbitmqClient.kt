@@ -100,7 +100,6 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
             "", PUBLISH_FROM_CLIENT, false,
             props, message.toByteArray()
         )
-
         Log.d("RabbitMQ", "message sent!!!")
     }
 
@@ -111,22 +110,25 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
             true,
             { consumerTag: String?, delivery: Delivery ->
                 val m = String(delivery.body, StandardCharsets.UTF_8)
-                println("I have received a message  $m")
                 var phoneNumber = ""
                 var message = ""
-//                uiUpdater?.toasterMessage(m)
+
                 val baseJsonResponse: JSONObject = JSONObject(m)
 
                 when (baseJsonResponse.getString("message_type")) {
                     "send_sms" -> {
                         phoneNumber = baseJsonResponse.getString("phone_number")
                         message = baseJsonResponse.getString("message_body")
+                        uiUpdater?.sendSms(phoneNumber, message)
+                    }
+                    "notification_update"->{
+                      message=baseJsonResponse.getString("message_body")
+//                        uiUpdater?.notificationMessage(message)
+                        uiUpdater?.updateStatusViewWith(message, GREEN_COLOR)
                     }
                 }
-                uiUpdater?.toasterMessage("$phoneNumber $message")
-                uiUpdater?.sendSms(phoneNumber, message)
-                println("$phoneNumber  $message")
-                Log.d("teretg", "$phoneNumber  $message")
+
+                Log.d("teretg", " $message")
 
             }
         )

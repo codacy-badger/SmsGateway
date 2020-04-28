@@ -3,16 +3,13 @@ package com.didahdx.smsgatewaysync
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import android.content.IntentFilter
 import android.os.Build
 import androidx.multidex.MultiDex
 import androidx.multidex.MultiDexApplication
-import com.didahdx.smsgatewaysync.receiver.ConnectionReceiver
-import com.didahdx.smsgatewaysync.receiver.SmsReceiver
+import com.didahdx.smsgatewaysync.utilities.CHANNEL_CLIENT_NOTIFICATION_NAME
 import com.didahdx.smsgatewaysync.utilities.CHANNEL_ID
-import com.didahdx.smsgatewaysync.utilities.CHANNEL_NAME
-import com.didahdx.smsgatewaysync.utilities.SMS_RECEIVED_INTENT
-import com.didahdx.smsgatewaysync.utilities.toast
+import com.didahdx.smsgatewaysync.utilities.CHANNEL_ID_2
+import com.didahdx.smsgatewaysync.utilities.CHANNEL_SMS_SERVICE_NAME
 import com.mazenrashed.printooth.Printooth
 
 class App : MultiDexApplication() {
@@ -32,10 +29,6 @@ class App : MultiDexApplication() {
 
     }
 
-    fun setConnectionListener(listener: ConnectionReceiver.ConnectionReceiverListener){
-        ConnectionReceiver.connectionReceiverListener=listener
-    }
-
     companion object{
         @get:Synchronized
         lateinit var instance:App
@@ -44,12 +37,18 @@ class App : MultiDexApplication() {
 
     private fun createNotificationChannel() {
         if(Build.VERSION.SDK_INT>Build.VERSION_CODES.O){
-            var notificationChannel=NotificationChannel(CHANNEL_ID,
-                CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_DEFAULT)
+            val notificationChannel=NotificationChannel(CHANNEL_ID,
+                CHANNEL_SMS_SERVICE_NAME,
+                NotificationManager.IMPORTANCE_LOW)
+
+            val updateNotificationChannel=NotificationChannel(
+                CHANNEL_ID_2,
+                CHANNEL_CLIENT_NOTIFICATION_NAME,
+                NotificationManager.IMPORTANCE_LOW)
 
             val manager : NotificationManager?= getSystemService(NotificationManager::class.java)
             manager?.createNotificationChannel(notificationChannel)
+            manager?.createNotificationChannel(updateNotificationChannel)
         }
     }
 

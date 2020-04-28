@@ -15,7 +15,7 @@ class BatteryReceiver : BroadcastReceiver() {
     val newIntent = Intent(BATTERY_LOCAL_BROADCAST_RECEIVER)
     override fun onReceive(context: Context, intent: Intent) {
         val batteryStatus: String=checkBatteryStatus(intent,context)
-//        context?.toast(batteryStatus)
+
     }
 
     private fun checkBatteryStatus(intent: Intent,context:Context):String{
@@ -48,7 +48,7 @@ class BatteryReceiver : BroadcastReceiver() {
         stringBuilder.append("$tempratureInFarenheit \u00B0F\n")
         newIntent.putExtra(BATTERY_TEMPERATURE_EXTRA,"$temperatureInCelsius °C")
 
-        stringBuilder.append("\n Power Source \n")
+        stringBuilder.append("\nPower Source \n")
 
 
        val powerSource= when(intent.getIntExtra(BatteryManager.EXTRA_PLUGGED,0)){
@@ -59,7 +59,7 @@ class BatteryReceiver : BroadcastReceiver() {
         }
         newIntent.putExtra(BATTERY_POWER_SOURCE_EXTRA,powerSource)
 
-        stringBuilder.append("\n Charging Status \n")
+        stringBuilder.append("\nCharging Status \n")
       val chargingStatus=  when(intent.getIntExtra(BatteryManager.EXTRA_STATUS,-1)) {
             BatteryManager.BATTERY_STATUS_CHARGING -> "charging "
             BatteryManager.BATTERY_STATUS_DISCHARGING -> "discharging"
