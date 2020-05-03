@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:targetApi="o">
+
+    <PreferenceCategory
+        android:title="Services"
+        app:iconSpaceReserved="false">
+        <SwitchPreferenceCompat
+            app:iconSpaceReserved="false"
+            android:key="services_key"
+            android:summary="Used to enable or disable the running services of the application"
+            android:title="Enable or Disable services"
+            app:defaultValue="true" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="Url Configuration"
+        app:iconSpaceReserved="false">
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:key="push_url"
+            android:summary="Enable forwarding to a custom Host url"
+            android:title="Enable Host Url"
+            app:iconSpaceReserved="false" />
+
+        <EditTextPreference
+            android:defaultValue="@string/host_url"
+            android:dependency="push_url"
+            android:key="host_url"
+            android:summary="Add your host url to root to"
+            android:title="Host Url"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+
+
+    <PreferenceCategory
+        android:title="Messages"
+        app:iconSpaceReserved="false">
+        <ListPreference
+            android:defaultValue="All"
+            android:entries="@array/mpesa_types"
+            android:entryValues="@array/mpesa_types"
+            android:key="mpesa_types"
+            android:summary="Types of mpesa transaction to be used"
+            android:title="Mpesa type"
+            app:iconSpaceReserved="false" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="enable_forward_sms"
+            android:summary="@string/phone_number"
+            android:title="Enable Forwarding of messages"
+            app:defaultValue="false"
+            app:iconSpaceReserved="false" />
+
+        <EditTextPreference
+            android:dependency="enable_forward_sms"
+            android:key="forward_sms_number"
+            android:summary="Add default phone number"
+            android:title="Phone Number"
+            app:defaultValue="+2547xxxxxxxx"
+            app:iconSpaceReserved="false" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="auto_delete"
+            android:summary="Enable auto deleting messages that are sent to server"
+            android:title="Auto Delete messages"
+            app:iconSpaceReserved="false" />
+
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="Printing"
+        app:iconSpaceReserved="false">
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="connect_printer"
+            android:summary="Connect to a printer"
+            android:title="Add Printer"
+            app:iconSpaceReserved="false" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:dependency="connect_printer"
+            android:key="auto_print"
+            android:summary="Allow automatic printing on incoming sms"
+            android:title="Auto Printing"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+
+
+    <Preference
+        android:title="Send feedback"
+        app:iconSpaceReserved="false"
+        app:key="feedback"
+        app:summary="Report technical issues or suggest new features" />
+
+</PreferenceScreen>
