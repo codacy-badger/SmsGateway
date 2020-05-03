@@ -60,6 +60,8 @@ class SmsDetailsActivity : AppCompatActivity(), PrintingCallback {
     var smsDate: String? = null
     var smsSender: String? = null
     var smsStatus: String? = null
+    var longitude: String? = null
+    var latitude: String? = null
     var printing: Printing? = null
     lateinit var sharedPrferences: SharedPreferences
 
@@ -78,12 +80,16 @@ class SmsDetailsActivity : AppCompatActivity(), PrintingCallback {
             smsDate = bundle?.getString(SMS_DATE_EXTRA)
             smsSender = bundle?.getString(SMS_SENDER_EXTRA)
             smsStatus = bundle?.getString(SMS_UPLOAD_STATUS_EXTRA)
+            longitude=bundle?.getString(LONGITUDE_EXTRA)
+            latitude=bundle?.getString(LATITUDE_EXTRA)
 
 
             text_view_sender_no_act.text = smsSender
             text_view_message_body_act.text = smsBody
             text_view_receipt_date_act.text = smsDate
             text_view_status_check_act.text=smsStatus
+            text_view_longitude_act.text=longitude
+            text_view_latitude_act.text=latitude
             if (smsBody != null) {
                 val smsFilter = SmsFilter(smsBody!!)
                 text_view_voucher_no_act.text = smsFilter.mpesaId

@@ -17,6 +17,7 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.READ_PHONE_NUMBERS" />
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
 
     <application
@@ -49,23 +50,15 @@
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
-
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>
-<!--        <receiver-->
-<!--            android:name=".receiver.BatteryReceiver"-->
-<!--            android:enabled="true"-->
-<!--            android:exported="false" />-->
 
-        <activity android:name=".ui.activities.ForgotPasswordActivity" />
-        <activity android:name=".ui.activities.SignUpActivity" />
         <activity
             android:name=".ui.activities.LoginActivity"
             android:windowSoftInputMode="adjustNothing">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

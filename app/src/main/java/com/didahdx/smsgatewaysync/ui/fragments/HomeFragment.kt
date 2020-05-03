@@ -79,14 +79,14 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
         Manifest.permission.ACCESS_COARSE_LOCATION,
         Manifest.permission.RECEIVE_SMS,
         Manifest.permission.READ_SMS,
-        Manifest.permission.BLUETOOTH,
-        Manifest.permission.BLUETOOTH_ADMIN,
-        Manifest.permission.READ_PHONE_STATE,
-        Manifest.permission.READ_CALL_LOG,
-        Manifest.permission.CALL_PHONE,
         Manifest.permission.SEND_SMS,
-        Manifest.permission.READ_PHONE_STATE
+        Manifest.permission.READ_PHONE_STATE,
+        Manifest.permission.READ_PHONE_STATE,
+        Manifest.permission.READ_PHONE_NUMBERS,
+        Manifest.permission.READ_CALL_LOG,
+        Manifest.permission.CALL_PHONE
     )
+
 
    lateinit var notificationManager:NotificationManagerCompat
     var notificationCounter=2
@@ -94,8 +94,8 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
     @Volatile
     lateinit var rabbitmqClient: RabbitmqClient
     private var locationBroadcastReceiver: BroadcastReceiver? = null
-    var userLongitude: String? = " "
-    var userLatitude: String? = " "
+    var userLongitude: String = " "
+    var userLatitude: String = " "
     val user = FirebaseAuth.getInstance().currentUser
     var UiUpdaterInterface: UiUpdaterInterface? = null
     var outgoingMessages: Queue<MessageInfo> = LinkedList()
@@ -194,6 +194,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
             text_view_status?.backgroundRed()
         }
         checkAndRequestPermissions()
+
         refresh_layout_home?.setOnRefreshListener { backgroundCoroutineCall() }
         backgroundCoroutineCall()
         startGettingLocation()
@@ -343,18 +344,21 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                             var message2: IncomingMessages? = null
                             if (messageText != null) {
                                 message2 = IncomingMessages(messageText, dateTimeStamp,
-                                        phoneNumber!!, true)
+                                        phoneNumber!!, true,userLongitude,userLatitude)
                             } else {
                                 message2 = null
                             }
                             context.let { tex ->
                                 if (message2 != null) {
                                     MessagesDatabase(tex).getIncomingMessageDao()
-                                        .updateMessage(message2)
+                                        .addMessage(message2)
                                 }
                             }
                         }
                     }
+
+
+
                 }
             }
         }
@@ -386,7 +390,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
     override fun onDestroyView() {
         super.onDestroyView()
         if (locationBroadcastReceiver != null) {
-            context?.unregisterReceiver(locationBroadcastReceiver)
+
         }
     }
 
@@ -473,7 +477,9 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                                     smsFilter.accountNumber,
                                     smsFilter.name,
                                     incomingMessages[i].date,
-                                    incomingMessages[i].status
+                                    incomingMessages[i].status,
+                                    incomingMessages[i].longitude,
+                                    incomingMessages[i].latitude
                                 )
                             )
                             updateCounter(i)
@@ -494,7 +500,9 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                                     smsFilter.accountNumber,
                                     smsFilter.name,
                                     incomingMessages[i].date,
-                                    incomingMessages[i].status
+                                    incomingMessages[i].status,
+                                    incomingMessages[i].longitude,
+                                    incomingMessages[i].latitude
                                 )
                             )
                             updateCounter(i)
@@ -515,7 +523,9 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                                     smsFilter.accountNumber,
                                     smsFilter.name,
                                     incomingMessages[i].date,
-                                    incomingMessages[i].status
+                                    incomingMessages[i].status,
+                                    incomingMessages[i].longitude,
+                                    incomingMessages[i].latitude
                                 )
                             )
                             updateCounter(i)
@@ -535,7 +545,9 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                                 smsFilter.accountNumber,
                                 smsFilter.name,
                                 incomingMessages[i].date,
-                                incomingMessages[i].status
+                                incomingMessages[i].status,
+                                incomingMessages[i].longitude,
+                                incomingMessages[i].latitude
                             )
                         )
                         updateCounter(i)
@@ -589,6 +601,8 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                     intent.putExtra(SMS_DATE_EXTRA, messageInfo.time)
                     intent.putExtra(SMS_SENDER_EXTRA, messageInfo.sender)
                     intent.putExtra(SMS_UPLOAD_STATUS_EXTRA, smsStatus)
+                    intent.putExtra(LONGITUDE_EXTRA,messageInfo.longitude)
+                    intent.putExtra(LATITUDE_EXTRA,messageInfo.latitude)
                     startActivity(intent)
                 }
 
@@ -806,6 +820,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
 
     override fun onResume() {
         super.onResume()
+        context?.registerReceiver(locationBroadcastReceiver, IntentFilter(LOCATION_UPDATE_INTENT))
         if (locationBroadcastReceiver == null) {
             locationBroadcastReceiver = object : BroadcastReceiver() {
                 override fun onReceive(context: Context, intent: Intent) {
@@ -816,11 +831,13 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                         userLatitude = latitude
                         userLongitude = longitude
 
+                        context.toast("$latitude ${intent.getStringExtra(LONGITUDE_EXTRA)}")
+
                     }
                 }
             }
         }
-        context?.registerReceiver(locationBroadcastReceiver, IntentFilter(LOCATION_UPDATE_INTENT))
+
     }
 
     //check and requests the permission which are required
@@ -847,6 +864,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
         return true;
     }
 
+
     //getting permission results
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -857,19 +875,25 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
         if (requestCode == PERMISSION_REQUEST_ALL_CODE) {
             val permissionResults: HashMap<String, Int> = HashMap()
             var deniedCount = 0
-
-            for (i in grantResults) {
+            var count=0
+            for (i in grantResults.indices) {
+                context?.toast("$count")
+                Log.d("Test","$count   grANT ${grantResults[i] }")
+                context?.toast("${grantResults[i] }")
+                count++
                 if (i >= 0 && grantResults.isNotEmpty() && grantResults[i] == PackageManager.PERMISSION_DENIED) {
                     permissionResults.put(permissions[i], grantResults[i])
                     deniedCount++
                 }
             }
 
+            context?.toast("$deniedCount ")
+
             if (deniedCount == 0) {
                 //initialise app
             } else {
                 for (entry in permissionResults) {
-                    var permName = entry.key
+                    var permName = entry.key.toString()
                     var permResult = entry.value
 
                     if (shouldShowRequestPermissionRationale(permName)) {
@@ -971,7 +995,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                     Manifest.permission.ACCESS_FINE_LOCATION
                 )
             ) {
-                context?.toast("Permission needed")
+//                context?.toast("Permission needed")
             } else {
                 requestPermissions(
                     arrayOf(
@@ -983,5 +1007,135 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
             }
         }
     }
+
+
+    private suspend fun getDbSmsMessages() {
+
+        val messageArrayList = ArrayList<MpesaMessageInfo>()
+
+        val cursor = activity?.contentResolver?.query(
+            Uri.parse("content://sms/inbox"),
+            null,
+            null,
+            null,
+            null
+        )
+
+        var messageCount = 0
+
+        if (cursor != null && cursor.moveToNext()) {
+            val nameId = cursor.getColumnIndex("address")
+            val messageId = cursor.getColumnIndex("body")
+            val dateId = cursor.getColumnIndex("date")
+            val mpesaType = " "
+            sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
+
+
+            Log.d(TAG, "mpesa sms $mpesaType ")
+
+            do {
+                val dateString = cursor.getString(dateId)
+
+//                if (cursor.getString(nameId) == "MPESA") {
+
+                var mpesaId: String =
+                    cursor.getString(messageId).split("\\s".toRegex()).first().trim()
+                if (!MPESA_ID_PATTERN.toRegex().matches(mpesaId)) {
+                    mpesaId = NOT_AVAILABLE
+                }
+
+                var smsFilter = SmsFilter(cursor.getString(messageId))
+
+
+                when (mpesaType) {
+                    PAY_BILL -> {
+                        if (smsFilter.mpesaType == PAY_BILL) {
+                            messageArrayList.add(
+                                MpesaMessageInfo(
+                                    messageId,
+                                    cursor.getString(messageId),
+                                    sdf.format(Date(dateString.toLong())).toString(),
+                                    cursor.getString(nameId),
+                                    mpesaId,
+                                    "",
+                                    smsFilter.amount,
+                                    "",
+                                    smsFilter.name,
+                                    dateString.toLong(),true,"",""
+                                )
+                            )
+                            updateCounter(messageCount)
+                            messageCount++
+                        }
+                    }
+                    DIRECT_MPESA -> {
+                        if (smsFilter.mpesaType == DIRECT_MPESA) {
+                            messageArrayList.add(
+                                MpesaMessageInfo(
+                                    messageId,
+                                    cursor.getString(messageId),
+                                    sdf.format(Date(dateString.toLong())).toString(),
+                                    cursor.getString(nameId),
+                                    mpesaId,
+                                    "",
+                                    smsFilter.amount,
+                                    "",
+                                    smsFilter.name,
+                                    dateString.toLong(),true,"",""
+                                )
+                            )
+//                            UpdateCounter(messageCount)
+                            messageCount++
+                        }
+                    }
+
+                    BUY_GOODS_AND_SERVICES -> {
+                        if (smsFilter.mpesaType == BUY_GOODS_AND_SERVICES) {
+                            messageArrayList.add(
+                                MpesaMessageInfo(messageId,
+                                    cursor.getString(messageId),
+                                    sdf.format(Date(dateString.toLong())).toString(),
+                                    cursor.getString(nameId),
+                                    mpesaId,
+                                    "",
+                                    smsFilter.amount,
+                                    "",
+                                    smsFilter.name,
+                                    dateString.toLong(),true,"",""
+                                )
+                            )
+                            updateCounter(messageCount)
+                            messageCount++
+                        }
+                    }
+
+                    else -> {
+                        messageArrayList.add(
+                            MpesaMessageInfo(
+                                messageId,
+                                cursor.getString(messageId),
+                                sdf.format(Date(dateString.toLong())).toString(),
+                                cursor.getString(nameId),
+                                mpesaId,
+                                "",
+                                smsFilter.amount,
+                                "",
+                                smsFilter.name,
+                                dateString.toLong(),true,"",""
+                            )
+                        )
+                        updateCounter(messageCount)
+                        messageCount++
+                    }
+                }
+//                }
+            } while (cursor.moveToNext())
+
+            cursor.close()
+        }
+
+        passMessagesToMain(messageArrayList)
+    }
+
 
 }

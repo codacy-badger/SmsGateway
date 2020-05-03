@@ -39,6 +39,7 @@
     <PreferenceCategory
         android:title="Messages"
         app:iconSpaceReserved="false">
+
         <ListPreference
             android:defaultValue="Direct Mpesa"
             android:entries="@array/mpesa_types"

@@ -58,17 +58,17 @@ class SmsReceiver : BroadcastReceiver() {
                 newIntent.putExtra("messageText", messageText)
                 newIntent.putExtra("date", time)
 
-                CoroutineScope(IO).launch {
-                    val message2: IncomingMessages?
-                    message2 = IncomingMessages(
-                            messageText!!, time!!,
-                            phoneNumber!!, true)
-
-                    context.let { tex ->
-                        MessagesDatabase(tex).getIncomingMessageDao()
-                            .addMessage(message2)
-                    }
-                }
+//                CoroutineScope(IO).launch {
+//                    val message2: IncomingMessages?
+//                    message2 = IncomingMessages(
+//                            messageText!!, time!!,
+//                            phoneNumber!!, true,"","")
+//
+//                    context.let { tex ->
+//                        MessagesDatabase(tex).getIncomingMessageDao()
+//                            .addMessage(message2)
+//                    }
+//                }
 
                 LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
                 if ("MPESA" == phoneNumber) {

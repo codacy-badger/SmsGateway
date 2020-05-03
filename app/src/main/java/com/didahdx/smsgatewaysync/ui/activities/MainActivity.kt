@@ -19,6 +19,9 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
+import androidx.navigation.NavController
+import androidx.navigation.Navigation
+import androidx.navigation.ui.NavigationUI
 import androidx.preference.PreferenceManager
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.receiver.BatteryReceiver
@@ -27,7 +30,7 @@ import com.didahdx.smsgatewaysync.receiver.PhoneCallReceiver
 import com.didahdx.smsgatewaysync.receiver.SmsReceiver
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.ui.IMainActivity
-import com.didahdx.smsgatewaysync.ui.fragments.*
+
 import com.didahdx.smsgatewaysync.utilities.*
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.analytics.FirebaseAnalytics
@@ -37,6 +40,7 @@ import com.microsoft.appcenter.analytics.Analytics
 import com.microsoft.appcenter.crashes.Crashes
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_layout.*
+
 
 
 class MainActivity : AppCompatActivity(),
@@ -55,22 +59,24 @@ class MainActivity : AppCompatActivity(),
 //    }
 
 
-    val appLog = AppLog()
-    lateinit var homeFragment: HomeFragment
-    lateinit var settingsFragment: SettingsFragment
-    lateinit var logFragment: LogFragment
-    lateinit var aboutFragment: AboutFragment
-    lateinit var phoneStatusFragment: PhoneStatusFragment
     private var mFirebaseAnalytics: FirebaseAnalytics? = null
     var isReadyToPublish: Boolean = false
     var mIMainActivity: IMainActivity? = null
     private lateinit var sharedPreferences: SharedPreferences
-
+    lateinit var navController: NavController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        setSupportActionBar(toolbar)
+
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        navController = Navigation.findNavController(this,R.id.nav_host_fragment2)
+        NavigationUI.setupWithNavController(navigation_view,navController)
+        NavigationUI.setupActionBarWithNavController(this,navController,drawer_layout)
+        navigation_view.setNavigationItemSelectedListener(this)
+
         AppCenter.start(
             application, "e55e44cf-eac5-49fc-a785-d6956b386176",
             Analytics::class.java, Crashes::class.java
@@ -78,7 +84,7 @@ class MainActivity : AppCompatActivity(),
 
         // Obtain the FirebaseAnalytics instance.
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this)
-        setSupportActionBar(toolbar)
+
 
         val drawerToggle: ActionBarDrawerToggle = object : ActionBarDrawerToggle(
             this,
@@ -93,9 +99,7 @@ class MainActivity : AppCompatActivity(),
         drawer_layout.addDrawerListener(drawerToggle)
         drawerToggle.syncState()
 
-        navigation_view.setNavigationItemSelectedListener(this)
 
-        settingUpDefaultFragment()
 
 
 //        App.instance.setConnectionListener(this)
@@ -154,67 +158,28 @@ class MainActivity : AppCompatActivity(),
         }
     }
 
-    private fun settingUpDefaultFragment() {
-        //setting default fragment
-        homeFragment = HomeFragment()
-        supportFragmentManager
-            .beginTransaction()
-            .replace(R.id.frame_layout, homeFragment)
-            .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-            .commit()
-    }
 
     //handling navigation drawer events
     override fun onNavigationItemSelected(menu: MenuItem): Boolean {
         when (menu.itemId) {
             R.id.nav_home -> {
-                homeFragment =
-                    HomeFragment()
-                supportFragmentManager
-                    .beginTransaction()
-                    .replace(R.id.frame_layout, homeFragment)
-                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-                    .commit()
+               navController.navigate(R.id.homeFragment)
             }
 
             R.id.nav_about -> {
-                aboutFragment =
-                    AboutFragment()
-                supportFragmentManager
-                    .beginTransaction()
-                    .replace(R.id.frame_layout, aboutFragment)
-                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-                    .commit()
+                navController.navigate(R.id.aboutFragment)
             }
 
             R.id.nav_phone_status -> {
-                phoneStatusFragment =
-                    PhoneStatusFragment()
-                supportFragmentManager
-                    .beginTransaction()
-                    .replace(R.id.frame_layout, phoneStatusFragment)
-                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-                    .commit()
+                navController.navigate(R.id.phoneStatusFragment)
             }
 
             R.id.nav_log -> {
-                logFragment =
-                    LogFragment()
-                supportFragmentManager
-                    .beginTransaction()
-                    .replace(R.id.frame_layout, logFragment)
-                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-                    .commit()
+                navController.navigate(R.id.logFragment)
             }
 
             R.id.nav_settings -> {
-                settingsFragment =
-                    SettingsFragment()
-                supportFragmentManager
-                    .beginTransaction()
-                    .replace(R.id.frame_layout, settingsFragment)
-                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-                    .commit()
+                navController.navigate(R.id.settingsFragment)
             }
 
             R.id.nav_logout -> {
@@ -249,6 +214,11 @@ class MainActivity : AppCompatActivity(),
         }
     }
 
+    override fun onSupportNavigateUp(): Boolean {
+        return NavigationUI.navigateUp(Navigation.findNavController(this,R.id.nav_host_fragment2),
+            drawer_layout)
+    }
+
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -263,15 +233,15 @@ class MainActivity : AppCompatActivity(),
             }
         }
 
-//        when (requestCode) {
-//            PERMISSION_FOREGROUND_SERVICES_CODE -> {
-//                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//
-//                } else {
+        when (requestCode) {
+            PERMISSION_FOREGROUND_SERVICES_CODE -> {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                } else {
 //                    toast("Permission denied")
-//                }
-//            }
-//        }
+                }
+            }
+        }
     }
 
 
@@ -291,10 +261,10 @@ class MainActivity : AppCompatActivity(),
 
     override fun onDestroy() {
         super.onDestroy()
-        val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
-        if(isServiceRunning){
-            stopServices()
-        }
+//        val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
+//        if(isServiceRunning){
+//            stopServices()
+//        }
 
 //        this.unregisterReceiver(SmsReceiver())
     }

@@ -2,13 +2,10 @@ package com.didahdx.smsgatewaysync.ui.fragments
 
 import android.Manifest
 import android.app.Activity
-import android.app.usage.UsageStats
-import android.app.usage.UsageStatsManager
 import android.content.*
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.*
-import android.provider.CalendarContract.Instances.BEGIN
 import android.provider.Settings
 import android.telephony.TelephonyManager
 import android.telephony.TelephonyManager.UssdResponseCallback
@@ -17,16 +14,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
-import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.content.PermissionChecker.checkSelfPermission
 import androidx.fragment.app.Fragment
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.utilities.PERMISSION_REQUEST_ALL_CODE
 import com.didahdx.smsgatewaysync.utilities.toast
 import kotlinx.android.synthetic.main.fragment_phone_status.*
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
+import java.lang.reflect.Method
 
 
 /**
@@ -84,7 +78,7 @@ class PhoneStatusFragment : Fragment() {
 
                         val bal=response.substring(response.indexOf("Bal:")+4,response.indexOf("KSH"))
 
-                        text_view_phone_status?.append("\n Airtime Balance KSh: $bal")
+                        text_view_phone_status?.append("\nAirtime Balance KSh: $bal")
 
 //                        context?.toast("ussd response: $response")
                         Log.e("ussd", "Success with response : $response  ")
@@ -176,11 +170,27 @@ class PhoneStatusFragment : Fragment() {
             val voltage= intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE,0).toDouble()/1000
             stringBuilder.append("\nVoltage : $voltage V\n")
 
+            val telephonyManager = requireContext().getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+            if (checkSelfPermission(requireContext(),
+                    Manifest.permission.READ_PHONE_STATE
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                stringBuilder.append("\nIMEI number : ${ telephonyManager.deviceId} \n  ")
+                stringBuilder.append("\nNetwork Name : ${ telephonyManager.networkOperatorName} \n  ")
+                stringBuilder.append("\nSim Serial Number : ${ telephonyManager.simSerialNumber}  \n ")
+                val imsi: String = ""
+                stringBuilder.append("\nIMSI : $imsi \n ")
+            }
+
             stringBuilder.append("\nPhone manufacturer : ${Build.MANUFACTURER} \n  ")
             stringBuilder.append("\nPhone model : ${Build.MODEL} \n")
             stringBuilder.append("\nPhone brand : ${Build.BRAND} \n")
 
             text_view_phone_status?.text= stringBuilder.toString()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                checkBalance()
+            }
+
         }
     }
 
@@ -293,5 +303,29 @@ class PhoneStatusFragment : Fragment() {
         alert.show()
         return alert;
     }
+
+
+//    operator fun get(context: Context, key: String?): String? {
+//        var ret = ""
+//        try {
+//            val cl = context.classLoader
+//            val SystemProperties = cl.loadClass("android.os.SystemProperties")
+//
+//            //Parameters Types
+//            val paramTypes: Array<Class<*>?> = arrayOfNulls(1)
+//            paramTypes[0] = String::class.java
+//            val get: Method = SystemProperties.getMethod("get", *paramTypes)
+//
+//            //Parameters
+//            val params = arrayOfNulls<Any>(1)
+//            params[0] = String(key)
+//            ret = get.invoke(SystemProperties, params)
+//        } catch (e: java.lang.Exception) {
+//            ret = ""
+//            //TODO : Error handling
+//        }
+//        return ret
+//    }
+
 
 }

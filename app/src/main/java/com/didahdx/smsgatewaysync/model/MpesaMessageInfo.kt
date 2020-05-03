@@ -11,5 +11,7 @@ data class MpesaMessageInfo(
     val accountNumber: String,
     val name: String,
     val dateTime:Long,
-    val status:Boolean
+    val status:Boolean,
+    val longitude:String,
+    val latitude:String
 )
