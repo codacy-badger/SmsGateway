@@ -15,18 +15,19 @@ import android.telephony.SmsManager
 import android.telephony.SubscriptionInfo
 import android.telephony.SubscriptionManager
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.checkSelfPermission
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.navigation.NavController
+import androidx.navigation.Navigation
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.didahdx.smsgatewaysync.R
@@ -37,6 +38,7 @@ import com.didahdx.smsgatewaysync.model.MessageInfo
 import com.didahdx.smsgatewaysync.model.MpesaMessageInfo
 import com.didahdx.smsgatewaysync.data.db.entities.IncomingMessages
 import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
+import com.didahdx.smsgatewaysync.model.SmsInfo
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.services.LocationGpsService
 import com.didahdx.smsgatewaysync.ui.UiUpdaterInterface
@@ -66,7 +68,8 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
     UiUpdaterInterface {
 
     private var messageList: ArrayList<MpesaMessageInfo> = ArrayList<MpesaMessageInfo>()
-   @Volatile var isConnected = false
+    @Volatile
+    var isConnected = false
     val appLog = AppLog()
     lateinit var mHomeViewModel: HomeViewModel
     var mMessageAdapter: MessageAdapter? = null
@@ -88,8 +91,8 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
     )
 
 
-   lateinit var notificationManager:NotificationManagerCompat
-    var notificationCounter=2
+    lateinit var notificationManager: NotificationManagerCompat
+    var notificationCounter = 2
 
     @Volatile
     lateinit var rabbitmqClient: RabbitmqClient
@@ -106,9 +109,11 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
     private lateinit var locationRequest: LocationRequest
     private lateinit var locationCallback: LocationCallback
     private lateinit var currentLocation: Location
+    lateinit var navController: NavController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
         UiUpdaterInterface = this
         Log.d("Log_Rabbitmq", "isConnected $isConnected")
         CoroutineScope(IO).launch {
@@ -119,15 +124,15 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
             sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
             val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
             if (!isConnected && isServiceRunning) {
-                rabbitmqClient.connection(requireContext() )
+                rabbitmqClient.connection(requireContext())
             }
         }
 
         locationProviderClient =
-            LocationServices.getFusedLocationProviderClient(requireContext() )
+            LocationServices.getFusedLocationProviderClient(requireContext())
         locationRequest = LocationRequest.create()
-        locationRequest?.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        locationRequest?.interval = UPDATE_INTERVAL.toLong()
+        locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        locationRequest.interval = UPDATE_INTERVAL.toLong()
         locationCallback = object : LocationCallback() {
             override fun onLocationAvailability(locationAvailability: LocationAvailability) {
                 super.onLocationAvailability(locationAvailability)
@@ -171,20 +176,18 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
             IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
         )
 
-        val intent = Intent(requireContext() , LocationGpsService::class.java)
+        val intent = Intent(requireContext(), LocationGpsService::class.java)
         context?.startService(intent)
 
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_home, container, false)
     }
 
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
         val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
-        notificationManager= NotificationManagerCompat.from(requireContext() )
+        notificationManager = NotificationManagerCompat.from(requireContext())
         if (isServiceRunning) {
             startServices()
             text_view_status?.backgroundGreen()
@@ -198,31 +201,38 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
         refresh_layout_home?.setOnRefreshListener { backgroundCoroutineCall() }
         backgroundCoroutineCall()
         startGettingLocation()
+
+        navController = Navigation.findNavController(view)
     }
+
+
 
     //appServices for showing notification bar
     private fun startServices() {
         val serviceIntent = Intent(requireContext(), AppServices::class.java)
         serviceIntent.putExtra(INPUT_EXTRAS, "$APP_NAME is running")
-        ContextCompat.startForegroundService(requireContext() , serviceIntent)
+        ContextCompat.startForegroundService(requireContext(), serviceIntent)
 
     }
 
     private fun stopServices() {
         val serviceIntent = Intent(requireContext(), AppServices::class.java)
-       requireContext().stopService(serviceIntent)
+        requireContext().stopService(serviceIntent)
     }
+
     private val batteryReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
             if (intent != null && isServiceRunning && BATTERY_LOCAL_BROADCAST_RECEIVER == intent.action) {
                 if (intent.extras != null) {
                     val batteryVoltage = intent.extras!!.getString(BATTERY_VOLTAGE_EXTRA)
-                    var batteryPercentage =intent.extras!!.getString(BATTERY_PERCENTAGE_EXTRA).toString()
+                    var batteryPercentage =
+                        intent.extras!!.getString(BATTERY_PERCENTAGE_EXTRA).toString()
                     val batteryCondition = intent.extras!!.getString(BATTERY_CONDITION_EXTRA)
                     val batteryTemperature = intent.extras!!.getString(BATTERY_TEMPERATURE_EXTRA)
                     val batteryPowerSource = intent.extras!!.getString(BATTERY_POWER_SOURCE_EXTRA)
-                    val batteryChargingStatus = intent.extras!!.getString(BATTERY_CHARGING_STATUS_EXTRA)
+                    val batteryChargingStatus =
+                        intent.extras!!.getString(BATTERY_CHARGING_STATUS_EXTRA)
                     val batteryTechnology = intent.extras!!.getString(BATTERY_TECHNOLOGY_EXTRA)
                     startGettingLocation()
 
@@ -241,7 +251,6 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                     obj?.put("date", Date().toString())
                     obj?.put("client_gateway_type", "android_phone")
 
-//                    obj?.toString()?.let { context?.toast(it) }
                     CoroutineScope(IO).launch {
                         obj?.toString()?.let {
                             rabbitmqClient.publishMessage(it)
@@ -250,7 +259,6 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                 }
             }
         }
-
     }
 
     //broadcast call receiver
@@ -343,8 +351,10 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
 
                             var message2: IncomingMessages? = null
                             if (messageText != null) {
-                                message2 = IncomingMessages(messageText, dateTimeStamp,
-                                        phoneNumber!!, true,userLongitude,userLatitude)
+                                message2 = IncomingMessages(
+                                    messageText, dateTimeStamp,
+                                    phoneNumber!!, true, userLongitude, userLatitude
+                                )
                             } else {
                                 message2 = null
                             }
@@ -356,7 +366,6 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                             }
                         }
                     }
-
 
 
                 }
@@ -410,7 +419,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
 
     //used to get sms from the phone
     private fun backgroundCoroutineCall() {
-        if (checkSelfPermission(requireContext() , Manifest.permission.READ_SMS)
+        if (checkSelfPermission(requireContext(), Manifest.permission.READ_SMS)
             == PackageManager.PERMISSION_GRANTED
         ) {
             view?.refresh_layout_home?.isRefreshing = true
@@ -453,7 +462,8 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
             incomingMessages.addAll(
                 MessagesDatabase(
                     it
-                ).getIncomingMessageDao().getAllMessages())
+                ).getIncomingMessageDao().getAllMessages()
+            )
         }
         val mpesaType = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
 
@@ -571,39 +581,39 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
 
         val date = messageInfo.dateTime
         var smsStatus = NOT_AVAILABLE
-        var incomingMessages: IncomingMessages
 
         CoroutineScope(IO).launch {
             context?.let {
+                val messagesList = MessagesDatabase(it).getIncomingMessageDao().getMessage(date)
 
 
-                val messagesList = MessagesDatabase(
-                    it
-                ).getIncomingMessageDao().getMessage(date)
-                val messagesList2 = MessagesDatabase(
-                    it
-                ).getIncomingMessageDao().getAllMessages()
-
-                val i = 0
 
                 CoroutineScope(Main).launch {
-//                    context?.toast("${messagesList2?.size}")
 
-                    if (!messagesList.isNullOrEmpty() && messagesList[0].status) {
-                        smsStatus = if (messageInfo.status) {
+                    smsStatus = if (!messagesList.isNullOrEmpty() && messagesList[0].status) {
+                        if (messageInfo.status) {
                             "Uploaded"
                         } else {
                             "pending"
                         }
+                    } else {
+                        NOT_AVAILABLE
                     }
-                    val intent = Intent(context, SmsDetailsActivity::class.java)
-                    intent.putExtra(SMS_BODY_EXTRA, messageInfo.messageBody)
-                    intent.putExtra(SMS_DATE_EXTRA, messageInfo.time)
-                    intent.putExtra(SMS_SENDER_EXTRA, messageInfo.sender)
-                    intent.putExtra(SMS_UPLOAD_STATUS_EXTRA, smsStatus)
-                    intent.putExtra(LONGITUDE_EXTRA,messageInfo.longitude)
-                    intent.putExtra(LATITUDE_EXTRA,messageInfo.latitude)
-                    startActivity(intent)
+
+                    requireContext().toast(" ${messagesList.toString()}")
+
+                    val smsInfo = SmsInfo(
+                        messageInfo.messageBody,
+                        messageInfo.time,
+                        messageInfo.sender,
+                        smsStatus,
+                        messageInfo.longitude,
+                        messageInfo.latitude)
+
+                    val bundle= bundleOf("SmsInfo" to smsInfo)
+                    navController.navigate(R.id.action_homeFragment_to_smsDetailsFragment,bundle)
+
+
                 }
 
             }
@@ -619,7 +629,6 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
     }
 
 
-
     private fun startServices(input: String) {
         val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
 
@@ -633,7 +642,6 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
             }
         }
     }
-
 
 
     override fun onDestroy() {
@@ -655,14 +663,14 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
     //used to show to notification
     override fun notificationMessage(message: String) {
         CoroutineScope(Main).launch {
-            val notification=NotificationCompat.Builder(requireContext(), CHANNEL_ID_2)
+            val notification = NotificationCompat.Builder(requireContext(), CHANNEL_ID_2)
                 .setContentTitle("Notification Message")
                 .setContentText(message)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setSmallIcon(R.drawable.ic_home)
                 .build()
 
-            notificationManager.notify(notificationCounter,notification)
+            notificationManager.notify(notificationCounter, notification)
             notificationCounter++
         }
     }
@@ -702,7 +710,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
         CoroutineScope(Main).launch {
             lateinit var smsManager: SmsManager
             val defaultSim = sharedPreferences.getString(PREF_SIM_CARD, "")
-            val localSubscriptionManager = SubscriptionManager.from( requireContext() )
+            val localSubscriptionManager = SubscriptionManager.from(requireContext())
             if (context?.let {
                     checkSelfPermission(
                         it,
@@ -712,11 +720,9 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                 == PackageManager.PERMISSION_GRANTED
             ) {
 
-
-//                context?.toast("called $phoneNumber")
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
                     if (checkSelfPermission(
-                            requireContext() ,
+                            requireContext(),
                             Manifest.permission.READ_PHONE_STATE
                         ) == PackageManager.PERMISSION_GRANTED
                     ) {
@@ -846,7 +852,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
 
         for (perm in appPermissions) {
             if (checkSelfPermission(
-                    requireContext() ,
+                    requireContext(),
                     perm
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
@@ -875,11 +881,11 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
         if (requestCode == PERMISSION_REQUEST_ALL_CODE) {
             val permissionResults: HashMap<String, Int> = HashMap()
             var deniedCount = 0
-            var count=0
+            var count = 0
             for (i in grantResults.indices) {
                 context?.toast("$count")
-                Log.d("Test","$count   grANT ${grantResults[i] }")
-                context?.toast("${grantResults[i] }")
+                Log.d("Test", "$count   grANT ${grantResults[i]}")
+                context?.toast("${grantResults[i]}")
                 count++
                 if (i >= 0 && grantResults.isNotEmpty() && grantResults[i] == PackageManager.PERMISSION_DENIED) {
                     permissionResults.put(permissions[i], grantResults[i])
@@ -946,7 +952,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
         isCancelable: Boolean
     ): AlertDialog {
 
-        val builder = AlertDialog.Builder(requireContext() )
+        val builder = AlertDialog.Builder(requireContext())
         builder.setTitle(title)
         builder.setCancelable(isCancelable)
         builder.setMessage(msg)
@@ -960,11 +966,11 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
     //getting location of user using location api
     private fun startGettingLocation() {
         if (checkSelfPermission(
-                requireContext() ,
+                requireContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED &&
             checkSelfPermission(
-                requireContext() ,
+                requireContext(),
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
         ) {
@@ -1061,7 +1067,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                                     smsFilter.amount,
                                     "",
                                     smsFilter.name,
-                                    dateString.toLong(),true,"",""
+                                    dateString.toLong(), true, "", ""
                                 )
                             )
                             updateCounter(messageCount)
@@ -1081,7 +1087,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                                     smsFilter.amount,
                                     "",
                                     smsFilter.name,
-                                    dateString.toLong(),true,"",""
+                                    dateString.toLong(), true, "", ""
                                 )
                             )
 //                            UpdateCounter(messageCount)
@@ -1092,7 +1098,8 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                     BUY_GOODS_AND_SERVICES -> {
                         if (smsFilter.mpesaType == BUY_GOODS_AND_SERVICES) {
                             messageArrayList.add(
-                                MpesaMessageInfo(messageId,
+                                MpesaMessageInfo(
+                                    messageId,
                                     cursor.getString(messageId),
                                     sdf.format(Date(dateString.toLong())).toString(),
                                     cursor.getString(nameId),
@@ -1101,7 +1108,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                                     smsFilter.amount,
                                     "",
                                     smsFilter.name,
-                                    dateString.toLong(),true,"",""
+                                    dateString.toLong(), true, "", ""
                                 )
                             )
                             updateCounter(messageCount)
@@ -1121,7 +1128,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                                 smsFilter.amount,
                                 "",
                                 smsFilter.name,
-                                dateString.toLong(),true,"",""
+                                dateString.toLong(), true, "", ""
                             )
                         )
                         updateCounter(messageCount)
@@ -1137,5 +1144,19 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
         passMessagesToMain(messageArrayList)
     }
 
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.main,menu)
+        super.onCreateOptionsMenu(menu, inflater)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.action_saved_sms -> {
+               navController.navigate(R.id.smsInboxFragment)
+            }
+
+        }
+        return super.onOptionsItemSelected(item)
+    }
 
 }

@@ -34,7 +34,7 @@
                         android:textColor="@color/colorPrimary" />
 
                     <TextView
-                        android:id="@+id/text_view_sender_no"
+                        android:id="@+id/text_view_sender_no_act"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         tools:text="867854895485478" />
@@ -53,7 +53,7 @@
                         android:textColor="@color/colorPrimary" />
 
                     <TextView
-                        android:id="@+id/text_view_status_check"
+                        android:id="@+id/text_view_status_check_act"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         tools:text="uploaded" />
@@ -68,7 +68,7 @@
                 android:textColor="@color/colorPrimary" />
 
             <TextView
-                android:id="@+id/text_view_receipt_date"
+                android:id="@+id/text_view_receipt_date_act"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 tools:text="uploaded" />
@@ -81,7 +81,7 @@
                 android:textColor="@color/colorPrimary" />
 
             <TextView
-                android:id="@+id/text_view_message_body"
+                android:id="@+id/text_view_message_body_act"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 tools:text="uploaded" />
@@ -105,7 +105,7 @@
                         android:textColor="@color/colorPrimary" />
 
                     <TextView
-                        android:id="@+id/text_view_voucher_no"
+                        android:id="@+id/text_view_voucher_no_act"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         tools:text="867854895485478" />
@@ -127,7 +127,7 @@
                         android:textColor="@color/colorPrimary" />
 
                     <TextView
-                        android:id="@+id/text_view_account_no"
+                        android:id="@+id/text_view_account_no_act"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         tools:text="uploaded" />
@@ -143,47 +143,97 @@
                 android:textColor="@color/colorPrimary" />
 
             <TextView
-                android:id="@+id/text_view_transaction_date"
+                android:id="@+id/text_view_transaction_date_act"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 tools:text="uploaded" />
             <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Name"
                 android:layout_marginTop="15dp"
-            android:textColor="@color/colorPrimary" />
+                android:textColor="@color/colorPrimary" />
 
             <TextView
-                android:id="@+id/text_view_name"
+                android:id="@+id/text_view_name_act"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 tools:text="uploaded" />
-            <TextView
-                android:layout_marginTop="15dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Phone Number"
-            android:textColor="@color/colorPrimary" />
-
-            <TextView
-                android:id="@+id/text_view_phone_number"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                tools:text="uploaded" />
-
             <TextView
                 android:layout_marginTop="15dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Amount"
-            android:textColor="@color/colorPrimary" />
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Phone Number"
+                android:textColor="@color/colorPrimary" />
 
             <TextView
-                android:id="@+id/text_view_amount"
+                android:id="@+id/text_view_phone_number_act"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 tools:text="uploaded" />
+
+            <TextView
+                android:layout_marginTop="15dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Amount"
+                android:textColor="@color/colorPrimary" />
+
+            <TextView
+                android:id="@+id/text_view_amount_act"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="uploaded" />
+
+
+            <RelativeLayout
+                android:layout_marginTop="15dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Latitude"
+                        android:textColor="@color/colorPrimary" />
+
+                    <TextView
+                        android:id="@+id/text_view_latitude_act"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        tools:text="867854895485478" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:gravity="end"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_gravity="end"
+                        android:gravity="end"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Longitude"
+                        android:textColor="@color/colorPrimary" />
+
+                    <TextView
+                        android:id="@+id/text_view_longitude_act"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        tools:text="uploaded" />
+                </LinearLayout>
+
+            </RelativeLayout>
+
 
 
         </LinearLayout>

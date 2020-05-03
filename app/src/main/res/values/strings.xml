@@ -6,6 +6,7 @@
     <string name="nav_header_subtitle">android.studio@android.com</string>
     <string name="nav_header_desc">Navigation header</string>
     <string name="action_settings">Settings</string>
+    <string name="action_saved_sms">Forward Saved Sms</string>
     <string name="action_print">Print</string>
     <string name="action_forward_sms">Forward sms</string>
     <string name="action_save_phone_number">Save phone number</string>

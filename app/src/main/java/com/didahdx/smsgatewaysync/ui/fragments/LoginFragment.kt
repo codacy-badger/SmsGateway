@@ -34,9 +34,9 @@ class LoginFragment : Fragment(R.layout.fragment_login), View.OnClickListener {
 
     override fun onClick(v: View?) {
         if (v == text_view_sign_up) {
-            navController?.navigate(R.id.action_loginFragment_to_signUpFragment)
+            navController.navigate(R.id.action_loginFragment_to_signUpFragment)
         } else if (v == text_view_forgot_password) {
-            navController?.navigate(R.id.action_loginFragment_to_forgotPasswordFragment)
+            navController.navigate(R.id.action_loginFragment_to_forgotPasswordFragment)
         } else if (v == button_login) {
 
             if (validateEmail() && validatePassword()) {

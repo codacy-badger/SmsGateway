@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.os.Build
 import android.os.Bundle
+import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
@@ -206,17 +207,18 @@ class MainActivity : AppCompatActivity(),
     }
 
 
-    override fun onBackPressed() {
-        if (drawer_layout.isDrawerOpen(GravityCompat.START)) {
-            drawer_layout.closeDrawer(GravityCompat.START)
-        } else {
-            super.onBackPressed()
-        }
-    }
+//    override fun onBackPressed() {
+//        if (drawer_layout.isDrawerOpen(GravityCompat.START)) {
+//            drawer_layout.closeDrawer(GravityCompat.START)
+//        } else {
+//            super.onBackPressed()
+//        }
+//    }
+
 
     override fun onSupportNavigateUp(): Boolean {
-        return NavigationUI.navigateUp(Navigation.findNavController(this,R.id.nav_host_fragment2),
-            drawer_layout)
+        navController.navigateUp()
+        return super.onSupportNavigateUp()
     }
 
 
@@ -268,6 +270,7 @@ class MainActivity : AppCompatActivity(),
 
 //        this.unregisterReceiver(SmsReceiver())
     }
+
     //used to display alert dialog box
     private fun showDialog(
         title: String, msg: String, postiveLabel: String,
