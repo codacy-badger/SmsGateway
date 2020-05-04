@@ -45,33 +45,33 @@ import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_layout.*
 
 
-class MainActivity : AppCompatActivity(),
-    NavigationView.OnNavigationItemSelectedListener {
-
+class MainActivity : AppCompatActivity(){
 
     private var mFirebaseAnalytics: FirebaseAnalytics? = null
     var isReadyToPublish: Boolean = false
     var mIMainActivity: IMainActivity? = null
     private lateinit var sharedPreferences: SharedPreferences
     lateinit var navController: NavController
+    private lateinit var drawerLayout: DrawerLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        setSupportActionBar(toolbar)
+        drawerLayout=findViewById(R.id.drawer_layout)
 
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayShowHomeEnabled(true)
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         navController = Navigation.findNavController(this, R.id.nav_host_fragment2)
         NavigationUI.setupWithNavController(navigation_view, navController)
-        NavigationUI.setupActionBarWithNavController(this, navController, drawer_layout)
+        NavigationUI.setupActionBarWithNavController(this, navController, drawerLayout)
 
-        navigation_view.setNavigationItemSelectedListener(this)
-
-        toolbar?.setNavigationOnClickListener {
-            navController.navigateUp()
-        }
+//        navigation_view.setNavigationItemSelectedListener(this)
+//        toolbar?.setNavigationOnClickListener {
+//            navController.navigateUp()
+//        }
 
         AppCenter.start(
             application, "e55e44cf-eac5-49fc-a785-d6956b386176",
@@ -82,18 +82,18 @@ class MainActivity : AppCompatActivity(),
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this)
 
 
-        val drawerToggle: ActionBarDrawerToggle = object : ActionBarDrawerToggle(
-            this,
-            drawer_layout, toolbar,
-            R.string.open,
-            R.string.close
-        ) {
-
-        }
-
-        drawerToggle.isDrawerIndicatorEnabled = true
-        drawer_layout.addDrawerListener(drawerToggle)
-        drawerToggle.syncState()
+//        val drawerToggle: ActionBarDrawerToggle = object : ActionBarDrawerToggle(
+//            this,
+//            drawer_layout, toolbar,
+//            R.string.open,
+//            R.string.close
+//        ) {
+//
+//        }
+//
+//        drawerToggle.isDrawerIndicatorEnabled = true
+//        drawer_layout.addDrawerListener(drawerToggle)
+//        drawerToggle.syncState()
 
 
         //registering broadcast receiver for battery
@@ -149,69 +149,22 @@ class MainActivity : AppCompatActivity(),
                     arrayOf(Manifest.permission.FOREGROUND_SERVICE),
                     PERMISSION_FOREGROUND_SERVICES_CODE
                 )
-
             }
         }
     }
 
 
-    //handling navigation drawer events
-    override fun onNavigationItemSelected(menu: MenuItem): Boolean {
-        when (menu.itemId) {
-            R.id.nav_home -> {
-                navController.navigate(R.id.homeFragment)
-            }
-
-            R.id.nav_about -> {
-                navController.navigate(R.id.aboutFragment)
-            }
-
-            R.id.nav_phone_status -> {
-                navController.navigate(R.id.phoneStatusFragment)
-            }
-
-            R.id.nav_log -> {
-                navController.navigate(R.id.logFragment)
-            }
-
-            R.id.nav_settings -> {
-                navController.navigate(R.id.settingsFragment)
-            }
-
-            R.id.nav_logout -> {
-
-                showDialog("Logout", "Do you want to logout?",
-                    "Yes"
-                    , DialogInterface.OnClickListener { dialog, which ->
-                        dialog.dismiss()
-                        FirebaseAuth.getInstance().signOut()
-                        startActivity(Intent(this, LoginActivity::class.java))
-                        stopServices()
-                        finish()
-
-                    },
-                    "No", DialogInterface.OnClickListener { dialog, which ->
-                        dialog.dismiss()
-                    }
-                    , false)
-            }
-        }
-
-        (drawer_layout as DrawerLayout).closeDrawer(GravityCompat.START)
-        return true
-    }
-
-
-    override fun onBackPressed() {
-        if (drawer_layout.isDrawerOpen(GravityCompat.START)) {
-            drawer_layout.closeDrawer(GravityCompat.START)
-        } else {
-            super.onBackPressed()
-        }
-    }
+//    override fun onBackPressed() {
+//        if (drawer_layout.isDrawerOpen(GravityCompat.START)) {
+//            drawer_layout.closeDrawer(GravityCompat.START)
+//        } else {
+//            super.onBackPressed()
+//        }
+//    }
 
 
     override fun onSupportNavigateUp(): Boolean {
+//        return  Navigation.findNavController(this, R.id.nav_host_fragment2).navigateUp()
         return NavigationUI.navigateUp(
             Navigation.findNavController(this, R.id.nav_host_fragment2), drawer_layout
         )
@@ -285,5 +238,7 @@ class MainActivity : AppCompatActivity(),
         alert.show()
         return alert;
     }
+
+
 
 }

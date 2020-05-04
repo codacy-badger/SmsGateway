@@ -28,6 +28,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
+import androidx.navigation.ui.NavigationUI
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.didahdx.smsgatewaysync.R
@@ -42,6 +43,7 @@ import com.didahdx.smsgatewaysync.model.SmsInfo
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.services.LocationGpsService
 import com.didahdx.smsgatewaysync.ui.UiUpdaterInterface
+import com.didahdx.smsgatewaysync.ui.activities.LoginActivity
 import com.didahdx.smsgatewaysync.utilities.*
 import com.didahdx.smsgatewaysync.ui.viewmodels.HomeViewModel
 import com.google.android.gms.location.*
@@ -1023,12 +1025,28 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.action_saved_sms -> {
-               navController.navigate(R.id.smsInboxFragment)
+            R.id.nav_logout -> {
+                showDialog("Logout", "Do you want to logout?",
+                    "Yes"
+                    , DialogInterface.OnClickListener { dialog, which ->
+                        dialog.dismiss()
+                        FirebaseAuth.getInstance().signOut()
+                        startActivity(Intent(requireContext(), LoginActivity::class.java))
+                        stopServices()
+                        requireActivity().onBackPressed()
+
+                    },
+                    "No", DialogInterface.OnClickListener { dialog, which ->
+                        dialog.dismiss()
+                    }
+                    , false)
+
             }
 
         }
-        return super.onOptionsItemSelected(item)
+        return NavigationUI.onNavDestinationSelected(item, navController) || super.onOptionsItemSelected(item)
     }
+
+
 
 }

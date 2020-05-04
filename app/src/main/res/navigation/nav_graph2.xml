@@ -16,11 +16,24 @@
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right" />
+        <action
+            android:id="@+id/action_homeFragment_to_aboutFragment"
+            app:destination="@id/aboutFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_phoneStatusFragment"
+            app:destination="@id/phoneStatusFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_logFragment"
+            app:destination="@id/logFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment" />
     </fragment>
     <fragment
         android:id="@+id/aboutFragment"
         android:name="com.didahdx.smsgatewaysync.ui.fragments.AboutFragment"
         android:label="About"
+
         tools:layout="@layout/fragment_about" />
     <fragment
         android:id="@+id/phoneStatusFragment"

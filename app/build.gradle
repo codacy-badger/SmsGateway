@@ -47,12 +47,12 @@ android {
 
             ext.revision = getGitRevParseInfo("--short")
             ext.branch = getGitRevParseInfo("--abbrev-ref")
-//
+
 //            println ext.revision
 //            println ext.branch
 
             //customize your app name by using variables
-            outputFileName = "app_${buildType}_${versionName}_${formattedDate}.apk"
+            outputFileName = "app_${buildType}_${versionName}_${ext.branch}_${ext.revision}_${formattedDate}.apk"
 
         }
     }
@@ -132,8 +132,7 @@ dependencies {
     // Kotlin
     implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"
     implementation "androidx.navigation:navigation-ui-ktx:$nav_version"
-    // Dynamic Feature Module Support
-    implementation "androidx.navigation:navigation-dynamic-features-fragment:$nav_version"
+
     // Testing Navigation
     androidTestImplementation "androidx.navigation:navigation-testing:$nav_version"
 
