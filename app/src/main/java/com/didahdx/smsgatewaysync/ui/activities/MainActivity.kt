@@ -61,17 +61,12 @@ class MainActivity : AppCompatActivity(){
         drawerLayout=findViewById(R.id.drawer_layout)
 
         setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayShowHomeEnabled(true)
+//        supportActionBar?.setDisplayShowHomeEnabled(true)
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         navController = Navigation.findNavController(this, R.id.nav_host_fragment2)
         NavigationUI.setupWithNavController(navigation_view, navController)
         NavigationUI.setupActionBarWithNavController(this, navController, drawerLayout)
-
-//        navigation_view.setNavigationItemSelectedListener(this)
-//        toolbar?.setNavigationOnClickListener {
-//            navController.navigateUp()
-//        }
 
         AppCenter.start(
             application, "e55e44cf-eac5-49fc-a785-d6956b386176",
@@ -80,20 +75,6 @@ class MainActivity : AppCompatActivity(){
 
         // Obtain the FirebaseAnalytics instance.
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this)
-
-
-//        val drawerToggle: ActionBarDrawerToggle = object : ActionBarDrawerToggle(
-//            this,
-//            drawer_layout, toolbar,
-//            R.string.open,
-//            R.string.close
-//        ) {
-//
-//        }
-//
-//        drawerToggle.isDrawerIndicatorEnabled = true
-//        drawer_layout.addDrawerListener(drawerToggle)
-//        drawerToggle.syncState()
 
 
         //registering broadcast receiver for battery
@@ -154,17 +135,16 @@ class MainActivity : AppCompatActivity(){
     }
 
 
-//    override fun onBackPressed() {
-//        if (drawer_layout.isDrawerOpen(GravityCompat.START)) {
-//            drawer_layout.closeDrawer(GravityCompat.START)
-//        } else {
-//            super.onBackPressed()
-//        }
-//    }
+    override fun onBackPressed() {
+        if (drawer_layout.isDrawerOpen(GravityCompat.START)) {
+            drawer_layout.closeDrawer(GravityCompat.START)
+        } else {
+            super.onBackPressed()
+        }
+    }
 
 
     override fun onSupportNavigateUp(): Boolean {
-//        return  Navigation.findNavController(this, R.id.nav_host_fragment2).navigateUp()
         return NavigationUI.navigateUp(
             Navigation.findNavController(this, R.id.nav_host_fragment2), drawer_layout
         )
