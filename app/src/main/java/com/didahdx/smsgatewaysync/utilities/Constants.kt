@@ -7,7 +7,7 @@ const val DATE_FORMAT="dd/MMM/yy hh:mm aaa"
 const val MPESA_ID_PATTERN="^[A-Z0-9]*$"
 const val RED_COLOR="RED_COLOR"
 const val GREEN_COLOR="GREEN_COLOR"
-const val NOT_AVAILABLE="N/A"
+const val NOT_AVAILABLE="NA"
 
 const val APP_SERVICE_KEY = "APP_SERVICE_KEY"
 const val APP_SERVICE_STATE = "APP_SERVICE_STATE"

@@ -48,7 +48,6 @@ class SmsFilter() {
            amount=matcher.group(1)
         }
 
-//            amount= message.substring(message.indexOf("Ksh") - 1, position+ 3).trim()
 
         return amount
     }
@@ -69,28 +68,28 @@ class SmsFilter() {
         /**
          * sending to another user
          * */
-        if (message.toLowerCase().indexOf("sent to") != -1 && message.indexOf(pattern) != -1) {
+        if (message.toLowerCase().indexOf("sent to") != -1
+            && message.indexOf(pattern) != -1) {
             name = message.substring(message.indexOf("sent to") + 4, message.indexOf("07") - 1)
             phoneNumber = message.substring(message.indexOf("07") - 1, message.indexOf("07") + 11)
             amount= message.substring(message.indexOf("Ksh") - 1, message.indexOf("sent to") - 1).trim()
-            mpesaType = DIRECT_MPESA
-        } else if (message.toLowerCase().indexOf("sent to") != -1 && message.indexOf(pattern) != -1
-            && message.indexOf("+254") != -1
-        ) {
+            mpesaType = NOT_AVAILABLE
+        } else if (message.toLowerCase().indexOf("sent to") != -1
+            && message.indexOf(pattern) != -1
+            && message.indexOf("+254") != -1) {
             name = message.substring(message.indexOf("sent to") + 4, message.indexOf("+254") - 1)
-            phoneNumber =
-                message.substring(message.indexOf("+254") - 1, message.indexOf("+254") + 14)
+            phoneNumber = message.substring(message.indexOf("+254") - 1, message.indexOf("+254") + 14)
             amount= message.substring(message.indexOf("Ksh") - 1, message.indexOf("sent to") - 1).trim()
-            mpesaType = DIRECT_MPESA
+            mpesaType = NOT_AVAILABLE
         }
 
         /**
          * pay bill for client side
          * */
-        if (message.toLowerCase()
-                .indexOf("sent to") != -1 && message.indexOf("for account") != -1
+        if (message.toLowerCase().indexOf("sent to") != -1
+            && message.indexOf("for account") != -1
         ) {
-            mpesaType = DIRECT_MPESA
+            mpesaType = NOT_AVAILABLE
             name = message.substring(
                 message.indexOf("sent to") + 7,
                 message.indexOf("for account") - 1
@@ -98,17 +97,17 @@ class SmsFilter() {
             amount= message.substring(message.indexOf("Ksh") - 1, message.indexOf("sent to") - 1).trim()
             phoneNumber =
                 message.substring(message.indexOf("account") + 7, message.indexOf("/") - 5)
-        } else if (message.toLowerCase().indexOf("sent to") != -1 && message.indexOf("07") != -1) {
+        } else if (message.toLowerCase().indexOf("sent to") != -1
+            && message.indexOf("07") != -1) {
             name = message.substring(message.indexOf("sent to") + 7, message.indexOf("07") - 1)
             phoneNumber = message.substring(message.indexOf("07"), message.indexOf("/") - 5)
-            mpesaType = DIRECT_MPESA
+            mpesaType = NOT_AVAILABLE
             amount= message.substring(message.indexOf("Ksh") - 1, message.indexOf("sent to") - 1).trim()
-        } else if (message.toLowerCase()
-                .indexOf("sent to") != -1 && message.indexOf("+254") != -1
-        ) {
+        } else if (message.toLowerCase().indexOf("sent to") != -1
+            && message.indexOf("+254") != -1) {
             name = message.substring(message.indexOf("sent to") + 7, message.indexOf("+254") - 1)
             phoneNumber = message.substring(message.indexOf("+254"), message.indexOf("/") - 5)
-            mpesaType = DIRECT_MPESA
+            mpesaType = NOT_AVAILABLE
             amount= message.substring(message.indexOf("Ksh") - 1, message.indexOf("sent to") - 1).trim()
         }
 
@@ -118,7 +117,7 @@ class SmsFilter() {
         if (message.toLowerCase().indexOf("withdraw") != -1) {
             name = message.substring(message.indexOf("from") + 4, message.indexOf("New") - 1)
             amount= message.substring(message.indexOf("Ksh") - 1, message.indexOf("from") - 1).trim()
-            mpesaType = DIRECT_MPESA
+            mpesaType = NOT_AVAILABLE
         }
 
         /**
@@ -127,7 +126,7 @@ class SmsFilter() {
         if (message.indexOf("paid to") != -1) {
             name = message.substring(message.indexOf("paid to") + 7, message.indexOf("/") - 5)
             amount= message.substring(message.indexOf("Ksh") - 1, message.indexOf("paid to") - 1).trim()
-            mpesaType = DIRECT_MPESA
+            mpesaType = NOT_AVAILABLE
         }
 
         /**

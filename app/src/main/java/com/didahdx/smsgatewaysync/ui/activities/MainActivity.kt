@@ -52,21 +52,17 @@ class MainActivity : AppCompatActivity(){
     var mIMainActivity: IMainActivity? = null
     private lateinit var sharedPreferences: SharedPreferences
     lateinit var navController: NavController
-    private lateinit var drawerLayout: DrawerLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        drawerLayout=findViewById(R.id.drawer_layout)
-
         setSupportActionBar(toolbar)
-//        supportActionBar?.setDisplayShowHomeEnabled(true)
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         navController = Navigation.findNavController(this, R.id.nav_host_fragment2)
         NavigationUI.setupWithNavController(navigation_view, navController)
-        NavigationUI.setupActionBarWithNavController(this, navController, drawerLayout)
+        NavigationUI.setupActionBarWithNavController(this, navController, drawer_layout)
 
         AppCenter.start(
             application, "e55e44cf-eac5-49fc-a785-d6956b386176",
@@ -113,7 +109,6 @@ class MainActivity : AppCompatActivity(){
         if (firebaseUser != null) {
             navUser.text = firebaseUser.email
         }
-
 
 
         checkForegroundPermission()

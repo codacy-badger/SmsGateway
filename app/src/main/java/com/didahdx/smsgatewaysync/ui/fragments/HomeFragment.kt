@@ -17,7 +17,6 @@ import android.telephony.SubscriptionManager
 import android.util.Log
 import android.view.*
 import androidx.appcompat.app.AlertDialog
-import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -32,26 +31,24 @@ import androidx.navigation.ui.NavigationUI
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.didahdx.smsgatewaysync.R
-import com.didahdx.smsgatewaysync.ui.activities.SmsDetailsActivity
-import com.didahdx.smsgatewaysync.ui.adapters.MessageAdapter
+import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
+import com.didahdx.smsgatewaysync.data.db.entities.IncomingMessages
 import com.didahdx.smsgatewaysync.manager.RabbitmqClient
 import com.didahdx.smsgatewaysync.model.MessageInfo
 import com.didahdx.smsgatewaysync.model.MpesaMessageInfo
-import com.didahdx.smsgatewaysync.data.db.entities.IncomingMessages
-import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
 import com.didahdx.smsgatewaysync.model.SmsInfo
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.services.LocationGpsService
 import com.didahdx.smsgatewaysync.ui.UiUpdaterInterface
 import com.didahdx.smsgatewaysync.ui.activities.LoginActivity
-import com.didahdx.smsgatewaysync.utilities.*
+import com.didahdx.smsgatewaysync.ui.adapters.MessageAdapter
 import com.didahdx.smsgatewaysync.ui.viewmodels.HomeViewModel
+import com.didahdx.smsgatewaysync.utilities.*
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.OnFailureListener
 import com.google.android.gms.tasks.OnSuccessListener
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.fragment_home.*
-import kotlinx.android.synthetic.main.fragment_home.view.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
@@ -106,7 +103,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
     var outgoingMessages: Queue<MessageInfo> = LinkedList()
     var messageCount = 0
     var lastMessageSentTime = 0
-    private val UPDATE_INTERVAL = 5000 * 20 // 5 seconds*20
+    private val UPDATE_INTERVAL = 500 * 20 // 5 seconds*20
     private lateinit var locationProviderClient: FusedLocationProviderClient
     private lateinit var locationRequest: LocationRequest
     private lateinit var locationCallback: LocationCallback

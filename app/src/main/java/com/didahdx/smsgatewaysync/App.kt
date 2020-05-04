@@ -11,6 +11,7 @@ import com.didahdx.smsgatewaysync.utilities.CHANNEL_ID
 import com.didahdx.smsgatewaysync.utilities.CHANNEL_ID_2
 import com.didahdx.smsgatewaysync.utilities.CHANNEL_SMS_SERVICE_NAME
 import com.mazenrashed.printooth.Printooth
+import timber.log.Timber
 
 class App : MultiDexApplication() {
 
@@ -26,6 +27,8 @@ class App : MultiDexApplication() {
         instance=this
         createNotificationChannel()
         Printooth.init(this)
+        Timber.plant(Timber.DebugTree())
+
 
     }
 

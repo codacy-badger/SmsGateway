@@ -3,14 +3,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/smsInboxFragment"
-        android:orderInCategory="100"
-        android:title="@string/action_saved_sms"
-        app:showAsAction="never" />
-    <group android:menuCategory="secondary"
-        android:checkableBehavior="single">
-        <item
-            android:id="@+id/nav_logout"
-            android:title="@string/menu_logout" />
-    </group>
+        android:title="@string/action_saved_sms" />
+
+    <item
+        android:id="@+id/nav_logout"
+        android:title="@string/menu_logout" />
 
 </menu>
