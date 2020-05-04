@@ -66,17 +66,17 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details), PrintingCall
     var smsBody: String? = " "
     var smsDate: String? = " "
     var smsSender: String? = " "
-    var smsStatus: String? =" "
+    var smsStatus: String? = " "
     var longitude: String? = " "
     var latitude: String? = " "
     var printing: Printing? = null
     lateinit var sharedPrferences: SharedPreferences
-     private var SmsInfo: SmsInfo?=null
+    private var SmsInfo: SmsInfo? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
-        SmsInfo= arguments?.getParcelable<SmsInfo>("SmsInfo")
+        SmsInfo = arguments?.getParcelable<SmsInfo>("SmsInfo")
     }
 
 
@@ -87,36 +87,61 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details), PrintingCall
             printing?.printingCallback = this
         }
 
-            //Retrieve the value
-            smsBody =SmsInfo?.messageBody
-            smsDate = SmsInfo?.time
-            smsSender =SmsInfo?.sender
-            smsStatus = SmsInfo?.status
-            longitude=SmsInfo?.longitude
-            latitude=SmsInfo?.latitude
+        //Retrieve the value
+        smsBody = SmsInfo?.messageBody
+        smsDate = SmsInfo?.time
+        smsSender = SmsInfo?.sender
+        smsStatus = SmsInfo?.status
+        longitude = SmsInfo?.longitude
+        latitude = SmsInfo?.latitude
 
 
-            text_view_sender_no_act.text = smsSender
-            text_view_message_body_act.text = smsBody
-            text_view_receipt_date_act.text = smsDate
-            text_view_status_check_act.text=smsStatus
-            text_view_longitude_act.text=longitude
-            text_view_latitude_act.text=latitude
-            if (smsBody != null) {
-                val smsFilter = SmsFilter(smsBody!!)
-                text_view_voucher_no_act.text = smsFilter.mpesaId
-                text_view_transaction_date_act.text = "${smsFilter.date}  ${smsFilter.time}"
-                text_view_name_act.text = smsFilter.name
-                text_view_phone_number_act.text = smsFilter.phoneNumber
-                text_view_amount_act.text = smsFilter.amount
-                text_view_account_no_act.text = smsFilter.accountNumber
-            }
+        text_view_sender_no_act.text = smsSender
+        text_view_message_body_act.text = smsBody
+        text_view_receipt_date_act.text = smsDate
+        text_view_status_check_act.text = smsStatus
+        text_view_longitude_act.text = longitude
+        text_view_latitude_act.text = latitude
+        if (smsBody != null) {
+            val smsFilter = SmsFilter(smsBody!!)
+            text_view_voucher_no_act.text = smsFilter.mpesaId
+            text_view_transaction_date_act.text = "${smsFilter.date}  ${smsFilter.time}"
+            text_view_name_act.text = smsFilter.name
+            text_view_phone_number_act.text = smsFilter.phoneNumber
+            text_view_amount_act.text = smsFilter.amount
+            text_view_account_no_act.text = smsFilter.accountNumber
+        }
+        //when the SMS has been sent
+        context?.registerReceiver(smsSent, IntentFilter(SMS_SENT_INTENT))
 
+        //when the SMS has been delivered
+        context?.registerReceiver(smsDelivered, IntentFilter(SMS_DELIVERED_INTENT))
     }
 
 
+    private val smsSent = object : BroadcastReceiver() {
+        override fun onReceive(arg0: Context?, arg1: Intent?) {
+            when (resultCode) {
+                Activity.RESULT_OK -> context?.toast("SMS sent")
+                SmsManager.RESULT_ERROR_GENERIC_FAILURE -> context?.toast("Generic failure")
+                SmsManager.RESULT_ERROR_NO_SERVICE -> context?.toast("No service")
+                SmsManager.RESULT_ERROR_NULL_PDU -> context?.toast("Null PDU")
+                SmsManager.RESULT_ERROR_RADIO_OFF -> context?.toast("Radio off")
+            }
+        }
+    }
+
+    private val smsDelivered = object : BroadcastReceiver() {
+        override fun onReceive(arg0: Context?, arg1: Intent?) {
+            when (resultCode) {
+                Activity.RESULT_OK -> context?.toast("SMS delivered")
+                Activity.RESULT_CANCELED -> context?.toast("SMS not delivered")
+            }
+        }
+    }
+
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.sms_details_menu,menu)
+        inflater.inflate(R.menu.sms_details_menu, menu)
         super.onCreateOptionsMenu(menu, inflater)
     }
 
@@ -141,18 +166,13 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details), PrintingCall
         val localSubscriptionManager = SubscriptionManager.from(requireContext())
         val phoneNumber = sharedPrferences.getString(PREF_PHONE_NUMBER, "")
         val usePhoneNumber = sharedPrferences.getBoolean(PREF_ENABLE_FORWARD_SMS, false)
-        if (usePhoneNumber && phoneNumber != null && !phoneNumber.isNullOrEmpty() && phoneNumber.indexOf(
-                "x"
-            ) < 0
+        if (usePhoneNumber && phoneNumber != null && !phoneNumber.isNullOrEmpty() &&
+            phoneNumber.indexOf("x") < 0
         ) {
 
-            if (checkSelfPermission(
-                    requireContext(),
-                    Manifest.permission.SEND_SMS
-                )
+            if (checkSelfPermission(requireContext(), Manifest.permission.SEND_SMS)
                 == PackageManager.PERMISSION_GRANTED
             ) {
-
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
                     if (checkSelfPermission(
                             requireContext(),
@@ -160,30 +180,31 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details), PrintingCall
                         ) == PackageManager.PERMISSION_GRANTED
                     ) {
                         if (localSubscriptionManager.activeSubscriptionInfoCount > 1) {
-                            val localList: List<*> = localSubscriptionManager.activeSubscriptionInfoList
+                            val localList: List<*> =
+                                localSubscriptionManager.activeSubscriptionInfoList
                             val simInfo1 = localList[0] as SubscriptionInfo
                             val simInfo2 = localList[1] as SubscriptionInfo
 
-                            smsManager = when(defaultSim){
-                                getString(R.string.sim_card_one)->{
+                            smsManager = when (defaultSim) {
+                                getString(R.string.sim_card_one) -> {
                                     //SendSMS From SIM One
                                     SmsManager.getSmsManagerForSubscriptionId(simInfo1.subscriptionId)
                                 }
-                                getString(R.string.sim_card_two)->{
+                                getString(R.string.sim_card_two) -> {
                                     //SendSMS From SIM Two
                                     SmsManager.getSmsManagerForSubscriptionId(simInfo2.subscriptionId)
                                 }
-                                else->{
+                                else -> {
                                     SmsManager.getDefault()
                                 }
                             }
-                        }else{
+                        } else {
                             smsManager = SmsManager.getDefault()
                         }
-                    }else{
+                    } else {
                         smsManager = SmsManager.getDefault()
                     }
-                }else{
+                } else {
                     smsManager = SmsManager.getDefault()
                 }
 
@@ -195,29 +216,6 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details), PrintingCall
                 val deliveredPI = PendingIntent.getBroadcast(
                     requireContext(), 0, Intent(SMS_DELIVERED_INTENT), 0
                 )
-
-                //when the SMS has been sent
-                requireContext().registerReceiver(object : BroadcastReceiver() {
-                    override fun onReceive(arg0: Context?, arg1: Intent?) {
-                        when (resultCode) {
-                            Activity.RESULT_OK -> requireContext().toast("SMS sent to $phoneNumber")
-                            SmsManager.RESULT_ERROR_GENERIC_FAILURE -> requireContext().toast("Generic failure")
-                            SmsManager.RESULT_ERROR_NO_SERVICE -> requireContext().toast("No service")
-                            SmsManager.RESULT_ERROR_NULL_PDU -> requireContext().toast("Null PDU")
-                            SmsManager.RESULT_ERROR_RADIO_OFF -> requireContext().toast("Radio off")
-                        }
-                    }
-                }, IntentFilter(SMS_SENT_INTENT))
-
-                //when the SMS has been delivered
-                requireContext().registerReceiver(object : BroadcastReceiver() {
-                    override fun onReceive(arg0: Context?, arg1: Intent?) {
-                        when (resultCode) {
-                            Activity.RESULT_OK -> requireContext().toast("SMS delivered")
-                            Activity.RESULT_CANCELED -> requireContext().toast("SMS not delivered")
-                        }
-                    }
-                }, IntentFilter(SMS_DELIVERED_INTENT))
 
                 val parts = smsManager.divideMessage(smsBody)
 
@@ -324,10 +322,10 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details), PrintingCall
                     requireContext().toast("Permission denied  to send sms")
                 }
             }
-            PERMISSION_READ_PHONE_STATE_CODE->{
+            PERMISSION_READ_PHONE_STATE_CODE -> {
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
-                }else{
+                } else {
 
                 }
             }
@@ -336,7 +334,7 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details), PrintingCall
     }
 
 
-    fun checkPhoneStatusPermission(){
+    fun checkPhoneStatusPermission() {
         if (checkSelfPermission(
                 requireContext(),
                 Manifest.permission.READ_PHONE_STATE

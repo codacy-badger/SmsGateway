@@ -422,15 +422,15 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
         if (checkSelfPermission(requireContext(), Manifest.permission.READ_SMS)
             == PackageManager.PERMISSION_GRANTED
         ) {
-            view?.refresh_layout_home?.isRefreshing = true
-            view?.text_loading?.text = getString(R.string.loading_messages, 0)
+            refresh_layout_home?.isRefreshing = true
+           text_loading?.text = getString(R.string.loading_messages, 0)
             //coroutine background job
             CoroutineScope(IO).launch {
                 getDatabaseMessages()
             }
         } else {
-            view?.progress_bar?.hide()
-            view?.text_loading?.hide()
+           progress_bar?.hide()
+            text_loading?.hide()
             setUpAdapter()
         }
 
@@ -580,7 +580,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
         val messageInfo: MpesaMessageInfo = messageList[position]
 
         val date = messageInfo.dateTime
-        var smsStatus = NOT_AVAILABLE
+        var smsStatus: String
 
         CoroutineScope(IO).launch {
             context?.let {
@@ -600,7 +600,6 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
                         NOT_AVAILABLE
                     }
 
-                    requireContext().toast(" ${messagesList.toString()}")
 
                     val smsInfo = SmsInfo(
                         messageInfo.messageBody,
@@ -1015,134 +1014,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
     }
 
 
-    private suspend fun getDbSmsMessages() {
 
-        val messageArrayList = ArrayList<MpesaMessageInfo>()
-
-        val cursor = activity?.contentResolver?.query(
-            Uri.parse("content://sms/inbox"),
-            null,
-            null,
-            null,
-            null
-        )
-
-        var messageCount = 0
-
-        if (cursor != null && cursor.moveToNext()) {
-            val nameId = cursor.getColumnIndex("address")
-            val messageId = cursor.getColumnIndex("body")
-            val dateId = cursor.getColumnIndex("date")
-            val mpesaType = " "
-            sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
-
-
-            Log.d(TAG, "mpesa sms $mpesaType ")
-
-            do {
-                val dateString = cursor.getString(dateId)
-
-//                if (cursor.getString(nameId) == "MPESA") {
-
-                var mpesaId: String =
-                    cursor.getString(messageId).split("\\s".toRegex()).first().trim()
-                if (!MPESA_ID_PATTERN.toRegex().matches(mpesaId)) {
-                    mpesaId = NOT_AVAILABLE
-                }
-
-                var smsFilter = SmsFilter(cursor.getString(messageId))
-
-
-                when (mpesaType) {
-                    PAY_BILL -> {
-                        if (smsFilter.mpesaType == PAY_BILL) {
-                            messageArrayList.add(
-                                MpesaMessageInfo(
-                                    messageId,
-                                    cursor.getString(messageId),
-                                    sdf.format(Date(dateString.toLong())).toString(),
-                                    cursor.getString(nameId),
-                                    mpesaId,
-                                    "",
-                                    smsFilter.amount,
-                                    "",
-                                    smsFilter.name,
-                                    dateString.toLong(), true, "", ""
-                                )
-                            )
-                            updateCounter(messageCount)
-                            messageCount++
-                        }
-                    }
-                    DIRECT_MPESA -> {
-                        if (smsFilter.mpesaType == DIRECT_MPESA) {
-                            messageArrayList.add(
-                                MpesaMessageInfo(
-                                    messageId,
-                                    cursor.getString(messageId),
-                                    sdf.format(Date(dateString.toLong())).toString(),
-                                    cursor.getString(nameId),
-                                    mpesaId,
-                                    "",
-                                    smsFilter.amount,
-                                    "",
-                                    smsFilter.name,
-                                    dateString.toLong(), true, "", ""
-                                )
-                            )
-//                            UpdateCounter(messageCount)
-                            messageCount++
-                        }
-                    }
-
-                    BUY_GOODS_AND_SERVICES -> {
-                        if (smsFilter.mpesaType == BUY_GOODS_AND_SERVICES) {
-                            messageArrayList.add(
-                                MpesaMessageInfo(
-                                    messageId,
-                                    cursor.getString(messageId),
-                                    sdf.format(Date(dateString.toLong())).toString(),
-                                    cursor.getString(nameId),
-                                    mpesaId,
-                                    "",
-                                    smsFilter.amount,
-                                    "",
-                                    smsFilter.name,
-                                    dateString.toLong(), true, "", ""
-                                )
-                            )
-                            updateCounter(messageCount)
-                            messageCount++
-                        }
-                    }
-
-                    else -> {
-                        messageArrayList.add(
-                            MpesaMessageInfo(
-                                messageId,
-                                cursor.getString(messageId),
-                                sdf.format(Date(dateString.toLong())).toString(),
-                                cursor.getString(nameId),
-                                mpesaId,
-                                "",
-                                smsFilter.amount,
-                                "",
-                                smsFilter.name,
-                                dateString.toLong(), true, "", ""
-                            )
-                        )
-                        updateCounter(messageCount)
-                        messageCount++
-                    }
-                }
-//                }
-            } while (cursor.moveToNext())
-
-            cursor.close()
-        }
-
-        passMessagesToMain(messageArrayList)
-    }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.main,menu)

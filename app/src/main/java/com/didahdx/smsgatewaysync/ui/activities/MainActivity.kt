@@ -18,10 +18,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
+import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.NavigationUI
 import androidx.preference.PreferenceManager
 import com.didahdx.smsgatewaysync.R
@@ -43,21 +45,8 @@ import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_layout.*
 
 
-
 class MainActivity : AppCompatActivity(),
     NavigationView.OnNavigationItemSelectedListener {
-
-//    //checks on network connectivity to update the notification bar
-//    override fun onNetworkConnectionChanged(isConnected: Boolean) {
-//        val time = Date()
-//        if (!isConnected) {
-////            startServices("No internet connection")
-//            appLog.writeToLog(this, "\n\n $time \n No internet Connection")
-//        } else {
-////            startServices("${getString(R.string.app_name)} is Running")
-//            appLog.writeToLog(this, "\n\n $time \n Connected to Internet ")
-//        }
-//    }
 
 
     private var mFirebaseAnalytics: FirebaseAnalytics? = null
@@ -72,11 +61,17 @@ class MainActivity : AppCompatActivity(),
 
         setSupportActionBar(toolbar)
 
+
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
-        navController = Navigation.findNavController(this,R.id.nav_host_fragment2)
-        NavigationUI.setupWithNavController(navigation_view,navController)
-        NavigationUI.setupActionBarWithNavController(this,navController,drawer_layout)
+        navController = Navigation.findNavController(this, R.id.nav_host_fragment2)
+        NavigationUI.setupWithNavController(navigation_view, navController)
+        NavigationUI.setupActionBarWithNavController(this, navController, drawer_layout)
+
         navigation_view.setNavigationItemSelectedListener(this)
+
+        toolbar?.setNavigationOnClickListener {
+            navController.navigateUp()
+        }
 
         AppCenter.start(
             application, "e55e44cf-eac5-49fc-a785-d6956b386176",
@@ -101,10 +96,6 @@ class MainActivity : AppCompatActivity(),
         drawerToggle.syncState()
 
 
-
-
-//        App.instance.setConnectionListener(this)
-
         //registering broadcast receiver for battery
         this.registerReceiver(
             BatteryReceiver(),
@@ -116,12 +107,12 @@ class MainActivity : AppCompatActivity(),
             SmsReceiver(), IntentFilter(SMS_RECEIVED_INTENT)
         )
 
-   //registering broadcast receiver for connection
+        //registering broadcast receiver for connection
         this.registerReceiver(
             ConnectionReceiver(), IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
         )
 
-        val callFilter=IntentFilter("android.intent.action.NEW_OUTGOING_CALL")
+        val callFilter = IntentFilter("android.intent.action.NEW_OUTGOING_CALL")
         callFilter.addAction("android.intent.action.PHONE_STATE")
 
         //registering broadcast receiver for callReceiver
@@ -130,8 +121,10 @@ class MainActivity : AppCompatActivity(),
         )
 
         //saving apps preference
-        PreferenceManager.setDefaultValues(this,
-            R.xml.preferences, false)
+        PreferenceManager.setDefaultValues(
+            this,
+            R.xml.preferences, false
+        )
 
         val headView: View = navigation_view.getHeaderView(0)
         val navUser: TextView = headView.findViewById<TextView>(R.id.text_view_user_loggedIn)
@@ -139,6 +132,8 @@ class MainActivity : AppCompatActivity(),
         if (firebaseUser != null) {
             navUser.text = firebaseUser.email
         }
+
+
 
         checkForegroundPermission()
     }
@@ -164,7 +159,7 @@ class MainActivity : AppCompatActivity(),
     override fun onNavigationItemSelected(menu: MenuItem): Boolean {
         when (menu.itemId) {
             R.id.nav_home -> {
-               navController.navigate(R.id.homeFragment)
+                navController.navigate(R.id.homeFragment)
             }
 
             R.id.nav_about -> {
@@ -202,23 +197,24 @@ class MainActivity : AppCompatActivity(),
             }
         }
 
-        drawer_layout.closeDrawer(GravityCompat.START)
+        (drawer_layout as DrawerLayout).closeDrawer(GravityCompat.START)
         return true
     }
 
 
-//    override fun onBackPressed() {
-//        if (drawer_layout.isDrawerOpen(GravityCompat.START)) {
-//            drawer_layout.closeDrawer(GravityCompat.START)
-//        } else {
-//            super.onBackPressed()
-//        }
-//    }
+    override fun onBackPressed() {
+        if (drawer_layout.isDrawerOpen(GravityCompat.START)) {
+            drawer_layout.closeDrawer(GravityCompat.START)
+        } else {
+            super.onBackPressed()
+        }
+    }
 
 
     override fun onSupportNavigateUp(): Boolean {
-        navController.navigateUp()
-        return super.onSupportNavigateUp()
+        return NavigationUI.navigateUp(
+            Navigation.findNavController(this, R.id.nav_host_fragment2), drawer_layout
+        )
     }
 
 
@@ -279,7 +275,7 @@ class MainActivity : AppCompatActivity(),
         isCancelable: Boolean
     ): AlertDialog {
 
-        val builder = AlertDialog.Builder(this )
+        val builder = AlertDialog.Builder(this)
         builder.setTitle(title)
         builder.setCancelable(isCancelable)
         builder.setMessage(msg)
