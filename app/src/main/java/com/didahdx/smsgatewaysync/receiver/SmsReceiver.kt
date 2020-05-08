@@ -11,19 +11,22 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
 import com.didahdx.smsgatewaysync.data.db.entities.IncomingMessages
 import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
+import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
 import com.didahdx.smsgatewaysync.utilities.*
 import com.mazenrashed.printooth.Printooth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
 
 
 class SmsReceiver : BroadcastReceiver() {
     private lateinit var sharedPreferences: SharedPreferences
     private val newIntent = Intent(SMS_LOCAL_BROADCAST_RECEIVER)
-    var phoneNumber:String?=" "
-    var messageText:String?=""
-    var time:Long?=null
+    var phoneNumber: String? = " "
+    var messageText: String? = ""
+    var time: Long? = null
     private val printer = BluetoothPrinter()
     private val smsFilter = SmsFilter()
 
@@ -46,29 +49,39 @@ class SmsReceiver : BroadcastReceiver() {
                         SmsMessage.createFromPdu(sms[i] as ByteArray)
                     }
                     phoneNumber = smsMessage.originatingAddress
-                     time = smsMessage.timestampMillis
+                    time = smsMessage.timestampMillis
                     messageBuilder.append(smsMessage.messageBody.toString())
 
                     println("$phoneNumber \n sms : \t $sms  \n  messageText :\t $messageText ")
                 }
 
-                messageText=messageBuilder.toString()
+                messageText = messageBuilder.toString()
 
                 newIntent.putExtra("phoneNumber", phoneNumber)
                 newIntent.putExtra("messageText", messageText)
                 newIntent.putExtra("date", time)
+                var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT)
+                CoroutineScope(IO).launch {
+                    val message2: MpesaMessageInfo?
+                    val smsFilter = SmsFilter(messageText!!)
+                    message2 = MpesaMessageInfo(
+                        messageText!!,
+                        sdf.format(Date(time!!)).toString(),
+                       phoneNumber!!,
+                        smsFilter.mpesaId,
+                        smsFilter.phoneNumber,
+                        smsFilter.amount,
+                        smsFilter.accountNumber,
+                        smsFilter.name,
+                        time!!,
+                       true, "", ""
+                    )
 
-//                CoroutineScope(IO).launch {
-//                    val message2: IncomingMessages?
-//                    message2 = IncomingMessages(
-//                            messageText!!, time!!,
-//                            phoneNumber!!, true,"","")
-//
-//                    context.let { tex ->
-//                        MessagesDatabase(tex).getIncomingMessageDao()
-//                            .addMessage(message2)
-//                    }
-//                }
+                    context.let { tex ->
+                        MessagesDatabase(tex).getIncomingMessageDao()
+                            .addMessage(message2)
+                    }
+                }
 
                 LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
                 if ("MPESA" == phoneNumber) {

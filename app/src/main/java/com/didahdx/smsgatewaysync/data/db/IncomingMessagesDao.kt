@@ -1,24 +1,25 @@
 package com.didahdx.smsgatewaysync.data.db
 
+import androidx.lifecycle.LiveData
 import androidx.room.*
-import com.didahdx.smsgatewaysync.data.db.entities.IncomingMessages
+import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
 
 @Dao
 interface IncomingMessagesDao {
 
  @Insert
- suspend fun addMessage(incomingMessages: IncomingMessages)
+ suspend fun addMessage(incomingMessages: MpesaMessageInfo)
 
  @Update
- suspend fun updateMessage(incomingMessages: IncomingMessages)
+ suspend fun updateMessage(incomingMessages: MpesaMessageInfo)
 
  @Delete
- suspend fun deleteMessage(incomingMessages: IncomingMessages)
+ suspend fun deleteMessage(incomingMessages: MpesaMessageInfo)
 
- @Query("SELECT * FROM incomingMessages ORDER BY id DESC")
- suspend fun getAllMessages():List<IncomingMessages>
+ @Query("SELECT * FROM mpesaMessageInfo ORDER BY id DESC")
+  fun getAllMessages(): LiveData<List<MpesaMessageInfo>>
 
- @Query("SELECT * FROM incomingMessages WHERE date=:time")
-  suspend fun getMessage(time:Long):List<IncomingMessages>
+ @Query("SELECT * FROM mpesaMessageInfo WHERE date=:time")
+   fun getMessage(time:Long):LiveData<List<MpesaMessageInfo>>
 
  }

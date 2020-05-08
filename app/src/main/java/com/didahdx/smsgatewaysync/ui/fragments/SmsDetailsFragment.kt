@@ -21,12 +21,12 @@ import androidx.preference.PreferenceManager
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.model.SmsInfo
 import com.didahdx.smsgatewaysync.utilities.*
+import com.itextpdf.text.pdf.PdfFileSpecification.url
 import com.mazenrashed.printooth.Printooth
 import com.mazenrashed.printooth.ui.ScanningActivity
 import com.mazenrashed.printooth.utilities.Printing
 import com.mazenrashed.printooth.utilities.PrintingCallback
 import kotlinx.android.synthetic.main.fragment_sms_details.*
-
 import java.util.*
 
 
@@ -151,7 +151,8 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details), PrintingCall
                 print()
             }
             R.id.action_forward_sms -> {
-                forwardSms()
+//                forwardSms()
+                shareMessage()
             }
 
         }
@@ -334,7 +335,7 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details), PrintingCall
     }
 
 
-    fun checkPhoneStatusPermission() {
+    private fun checkPhoneStatusPermission() {
         if (checkSelfPermission(
                 requireContext(),
                 Manifest.permission.READ_PHONE_STATE
@@ -347,5 +348,12 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details), PrintingCall
         }
     }
 
+    private fun shareMessage(){
+        val shareIntent = Intent()
+        shareIntent.action = Intent.ACTION_SEND
+        shareIntent.putExtra(Intent.EXTRA_TEXT, smsBody)
+        shareIntent.type = "text/plain"
+        startActivity(shareIntent)
+    }
 
 }

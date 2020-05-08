@@ -1,14 +1,73 @@
 package com.didahdx.smsgatewaysync.ui.viewmodels
 
+import android.app.Application
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
-import com.didahdx.smsgatewaysync.model.MpesaMessageInfo
+import androidx.preference.PreferenceManager
+import com.didahdx.smsgatewaysync.data.db.IncomingMessagesDao
+import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
+import com.didahdx.smsgatewaysync.utilities.*
 
-class HomeViewModel :ViewModel(){
-    private val mMessageInfo=MutableLiveData<ArrayList<MpesaMessageInfo>>()
+class HomeViewModel(
+    dataSource: IncomingMessagesDao,
+    application: Application
+) : ViewModel() {
 
-    fun getMessages():LiveData<ArrayList<MpesaMessageInfo>>{
-        return mMessageInfo
+    init {
+
+    }
+
+    private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(application)
+
+    private val database = dataSource
+
+    private val incomingMessages = database.getAllMessages()
+
+    val filteredMessages = Transformations.map(incomingMessages) {
+        val mpesaType = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
+        val messagesFilled = ArrayList<MpesaMessageInfo>()
+        for (i in it.indices) {
+            val smsFilter = SmsFilter(it[i].messageBody)
+            when (mpesaType) {
+                PAY_BILL -> {
+                    if (smsFilter.mpesaType == PAY_BILL) {
+                        messagesFilled.add(it[i])
+                    }
+                }
+
+                DIRECT_MPESA -> {
+                    if (smsFilter.mpesaType == DIRECT_MPESA) {
+                        messagesFilled.add(it[i])
+                    }
+                }
+
+                BUY_GOODS_AND_SERVICES -> {
+                    if (smsFilter.mpesaType == BUY_GOODS_AND_SERVICES) {
+                        messagesFilled.add(it[i])
+                    }
+                }
+                else -> {
+                    messagesFilled.add(it[i])
+                }
+            }
+        }
+
+        return@map messagesFilled.toList()
+    }
+
+    //data to be passed to next screen
+    private val _eventMessageClicked = MutableLiveData<MpesaMessageInfo>()
+    val eventMessageClicked: LiveData<MpesaMessageInfo>
+        get() = _eventMessageClicked
+
+    fun onMessageDetailClicked(id: MpesaMessageInfo) {
+        _eventMessageClicked.value = id
+    }
+
+    fun onMessageDetailNavigated() {
+        _eventMessageClicked.value = null
     }
 }
+

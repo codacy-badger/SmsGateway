@@ -52,7 +52,9 @@ class SmsFilter() {
         return amount
     }
 
-    //format used for print out
+    /**
+     * format used for print out
+     ***********/
     private fun messageFormat(): String {
         return "Payment details:\n Name: ${name.toUpperCase().trim()} \n Phone No: $phoneNumber " +
                 "\n Amount: $amount \n Transaction Date: $date \n Time: $time " +
@@ -66,8 +68,8 @@ class SmsFilter() {
         val pattern = "^[0-9]{10}$"
 
         /**
-         * sending to another user
-         * */
+         * sending money to another user
+         ******/
         if (message.toLowerCase().indexOf("sent to") != -1
             && message.indexOf(pattern) != -1) {
             name = message.substring(message.indexOf("sent to") + 4, message.indexOf("07") - 1)
@@ -85,7 +87,7 @@ class SmsFilter() {
 
         /**
          * pay bill for client side
-         * */
+         ******/
         if (message.toLowerCase().indexOf("sent to") != -1
             && message.indexOf("for account") != -1
         ) {
@@ -113,7 +115,7 @@ class SmsFilter() {
 
         /**
          * widthdraw from agent
-         * */
+         ******/
         if (message.toLowerCase().indexOf("withdraw") != -1) {
             name = message.substring(message.indexOf("from") + 4, message.indexOf("New") - 1)
             amount= message.substring(message.indexOf("Ksh") - 1, message.indexOf("from") - 1).trim()
@@ -122,7 +124,7 @@ class SmsFilter() {
 
         /**
          * buy goods and services for client side
-         * */
+         ******/
         if (message.indexOf("paid to") != -1) {
             name = message.substring(message.indexOf("paid to") + 7, message.indexOf("/") - 5)
             amount= message.substring(message.indexOf("Ksh") - 1, message.indexOf("paid to") - 1).trim()
@@ -130,24 +132,23 @@ class SmsFilter() {
         }
 
         /**
-         * receiving from another user
-         * */
-        if (message.indexOf("received") != -1 && message.indexOf("07") != -1) {
+         * receiving money from another user
+         ******/
+        if (message.indexOf("received") != -1 && message.indexOf("07") != -1 && message.indexOf("from")!=-1) {
             name = message.substring(message.indexOf("from") + 4, message.indexOf("07") - 1)
             phoneNumber = message.substring(message.indexOf("07") - 1, message.indexOf("07") + 11)
             mpesaType = DIRECT_MPESA
             amount= message.substring(message.indexOf("Ksh") - 1, message.indexOf("from") - 1).trim()
-        } else if (message.indexOf("received") != -1 && message.indexOf("+254") != -1) {
+        } else if (message.indexOf("received") != -1 && message.indexOf("+254") != -1 && message.indexOf("from")!=-1) {
             name = message.substring(message.indexOf("from") + 4, message.indexOf("+254") - 1)
-            phoneNumber =
-                message.substring(message.indexOf("+254") - 1, message.indexOf("+254") + 14)
+            phoneNumber = message.substring(message.indexOf("+254") - 1, message.indexOf("+254") + 14)
             amount= message.substring(message.indexOf("Ksh") - 1, message.indexOf("from") - 1).trim()
             mpesaType = DIRECT_MPESA
         }
 
         /**
          * deposit to your mpesa account
-         * */
+         ******/
         if (message.toLowerCase().indexOf("give ksh") != -1 &&
             message.toLowerCase().indexOf("cash to") != -1
         ) {
@@ -160,7 +161,7 @@ class SmsFilter() {
 
         /**
          * pay bill seller side
-         * */
+         ******/
         if (message.indexOf("received from") != -1 && message.indexOf("254") != -1) {
             name = message.substring(message.indexOf("from") + 4, message.indexOf("254") - 1)
             phoneNumber = message.substring(message.indexOf("254") - 1, message.indexOf("254") + 12)

@@ -2,28 +2,22 @@ package com.didahdx.smsgatewaysync.ui.activities
 
 
 import android.Manifest
-import android.app.NotificationManager
-import android.content.*
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.os.Build
 import android.os.Bundle
-import android.view.Menu
-import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
-import androidx.appcompat.app.ActionBarDrawerToggle
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
-import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentTransaction
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
-import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.NavigationUI
 import androidx.preference.PreferenceManager
 import com.didahdx.smsgatewaysync.R
@@ -33,9 +27,10 @@ import com.didahdx.smsgatewaysync.receiver.PhoneCallReceiver
 import com.didahdx.smsgatewaysync.receiver.SmsReceiver
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.ui.IMainActivity
-
-import com.didahdx.smsgatewaysync.utilities.*
-import com.google.android.material.navigation.NavigationView
+import com.didahdx.smsgatewaysync.utilities.INPUT_EXTRAS
+import com.didahdx.smsgatewaysync.utilities.PERMISSION_FOREGROUND_SERVICES_CODE
+import com.didahdx.smsgatewaysync.utilities.PREF_SERVICES_KEY
+import com.didahdx.smsgatewaysync.utilities.SMS_RECEIVED_INTENT
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.auth.FirebaseAuth
 import com.microsoft.appcenter.AppCenter
@@ -71,31 +66,22 @@ class MainActivity : AppCompatActivity(){
 
         // Obtain the FirebaseAnalytics instance.
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this)
-
+        registerReceiver(SmsReceiver(), IntentFilter(SMS_RECEIVED_INTENT))
 
         //registering broadcast receiver for battery
-        this.registerReceiver(
-            BatteryReceiver(),
-            IntentFilter(Intent.ACTION_BATTERY_CHANGED)
-        )
+    registerReceiver(BatteryReceiver(), IntentFilter(Intent.ACTION_BATTERY_CHANGED))
 
-        //registering broadcast receiver for smsReceiver
-        this.registerReceiver(
-            SmsReceiver(), IntentFilter(SMS_RECEIVED_INTENT)
-        )
+
 
         //registering broadcast receiver for connection
-        this.registerReceiver(
-            ConnectionReceiver(), IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
-        )
+       registerReceiver(ConnectionReceiver(),
+            IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
 
         val callFilter = IntentFilter("android.intent.action.NEW_OUTGOING_CALL")
         callFilter.addAction("android.intent.action.PHONE_STATE")
 
         //registering broadcast receiver for callReceiver
-        baseContext.registerReceiver(
-            PhoneCallReceiver(), callFilter
-        )
+        registerReceiver(PhoneCallReceiver(), callFilter)
 
         //saving apps preference
         PreferenceManager.setDefaultValues(
@@ -187,33 +173,21 @@ class MainActivity : AppCompatActivity(){
 
     override fun onDestroy() {
         super.onDestroy()
-//        val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
-//        if(isServiceRunning){
-//            stopServices()
-//        }
+        val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
+        if(isServiceRunning){
+            stopServices()
+        }
 
-//        this.unregisterReceiver(SmsReceiver())
     }
 
-    //used to display alert dialog box
-    private fun showDialog(
-        title: String, msg: String, postiveLabel: String,
-        postiveOnClick: DialogInterface.OnClickListener,
-        negativeLabel: String, negativeOnClick: DialogInterface.OnClickListener,
-        isCancelable: Boolean
-    ): AlertDialog {
+    override fun onResume() {
+        super.onResume()
+        //registering broadcast receiver for smsReceiver
 
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle(title)
-        builder.setCancelable(isCancelable)
-        builder.setMessage(msg)
-        builder.setPositiveButton(postiveLabel, postiveOnClick)
-        builder.setNegativeButton(negativeLabel, negativeOnClick)
-        val alert = builder.create()
-        alert.show()
-        return alert;
     }
 
-
-
+    override fun onPause() {
+        super.onPause()
+//        unregisterReceiver(SmsReceiver())
+    }
 }

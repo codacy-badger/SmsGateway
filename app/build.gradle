@@ -34,6 +34,10 @@ android {
         targetCompatibility = 1.8
     }
 
+    dataBinding {
+        enabled = true
+    }
+
     // Customize your APK name here
     applicationVariants.all { variant ->
         variant.outputs.all { output ->
@@ -48,11 +52,8 @@ android {
             ext.revision = getGitRevParseInfo("--short")
             ext.branch = getGitRevParseInfo("--abbrev-ref")
 
-//            println ext.revision
-//            println ext.branch
-
             //customize your app name by using variables
-            outputFileName = "app_${buildType}_${versionName}_${ext.branch}_${ext.revision}_${formattedDate}.apk"
+            outputFileName = "app_${buildType}_${versionName}_${ext.revision}_${formattedDate}.apk"
 
         }
     }

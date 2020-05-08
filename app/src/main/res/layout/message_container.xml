@@ -1,9 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable
+            name="messageText"
+            type="com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo"/>
+
+        <variable
+            name="clickListener"
+            type="com.didahdx.smsgatewaysync.ui.adapters.MessageAdapterListener"
+            />
+    </data>
+
+
+<androidx.cardview.widget.CardView
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:onClick="@{() -> clickListener.onClick(messageText)}"
     android:background="@drawable/item_background"
     android:clickable="true"
     android:layout_margin="2dp"
@@ -29,6 +45,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
+            app:Sender="@{messageText}"
             android:layout_marginStart="4dp"
             android:layout_marginBottom="5dp"
             android:textStyle="italic|bold"
@@ -39,6 +56,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_marginStart="4dp"
+            app:MpesaId="@{messageText}"
             android:id="@+id/text_view_mpesaId"
             tools:text="mpesaId"/>
 
@@ -51,6 +69,7 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/text_view_sender1"
             android:layout_marginStart="5dp"
+            app:Name="@{messageText}"
             android:textStyle="bold"
             android:layout_marginTop="7dp"
             android:layout_marginBottom="7dp"
@@ -62,6 +81,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
+            app:Time="@{messageText}"
            android:layout_alignParentEnd="true"
             android:ellipsize="end"
             android:layout_marginBottom="5dp"
@@ -71,6 +91,7 @@
         <TextView
             tools:text="2,000.00"
             android:layout_width="wrap_content"
+            app:Amount="@{messageText}"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_alignParentRight="true"
@@ -80,3 +101,4 @@
     </RelativeLayout>
 
 </androidx.cardview.widget.CardView>
+</layout>

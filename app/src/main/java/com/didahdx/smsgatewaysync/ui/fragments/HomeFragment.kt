@@ -6,7 +6,6 @@ import android.app.PendingIntent
 import android.content.*
 import android.content.pm.PackageManager
 import android.location.Location
-import android.net.ConnectivityManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -22,27 +21,28 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.core.os.bundleOf
+import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
 import androidx.preference.PreferenceManager
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.GridLayoutManager
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
-import com.didahdx.smsgatewaysync.data.db.entities.IncomingMessages
+import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
+import com.didahdx.smsgatewaysync.databinding.FragmentHomeBinding
 import com.didahdx.smsgatewaysync.manager.RabbitmqClient
 import com.didahdx.smsgatewaysync.model.MessageInfo
-import com.didahdx.smsgatewaysync.model.MpesaMessageInfo
-import com.didahdx.smsgatewaysync.model.SmsInfo
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.services.LocationGpsService
 import com.didahdx.smsgatewaysync.ui.UiUpdaterInterface
 import com.didahdx.smsgatewaysync.ui.activities.LoginActivity
 import com.didahdx.smsgatewaysync.ui.adapters.MessageAdapter
+import com.didahdx.smsgatewaysync.ui.adapters.MessageAdapterListener
 import com.didahdx.smsgatewaysync.ui.viewmodels.HomeViewModel
+import com.didahdx.smsgatewaysync.ui.viewmodels.HomeViewModelFactory
 import com.didahdx.smsgatewaysync.utilities.*
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.OnFailureListener
@@ -55,18 +55,22 @@ import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.json.JSONObject
+import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
+import androidx.lifecycle.Observer
+import androidx.navigation.fragment.findNavController
+import com.didahdx.smsgatewaysync.model.SmsInfo
 
 /**
  * A simple [Fragment] subclass.
  */
-class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
+class HomeFragment : Fragment(),
     UiUpdaterInterface {
 
     private var messageList: ArrayList<MpesaMessageInfo> = ArrayList<MpesaMessageInfo>()
+
     @Volatile
     var isConnected = false
     val appLog = AppLog()
@@ -75,6 +79,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
     var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT)
     private lateinit var sharedPreferences: SharedPreferences
     val TAG = HomeFragment::class.java.simpleName
+
 
     private val appPermissions = arrayOf(
         Manifest.permission.ACCESS_FINE_LOCATION,
@@ -114,12 +119,12 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
         UiUpdaterInterface = this
-        Log.d("Log_Rabbitmq", "isConnected $isConnected")
+        Timber.i("isConnected $isConnected")
         CoroutineScope(IO).launch {
             rabbitmqClient = RabbitmqClient(UiUpdaterInterface, user?.email!!)
-            Log.d("Log_Rabbitmq", " object ${rabbitmqClient.hashCode()}")
+            Timber.i(" object ${rabbitmqClient.hashCode()}")
 
-            Log.d("Log_Rabbitmq", "isConnected $isConnected")
+            Timber.i("isConnected $isConnected")
             sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
             val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
             if (!isConnected && isServiceRunning) {
@@ -136,50 +141,96 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
             override fun onLocationAvailability(locationAvailability: LocationAvailability) {
                 super.onLocationAvailability(locationAvailability)
                 if (locationAvailability.isLocationAvailable) {
-                    Log.i(TAG, "Location is available")
+                    Timber.i("Location is available")
                 } else {
-                    Log.i(TAG, "Location is unavailable")
+                    Timber.i("Location is unavailable")
                 }
             }
 
             override fun onLocationResult(locationResult: LocationResult) {
                 super.onLocationResult(locationResult)
-                Log.i(TAG, "Location result is available")
+                Timber.i("Location result is available")
             }
         }
 
-        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
-            mSmsReceiver,
-            IntentFilter(SMS_LOCAL_BROADCAST_RECEIVER)
-        )
-
-        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
-            callReceiver,
-            IntentFilter(CALL_LOCAL_BROADCAST_RECEIVER)
-        )
-        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
-            batteryReceiver,
-            IntentFilter(BATTERY_LOCAL_BROADCAST_RECEIVER)
-        )
+//        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
+//            mSmsReceiver,
+//            IntentFilter(SMS_LOCAL_BROADCAST_RECEIVER)
+//        )
+//
+//        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
+//            callReceiver,
+//            IntentFilter(CALL_LOCAL_BROADCAST_RECEIVER)
+//        )
+//        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
+//            batteryReceiver,
+//            IntentFilter(BATTERY_LOCAL_BROADCAST_RECEIVER)
+//        )
+//
+//        //registering the broadcast receiver for network
+//        context?.registerReceiver(
+//            mConnectionReceiver,
+//            IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
+//        )
     }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        mHomeViewModel = ViewModelProvider(this).get(HomeViewModel::class.java)
 
-        //registering the broadcast receiver for network
-        context?.registerReceiver(
-            mConnectionReceiver,
-            IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
+        val binding: FragmentHomeBinding = DataBindingUtil.inflate(
+            inflater, R.layout.fragment_home, container, false
         )
+        val application = requireNotNull(this.activity).application
+        val database = MessagesDatabase(application).getIncomingMessageDao()
+        val factory = HomeViewModelFactory(database, application)
+        mHomeViewModel = ViewModelProvider(this, factory).get(HomeViewModel::class.java)
+
+        binding.homeViewModel = mHomeViewModel
+        val adapter = MessageAdapter(MessageAdapterListener {
+            mHomeViewModel.onMessageDetailClicked(it)
+
+        })
+
+        val manager = GridLayoutManager(activity, 1, GridLayoutManager.VERTICAL, false)
+        binding.recyclerViewMessageList.layoutManager = manager
+        binding.recyclerViewMessageList.adapter = adapter
+        binding.lifecycleOwner = this
+
+        mHomeViewModel.filteredMessages.observe(viewLifecycleOwner, Observer {
+            it?.let {
+                binding.progressBar.hide()
+                binding.textLoading.hide()
+                adapter.submitList(it)
+            }
+        })
+
+
+        //navigating to sms detail screen
+        mHomeViewModel.eventMessageClicked.observe(viewLifecycleOwner, Observer {
+            it?.let {
+
+                val smsStatus = if (it.status) {
+                    "Uploaded"
+                } else {
+                    "pending"
+                }
+
+                val smsInfo = SmsInfo(it.messageBody, it.time, it.sender, smsStatus, it.longitude,
+                    it.latitude)
+
+                val bundle = bundleOf("SmsInfo" to smsInfo)
+               this.findNavController().navigate(R.id.action_homeFragment_to_smsDetailsFragment, bundle)
+                mHomeViewModel.onMessageDetailNavigated()
+            }
+        })
 
         val intent = Intent(requireContext(), LocationGpsService::class.java)
         context?.startService(intent)
 
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_home, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -197,13 +248,12 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
         }
         checkAndRequestPermissions()
 
-        refresh_layout_home?.setOnRefreshListener { backgroundCoroutineCall() }
-        backgroundCoroutineCall()
-        startGettingLocation()
+//        refresh_layout_home?.setOnRefreshListener { backgroundCoroutineCall() }
+//        backgroundCoroutineCall()
+//        startGettingLocation()
 
         navController = Navigation.findNavController(view)
     }
-
 
 
     //appServices for showing notification bar
@@ -219,230 +269,221 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
         requireContext().stopService(serviceIntent)
     }
 
-    private val batteryReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
-            if (intent != null && isServiceRunning && BATTERY_LOCAL_BROADCAST_RECEIVER == intent.action) {
-                if (intent.extras != null) {
-                    val batteryVoltage = intent.extras!!.getString(BATTERY_VOLTAGE_EXTRA)
-                    var batteryPercentage =
-                        intent.extras!!.getString(BATTERY_PERCENTAGE_EXTRA).toString()
-                    val batteryCondition = intent.extras!!.getString(BATTERY_CONDITION_EXTRA)
-                    val batteryTemperature = intent.extras!!.getString(BATTERY_TEMPERATURE_EXTRA)
-                    val batteryPowerSource = intent.extras!!.getString(BATTERY_POWER_SOURCE_EXTRA)
-                    val batteryChargingStatus =
-                        intent.extras!!.getString(BATTERY_CHARGING_STATUS_EXTRA)
-                    val batteryTechnology = intent.extras!!.getString(BATTERY_TECHNOLOGY_EXTRA)
-                    startGettingLocation()
-
-                    val obj: JSONObject? = JSONObject()
-                    obj?.put("type", "phoneStatus")
-                    obj?.put("batteryPercentage", batteryPercentage)
-                    obj?.put("batteryCondition", batteryCondition)
-                    obj?.put("batteryTemperature", batteryTemperature)
-                    obj?.put("batteryPowerSource", batteryPowerSource)
-                    obj?.put("batteryChargingStatus", batteryChargingStatus)
-                    obj?.put("batteryTechnology", batteryTechnology)
-                    obj?.put("batteryVoltage", batteryVoltage)
-                    obj?.put("longitude", userLongitude)
-                    obj?.put("latitude", userLatitude)
-                    obj?.put("client_sender", user?.email!!)
-                    obj?.put("date", Date().toString())
-                    obj?.put("client_gateway_type", "android_phone")
-
-                    CoroutineScope(IO).launch {
-                        obj?.toString()?.let {
-                            rabbitmqClient.publishMessage(it)
-                        }
-                    }
-                }
-            }
-        }
-    }
+//    private val batteryReceiver = object : BroadcastReceiver() {
+//        override fun onReceive(context: Context?, intent: Intent?) {
+//            val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
+//            if (intent != null && isServiceRunning && BATTERY_LOCAL_BROADCAST_RECEIVER == intent.action) {
+//                if (intent.extras != null) {
+//                    val batteryVoltage = intent.extras!!.getString(BATTERY_VOLTAGE_EXTRA)
+//                    var batteryPercentage =
+//                        intent.extras!!.getString(BATTERY_PERCENTAGE_EXTRA).toString()
+//                    val batteryCondition = intent.extras!!.getString(BATTERY_CONDITION_EXTRA)
+//                    val batteryTemperature = intent.extras!!.getString(BATTERY_TEMPERATURE_EXTRA)
+//                    val batteryPowerSource = intent.extras!!.getString(BATTERY_POWER_SOURCE_EXTRA)
+//                    val batteryChargingStatus =
+//                        intent.extras!!.getString(BATTERY_CHARGING_STATUS_EXTRA)
+//                    val batteryTechnology = intent.extras!!.getString(BATTERY_TECHNOLOGY_EXTRA)
+//                    startGettingLocation()
+//
+//                    val obj: JSONObject? = JSONObject()
+//                    obj?.put("type", "phoneStatus")
+//                    obj?.put("batteryPercentage", batteryPercentage)
+//                    obj?.put("batteryCondition", batteryCondition)
+//                    obj?.put("batteryTemperature", batteryTemperature)
+//                    obj?.put("batteryPowerSource", batteryPowerSource)
+//                    obj?.put("batteryChargingStatus", batteryChargingStatus)
+//                    obj?.put("batteryTechnology", batteryTechnology)
+//                    obj?.put("batteryVoltage", batteryVoltage)
+//                    obj?.put("longitude", userLongitude)
+//                    obj?.put("latitude", userLatitude)
+//                    obj?.put("client_sender", user?.email!!)
+//                    obj?.put("date", Date().toString())
+//                    obj?.put("client_gateway_type", "android_phone")
+//
+//                    CoroutineScope(IO).launch {
+//                        obj?.toString()?.let {
+//                            rabbitmqClient.publishMessage(it)
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     //broadcast call receiver
-    private val callReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
-            if (intent != null && isServiceRunning && CALL_LOCAL_BROADCAST_RECEIVER == intent.action) {
-                if (intent.extras != null) {
-                    var phoneNumber: String? = " "
-                    phoneNumber = intent.extras!!.getString(PHONE_NUMBER_EXTRA)
-                    val callType = intent.extras!!.getString(CALL_TYPE_EXTRA)
-                    val startTime = intent.extras!!.getString(START_TIME_EXTRA)
-                    val endTime = intent.extras!!.getString(END_TIME_EXTRA)
-                    startGettingLocation()
-                    val obj: JSONObject? = JSONObject()
-                    obj?.put("type", "calls")
-                    obj?.put("longitude", userLongitude)
-                    obj?.put("latitude", userLatitude)
-                    obj?.put("client_sender", user?.email!!)
-                    obj?.put("client_gateway_type", "android_phone")
-                    obj?.put("call_type", callType)
-                    obj?.put("phone_number", phoneNumber)
-                    obj?.put("start_time", startTime)
-                    obj?.put("end_time", endTime)
-
-                    CoroutineScope(IO).launch {
-                        obj?.toString()?.let {
-                            rabbitmqClient.publishMessage(it)
-                        }
-                    }
-                }
-            }
-        }
-    }
+//    private val callReceiver = object : BroadcastReceiver() {
+//        override fun onReceive(context: Context?, intent: Intent?) {
+//            val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
+//            if (intent != null && isServiceRunning && CALL_LOCAL_BROADCAST_RECEIVER == intent.action) {
+//                if (intent.extras != null) {
+//                    var phoneNumber: String? = " "
+//                    phoneNumber = intent.extras!!.getString(PHONE_NUMBER_EXTRA)
+//                    val callType = intent.extras!!.getString(CALL_TYPE_EXTRA)
+//                    val startTime = intent.extras!!.getString(START_TIME_EXTRA)
+//                    val endTime = intent.extras!!.getString(END_TIME_EXTRA)
+//                    startGettingLocation()
+//                    val obj: JSONObject? = JSONObject()
+//                    obj?.put("type", "calls")
+//                    obj?.put("longitude", userLongitude)
+//                    obj?.put("latitude", userLatitude)
+//                    obj?.put("client_sender", user?.email!!)
+//                    obj?.put("client_gateway_type", "android_phone")
+//                    obj?.put("call_type", callType)
+//                    obj?.put("phone_number", phoneNumber)
+//                    obj?.put("start_time", startTime)
+//                    obj?.put("end_time", endTime)
+//
+//                    CoroutineScope(IO).launch {
+//                        obj?.toString()?.let {
+//                            rabbitmqClient.publishMessage(it)
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     //broadcast sms receiver
-    private val mSmsReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent?) {
-            val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
-            if (intent != null && isServiceRunning && SMS_LOCAL_BROADCAST_RECEIVER == intent.action) {
-                Log.d("sms_rece", "action local ${intent.action}")
-                if (intent.extras != null) {
-                    val phoneNumber = intent.extras!!.getString("phoneNumber")
-                    val dateTimeStamp = intent.extras!!.getLong("date")
-                    val messageText = intent.extras!!.getString("messageText")
-                    val date = Date(dateTimeStamp).toString()
-
-//                    context?.toast(" local receiver \n $phoneNumber $messageText ")
-                    startGettingLocation()
-
-                    val obj: JSONObject? = JSONObject()
-                    val smsFilter = messageText?.let { SmsFilter(it) }
-                    obj?.put("type", "message")
-                    obj?.put("message_body", messageText)
-                    obj?.put("receipt_date", date)
-                    obj?.put("sender_id", phoneNumber)
-                    obj?.put("longitude", userLongitude)
-                    obj?.put("latitude", userLatitude)
-                    obj?.put("client_sender", user?.email!!)
-                    obj?.put("client_gateway_type", "android_phone")
-
-
-                    if (phoneNumber != null && phoneNumber == "MPESA") {
-                        obj?.put("message_type", "mpesa")
-                        obj?.put("voucher_number", smsFilter?.mpesaId)
-                        obj?.put("transaction_type", smsFilter?.mpesaType)
-                        obj?.put("phone_number", smsFilter?.phoneNumber)
-                        obj?.put("name", smsFilter?.name)
-                        if (smsFilter?.time != NOT_AVAILABLE && smsFilter?.date != NOT_AVAILABLE) {
-                            obj?.put(
-                                "transaction_date",
-                                "${smsFilter?.date} ${smsFilter?.time}"
-                            )
-                        } else if (smsFilter?.date != NOT_AVAILABLE) {
-                            obj?.put("transaction_date", smsFilter?.date)
-                        } else if (smsFilter?.time !=
-                            NOT_AVAILABLE
-                        ) {
-                            obj?.put("transaction_date", smsFilter?.time)
-                        }
-                        obj?.put("amount", smsFilter?.amount)
-
-                    } else {
-                        obj?.put("message_type", "recieved_sms")
-                    }
-
-                    CoroutineScope(IO).launch {
-                        obj?.toString()?.let {
-                            rabbitmqClient.publishMessage(it)
-
-                            var message2: IncomingMessages? = null
-                            if (messageText != null) {
-                                message2 = IncomingMessages(
-                                    messageText, dateTimeStamp,
-                                    phoneNumber!!, true, userLongitude, userLatitude
-                                )
-                            } else {
-                                message2 = null
-                            }
-                            context.let { tex ->
-                                if (message2 != null) {
-                                    MessagesDatabase(tex).getIncomingMessageDao()
-                                        .addMessage(message2)
-                                }
-                            }
-                        }
-                    }
-
-
-                }
-            }
-        }
-    }
+//    private val mSmsReceiver = object : BroadcastReceiver() {
+//        override fun onReceive(context: Context, intent: Intent?) {
+//            val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
+//            if (intent != null && isServiceRunning && SMS_LOCAL_BROADCAST_RECEIVER == intent.action) {
+//                Log.d("sms_rece", "action local ${intent.action}")
+//                if (intent.extras != null) {
+//                    val phoneNumber = intent.extras!!.getString("phoneNumber")
+//                    val dateTimeStamp = intent.extras!!.getLong("date")
+//                    val messageText = intent.extras!!.getString("messageText")
+//                    val date = Date(dateTimeStamp).toString()
+//
+////                    context?.toast(" local receiver \n $phoneNumber $messageText ")
+//                    startGettingLocation()
+//
+//                    val obj: JSONObject? = JSONObject()
+//                    val smsFilter = messageText?.let { SmsFilter(it) }
+//                    obj?.put("type", "message")
+//                    obj?.put("message_body", messageText)
+//                    obj?.put("receipt_date", date)
+//                    obj?.put("sender_id", phoneNumber)
+//                    obj?.put("longitude", userLongitude)
+//                    obj?.put("latitude", userLatitude)
+//                    obj?.put("client_sender", user?.email!!)
+//                    obj?.put("client_gateway_type", "android_phone")
+//
+//
+//                    if (phoneNumber != null && phoneNumber == "MPESA") {
+//                        obj?.put("message_type", "mpesa")
+//                        obj?.put("voucher_number", smsFilter?.mpesaId)
+//                        obj?.put("transaction_type", smsFilter?.mpesaType)
+//                        obj?.put("phone_number", smsFilter?.phoneNumber)
+//                        obj?.put("name", smsFilter?.name)
+//                        if (smsFilter?.time != NOT_AVAILABLE && smsFilter?.date != NOT_AVAILABLE) {
+//                            obj?.put(
+//                                "transaction_date",
+//                                "${smsFilter?.date} ${smsFilter?.time}"
+//                            )
+//                        } else if (smsFilter.date != NOT_AVAILABLE) {
+//                            obj?.put("transaction_date", smsFilter.date)
+//                        } else if (smsFilter.time !=
+//                            NOT_AVAILABLE
+//                        ) {
+//                            obj?.put("transaction_date", smsFilter.time)
+//                        }
+//                        obj?.put("amount", smsFilter?.amount)
+//
+//                    } else {
+//                        obj?.put("message_type", "recieved_sms")
+//                    }
+//
+//                    CoroutineScope(IO).launch {
+//                        obj?.toString()?.let {
+//                            rabbitmqClient.publishMessage(it)
+//
+//                            var message2: IncomingMessages? = null
+//                            if (messageText != null) {
+//                                message2 = IncomingMessages(
+//                                    messageText, dateTimeStamp,
+//                                    phoneNumber!!, true, userLongitude, userLatitude
+//                                )
+//                            } else {
+//                                message2 = null
+//                            }
+//                            context.let { tex ->
+//                                if (message2 != null) {
+////                                    MessagesDatabase(tex).getIncomingMessageDao()
+////                                        .addMessage(message2)
+//                                }
+//                            }
+//                        }
+//                    }
+//
+//
+//                }
+//            }
+//        }
+//    }
 
     //broadcast connection receiver
-    private val mConnectionReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent?) {
+//    private val mConnectionReceiver = object : BroadcastReceiver() {
+//        override fun onReceive(context: Context, intent: Intent?) {
+//
+//            val connectionManager =
+//                context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+//            val activeNetwork = connectionManager.activeNetworkInfo
+//            when ((activeNetwork != null && activeNetwork.isConnectedOrConnecting)) {
+//                true -> {
+////                    context?.toast("network connected")
+////                    text_view_status.text = "${getString(R.string.app_name)} is Running"
+////                    text_view_status?.BackGroundGreen()
+//                }
+//                false -> {
+////                    context?.toast("network not available")
+////                    text_view_status.text = "No internet connection"
+////                    text_view_status?.BackGroundRed()
+//                }
+//            }
+//        }
+//    }
 
-            val connectionManager =
-                context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-            val activeNetwork = connectionManager.activeNetworkInfo
-            when ((activeNetwork != null && activeNetwork.isConnectedOrConnecting)) {
-                true -> {
-//                    context?.toast("network connected")
-//                    text_view_status.text = "${getString(R.string.app_name)} is Running"
-//                    text_view_status?.BackGroundGreen()
-                }
-                false -> {
-//                    context?.toast("network not available")
-//                    text_view_status.text = "No internet connection"
-//                    text_view_status?.BackGroundRed()
-                }
-            }
-        }
-    }
 
+//    override fun onDestroyView() {
+//        super.onDestroyView()
+//        if (locationBroadcastReceiver != null) {
+//
+//        }
+//    }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        if (locationBroadcastReceiver != null) {
-
-        }
-    }
-
-    private fun setUpAdapter() {
-        progress_bar?.hide()
-        text_loading?.hide()
-        recycler_view_message_list?.layoutManager = LinearLayoutManager(activity)
-        mMessageAdapter = MessageAdapter(messageList, this)
-        recycler_view_message_list?.adapter = mMessageAdapter
-        refresh_layout_home?.isRefreshing = false
-
-        if (messageList.size <= 0) {
-            text_loading?.show()
-            text_loading?.text = "No messages available at the moment"
-        }
-    }
+//    private fun setUpAdapter() {
+//        progress_bar?.hide()
+//        text_loading?.hide()
+//        recycler_view_message_list?.layoutManager = LinearLayoutManager(activity)
+//        mMessageAdapter = MessageAdapter()
+//        recycler_view_message_list?.adapter = mMessageAdapter
+//        refresh_layout_home?.isRefreshing = false
+//
+//        if (messageList.size <= 0) {
+//            text_loading?.show()
+//            text_loading?.text = "No messages available at the moment"
+//        }
+//    }
 
     //used to get sms from the phone
-    private fun backgroundCoroutineCall() {
-        if (checkSelfPermission(requireContext(), Manifest.permission.READ_SMS)
-            == PackageManager.PERMISSION_GRANTED
-        ) {
-            refresh_layout_home?.isRefreshing = true
-           text_loading?.text = getString(R.string.loading_messages, 0)
-            //coroutine background job
-            CoroutineScope(IO).launch {
-                getDatabaseMessages()
-            }
-        } else {
-           progress_bar?.hide()
-            text_loading?.hide()
-            setUpAdapter()
-        }
-
-    }
-
-    //adds message to the screen
-    private suspend fun passMessagesToMain(list: ArrayList<MpesaMessageInfo>) {
-        withContext(Main) {
-            messageList.clear()
-            messageList = ArrayList<MpesaMessageInfo>(list)
-            setUpAdapter()
-        }
-    }
+//    private fun backgroundCoroutineCall() {
+//        if (checkSelfPermission(requireContext(), Manifest.permission.READ_SMS)
+//            == PackageManager.PERMISSION_GRANTED
+//        ) {
+//            refresh_layout_home?.isRefreshing = true
+//           text_loading?.text = getString(R.string.loading_messages, 0)
+//            //coroutine background job
+//            CoroutineScope(IO).launch {
+//                getDatabaseMessages()
+//            }
+//        } else {
+//           progress_bar?.hide()
+//            text_loading?.hide()
+//            setUpAdapter()
+//        }
+//
+//    }
 
 
     //updates the counter on the screen
@@ -452,122 +493,6 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
         }
     }
 
-    private suspend fun getDatabaseMessages() {
-
-        var messageArrayList = ArrayList<MpesaMessageInfo>()
-        var incomingMessages = ArrayList<IncomingMessages>()
-        context?.let {
-
-            incomingMessages.addAll(
-                MessagesDatabase(
-                    it
-                ).getIncomingMessageDao().getAllMessages()
-            )
-        }
-        val mpesaType = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
-
-
-        if (incomingMessages.size > 0) {
-            for (i in incomingMessages.indices) {
-                val smsFilter = SmsFilter(incomingMessages[i].messageBody)
-
-                when (mpesaType) {
-                    PAY_BILL -> {
-                        if (smsFilter.mpesaType == PAY_BILL) {
-                            messageArrayList.add(
-                                MpesaMessageInfo(
-                                    incomingMessages[i].id,
-                                    incomingMessages[i].messageBody,
-                                    sdf.format(Date(incomingMessages[i].date)).toString(),
-                                    incomingMessages[i].sender,
-                                    smsFilter.mpesaId,
-                                    smsFilter.phoneNumber,
-                                    smsFilter.amount,
-                                    smsFilter.accountNumber,
-                                    smsFilter.name,
-                                    incomingMessages[i].date,
-                                    incomingMessages[i].status,
-                                    incomingMessages[i].longitude,
-                                    incomingMessages[i].latitude
-                                )
-                            )
-                            updateCounter(i)
-                        }
-                    }
-
-                    DIRECT_MPESA -> {
-                        if (smsFilter.mpesaType == DIRECT_MPESA) {
-                            messageArrayList.add(
-                                MpesaMessageInfo(
-                                    incomingMessages[i].id,
-                                    incomingMessages[i].messageBody,
-                                    sdf.format(Date(incomingMessages[i].date)).toString(),
-                                    incomingMessages[i].sender,
-                                    smsFilter.mpesaId,
-                                    smsFilter.phoneNumber,
-                                    smsFilter.amount,
-                                    smsFilter.accountNumber,
-                                    smsFilter.name,
-                                    incomingMessages[i].date,
-                                    incomingMessages[i].status,
-                                    incomingMessages[i].longitude,
-                                    incomingMessages[i].latitude
-                                )
-                            )
-                            updateCounter(i)
-                        }
-                    }
-
-                    BUY_GOODS_AND_SERVICES -> {
-                        if (smsFilter.mpesaType == BUY_GOODS_AND_SERVICES) {
-                            messageArrayList.add(
-                                MpesaMessageInfo(
-                                    incomingMessages[i].id,
-                                    incomingMessages[i].messageBody,
-                                    sdf.format(Date(incomingMessages[i].date)).toString(),
-                                    incomingMessages[i].sender,
-                                    smsFilter.mpesaId,
-                                    smsFilter.phoneNumber,
-                                    smsFilter.amount,
-                                    smsFilter.accountNumber,
-                                    smsFilter.name,
-                                    incomingMessages[i].date,
-                                    incomingMessages[i].status,
-                                    incomingMessages[i].longitude,
-                                    incomingMessages[i].latitude
-                                )
-                            )
-                            updateCounter(i)
-                        }
-                    }
-                    else -> {
-
-                        messageArrayList.add(
-                            MpesaMessageInfo(
-                                incomingMessages[i].id,
-                                incomingMessages[i].messageBody,
-                                sdf.format(Date(incomingMessages[i].date)).toString(),
-                                incomingMessages[i].sender,
-                                smsFilter.mpesaId,
-                                smsFilter.phoneNumber,
-                                smsFilter.amount,
-                                smsFilter.accountNumber,
-                                smsFilter.name,
-                                incomingMessages[i].date,
-                                incomingMessages[i].status,
-                                incomingMessages[i].longitude,
-                                incomingMessages[i].latitude
-                            )
-                        )
-                        updateCounter(i)
-                    }
-                }
-
-            }
-        }
-
-        passMessagesToMain(messageArrayList)
-    }
 
     override fun onPause() {
         super.onPause()
@@ -575,56 +500,51 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
     }
 
 
-    override fun onItemClick(position: Int) {
-        val messageInfo: MpesaMessageInfo = messageList[position]
-
-        val date = messageInfo.dateTime
-        var smsStatus: String
-
-        CoroutineScope(IO).launch {
-            context?.let {
-                val messagesList = MessagesDatabase(it).getIncomingMessageDao().getMessage(date)
-
-
-
-                CoroutineScope(Main).launch {
-
-                    smsStatus = if (!messagesList.isNullOrEmpty() && messagesList[0].status) {
-                        if (messageInfo.status) {
-                            "Uploaded"
-                        } else {
-                            "pending"
-                        }
-                    } else {
-                        NOT_AVAILABLE
-                    }
-
-
-                    val smsInfo = SmsInfo(
-                        messageInfo.messageBody,
-                        messageInfo.time,
-                        messageInfo.sender,
-                        smsStatus,
-                        messageInfo.longitude,
-                        messageInfo.latitude)
-
-                    val bundle= bundleOf("SmsInfo" to smsInfo)
-                    navController.navigate(R.id.action_homeFragment_to_smsDetailsFragment,bundle)
-
-
-                }
-
-            }
-
-        }
-
-
-    }
-
-    //click Listener for pdf
-    override fun onPrintPdf(position: Int) {
-
-    }
+//    override fun onItemClick(position: Int) {
+//        val messageInfo: MpesaMessageInfo = messageList[position]
+//
+//        val date = messageInfo.dateTime
+//        var smsStatus: String
+//
+//        CoroutineScope(IO).launch {
+//            context?.let {
+//                val messagesList = MessagesDatabase(it).getIncomingMessageDao().getMessage(date)
+//
+//
+//
+//                CoroutineScope(Main).launch {
+//
+//                    smsStatus = if (!messagesList.isNullOrEmpty() && messagesList[0].status) {
+//                        if (messageInfo.status) {
+//                            "Uploaded"
+//                        } else {
+//                            "pending"
+//                        }
+//                    } else {
+//                        NOT_AVAILABLE
+//                    }
+//
+//
+//                    val smsInfo = SmsInfo(
+//                        messageInfo.messageBody,
+//                        messageInfo.time,
+//                        messageInfo.sender,
+//                        smsStatus,
+//                        messageInfo.longitude,
+//                        messageInfo.latitude)
+//
+//                    val bundle= bundleOf("SmsInfo" to smsInfo)
+//                    navController.navigate(R.id.action_homeFragment_to_smsDetailsFragment,bundle)
+//
+//
+//                }
+//
+//            }
+//
+//        }
+//
+//
+//    }
 
 
     private fun startServices(input: String) {
@@ -642,14 +562,14 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
     }
 
 
-    override fun onDestroy() {
-        super.onDestroy()
-        requireContext().unregisterReceiver(mConnectionReceiver)
-        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(mSmsReceiver)
-        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(callReceiver)
-        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(batteryReceiver)
-//        stopServices()
-    }
+//    override fun onDestroy() {
+//        super.onDestroy()
+//        context?.unregisterReceiver(mConnectionReceiver)
+//        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(mSmsReceiver)
+//        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(callReceiver)
+//        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(batteryReceiver)
+////        stopServices()
+//    }
 
     //used to check if the app has connected
     override fun isConnected(value: Boolean) {
@@ -882,7 +802,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
             var count = 0
             for (i in grantResults.indices) {
                 context?.toast("$count")
-                Log.d("Test", "$count   grANT ${grantResults[i]}")
+                Timber.i("$count   grANT ${grantResults[i]}")
                 context?.toast("${grantResults[i]}")
                 count++
                 if (i >= 0 && grantResults.isNotEmpty() && grantResults[i] == PackageManager.PERMISSION_DENIED) {
@@ -989,10 +909,7 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
 
             locationProviderClient?.lastLocation
                 ?.addOnFailureListener(OnFailureListener { e ->
-                    Log.i(
-                        TAG,
-                        "Exception while getting the location: " + e.message
-                    )
+                    Timber.i("Exception while getting the location: ${e.message}")
                 })
         } else {
             if (shouldShowRequestPermissionRationale(
@@ -1013,10 +930,8 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
     }
 
 
-
-
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.main,menu)
+        inflater.inflate(R.menu.main, menu)
         super.onCreateOptionsMenu(menu, inflater)
     }
 
@@ -1041,9 +956,11 @@ class HomeFragment : BaseFragment(), MessageAdapter.OnItemClickListener,
             }
 
         }
-        return NavigationUI.onNavDestinationSelected(item, navController) || super.onOptionsItemSelected(item)
+        return NavigationUI.onNavDestinationSelected(
+            item,
+            navController
+        ) || super.onOptionsItemSelected(item)
     }
-
 
 
 }
