@@ -23,7 +23,7 @@ class LocationGpsService : Service() {
     private var locationManager: LocationManager? = null
 
     override fun onBind(intent: Intent): IBinder? {
-      return null
+        return null
     }
 
 
@@ -31,11 +31,11 @@ class LocationGpsService : Service() {
         locationListener = object : LocationListener {
             override fun onLocationChanged(location: Location) {
                 val intent = Intent(LOCATION_UPDATE_INTENT)
-                intent.putExtra(LONGITUDE_EXTRA,location.longitude.toString())
-                intent.putExtra(LATITUDE_EXTRA,location.latitude.toString())
-                intent.putExtra(ALTITUDE_EXTRA,location.altitude.toString())
+                intent.putExtra(LONGITUDE_EXTRA, location.longitude.toString())
+                intent.putExtra(LATITUDE_EXTRA, location.latitude.toString())
+                intent.putExtra(ALTITUDE_EXTRA, location.altitude.toString())
 
-                Log.d("locaitiion","${location.longitude}  ${location.latitude}")
+                Log.d("locaitiion", "${location.longitude}  ${location.latitude}")
                 println("locaitiion ${location.longitude}  ${location.latitude}")
                 sendBroadcast(intent)
             }
@@ -70,6 +70,7 @@ class LocationGpsService : Service() {
             locationListener
         )
     }
+
     override fun onDestroy() {
         super.onDestroy()
         locationManager?.removeUpdates(locationListener)

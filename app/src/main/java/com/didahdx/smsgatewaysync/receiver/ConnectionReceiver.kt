@@ -15,13 +15,14 @@ import java.util.*
  * used to check the network connection
  * **/
 class ConnectionReceiver : BroadcastReceiver() {
-    private  val DEBUG_TAG = "NetworkStatusExample"
+    private val DEBUG_TAG = "NetworkStatusExample"
     val appLog = AppLog()
     override fun onReceive(context: Context, intent: Intent) {
-        if (ConnectivityManager.CONNECTIVITY_ACTION== intent.action){
+        if (ConnectivityManager.CONNECTIVITY_ACTION == intent.action) {
 
-            val connectionManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-            var isConnect:Boolean=false
+            val connectionManager =
+                context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            var isConnect: Boolean = false
             var isWifiConn: Boolean = false
             var isMobileConn: Boolean = false
             connectionManager.allNetworks.forEach { network ->
@@ -43,11 +44,11 @@ class ConnectionReceiver : BroadcastReceiver() {
                     }
 
                     val activeNetwork = connectionManager.activeNetworkInfo
-                   if(!(activeNetwork != null && activeNetwork.isConnectedOrConnecting)){
-                       context.toast("Connection lost")
-                       val time = Date()
-                       appLog.writeToLog(context, "\n $time \n Connection lost\n")
-                   }
+                    if (!(activeNetwork != null && activeNetwork.isConnectedOrConnecting)) {
+                        context.toast("Connection lost")
+                        val time = Date()
+                        appLog.writeToLog(context, "\n $time \n Connection lost\n")
+                    }
                 }
             }
             Log.d(DEBUG_TAG, "Wifi connected: $isWifiConn")

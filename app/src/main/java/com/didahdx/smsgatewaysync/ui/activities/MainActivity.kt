@@ -38,9 +38,10 @@ import com.microsoft.appcenter.analytics.Analytics
 import com.microsoft.appcenter.crashes.Crashes
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_layout.*
+import kotlinx.android.synthetic.main.navigation_header.view.*
 
 
-class MainActivity : AppCompatActivity(){
+class MainActivity : AppCompatActivity() {
 
     private var mFirebaseAnalytics: FirebaseAnalytics? = null
     var isReadyToPublish: Boolean = false
@@ -69,13 +70,14 @@ class MainActivity : AppCompatActivity(){
         registerReceiver(SmsReceiver(), IntentFilter(SMS_RECEIVED_INTENT))
 
         //registering broadcast receiver for battery
-    registerReceiver(BatteryReceiver(), IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-
+        registerReceiver(BatteryReceiver(), IntentFilter(Intent.ACTION_BATTERY_CHANGED))
 
 
         //registering broadcast receiver for connection
-       registerReceiver(ConnectionReceiver(),
-            IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
+        registerReceiver(
+            ConnectionReceiver(),
+            IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
+        )
 
         val callFilter = IntentFilter("android.intent.action.NEW_OUTGOING_CALL")
         callFilter.addAction("android.intent.action.PHONE_STATE")
@@ -90,7 +92,7 @@ class MainActivity : AppCompatActivity(){
         )
 
         val headView: View = navigation_view.getHeaderView(0)
-        val navUser: TextView = headView.findViewById<TextView>(R.id.text_view_user_loggedIn)
+        val navUser: TextView = headView.text_view_user_loggedIn
         val firebaseUser = FirebaseAuth.getInstance().currentUser
         if (firebaseUser != null) {
             navUser.text = firebaseUser.email
@@ -174,7 +176,7 @@ class MainActivity : AppCompatActivity(){
     override fun onDestroy() {
         super.onDestroy()
         val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
-        if(isServiceRunning){
+        if (isServiceRunning) {
             stopServices()
         }
 

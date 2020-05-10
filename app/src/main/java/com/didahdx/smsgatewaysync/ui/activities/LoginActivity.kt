@@ -13,14 +13,14 @@ import com.didahdx.smsgatewaysync.utilities.PERMISSION_READ_SMS_CODE
 import com.didahdx.smsgatewaysync.utilities.toast
 
 
-class LoginActivity : AppCompatActivity(){
+class LoginActivity : AppCompatActivity() {
     lateinit var navController: NavController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
-        navController = Navigation.findNavController(this,R.id.nav_host_fragment)
-        NavigationUI.setupActionBarWithNavController(this,navController)
+        navController = Navigation.findNavController(this, R.id.nav_host_fragment)
+        NavigationUI.setupActionBarWithNavController(this, navController)
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -44,7 +44,7 @@ class LoginActivity : AppCompatActivity(){
         when (requestCode) {
             PERMISSION_READ_SMS_CODE -> {
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                   toast("Permission granted to read sms")
+                    toast("Permission granted to read sms")
                 } else {
                     toast("Permission denied to read sms")
                 }

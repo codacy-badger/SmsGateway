@@ -14,7 +14,7 @@ import java.util.concurrent.TimeoutException
 
 
 class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val email: String) :
-    ConfirmListener{
+    ConfirmListener {
     private val connectionFactory = ConnectionFactory()
 
     private val queue = LinkedBlockingDeque<String>()
@@ -121,8 +121,8 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
                         message = baseJsonResponse.getString("message_body")
                         uiUpdater?.sendSms(phoneNumber, message)
                     }
-                    "notification_update"->{
-                      message=baseJsonResponse.getString("message_body")
+                    "notification_update" -> {
+                        message = baseJsonResponse.getString("message_body")
 //                        uiUpdater?.notificationMessage(message)
                         uiUpdater?.updateStatusViewWith(message, GREEN_COLOR)
                     }
@@ -203,7 +203,6 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
     override fun handleNack(deliveryTag: Long, multiple: Boolean) {
 //        uiUpdater?.toasterMessage("delivery Tag Failed Sender $deliveryTag")
     }
-
 
 
 }

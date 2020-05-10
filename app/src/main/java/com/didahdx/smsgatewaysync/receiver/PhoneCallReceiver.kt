@@ -10,7 +10,7 @@ import com.didahdx.smsgatewaysync.utilities.*
 import java.util.*
 
 
- class PhoneCallReceiver : BroadcastReceiver() {
+class PhoneCallReceiver : BroadcastReceiver() {
 //The receiver will be recreated whenever android feels like it.  We need a static variable to remember data between instantiations
 
     //The receiver will be recreated whenever android feels like it.  We need a static variable to remember data between instantiations
@@ -19,7 +19,7 @@ import java.util.*
     private var isIncoming = false
     private var savedNumber //because the passed incoming is only valid in ringing
             : String? = null
-     val newIntent = Intent(CALL_LOCAL_BROADCAST_RECEIVER)
+    val newIntent = Intent(CALL_LOCAL_BROADCAST_RECEIVER)
 
     override fun onReceive(context: Context, intent: Intent) {
 
@@ -42,8 +42,8 @@ import java.util.*
                 state = TelephonyManager.CALL_STATE_RINGING
             }
 
-                Log.d("cafrghjk","phone receiver called $number")
-                onCallStateChanged(context, state, number)
+            Log.d("cafrghjk", "phone receiver called $number")
+            onCallStateChanged(context, state, number)
 
         }
     }
@@ -60,7 +60,7 @@ import java.util.*
         number: String?
     ) {
 
-       Log.d("cafrghjk","caall called")
+        Log.d("cafrghjk", "caall called")
         if (lastState == state) {
             //No change, debounce extras
             return
@@ -71,9 +71,9 @@ import java.util.*
                 callStartTime = Date()
                 savedNumber = number
                 if (context != null) {
-                    newIntent.putExtra(CALL_TYPE_EXTRA,"incomingCallReceived")
-                    newIntent.putExtra(PHONE_NUMBER_EXTRA,number)
-                    newIntent.putExtra(START_TIME_EXTRA,Date().toString())
+                    newIntent.putExtra(CALL_TYPE_EXTRA, "incomingCallReceived")
+                    newIntent.putExtra(PHONE_NUMBER_EXTRA, number)
+                    newIntent.putExtra(START_TIME_EXTRA, Date().toString())
                     LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
                 }
             }
@@ -82,18 +82,18 @@ import java.util.*
                     isIncoming = false
                     callStartTime = Date()
                     if (context != null) {
-                        newIntent.putExtra(CALL_TYPE_EXTRA,"onOutgoingCallStarted")
-                        newIntent.putExtra(PHONE_NUMBER_EXTRA,savedNumber)
-                        newIntent.putExtra(START_TIME_EXTRA,Date().toString())
+                        newIntent.putExtra(CALL_TYPE_EXTRA, "onOutgoingCallStarted")
+                        newIntent.putExtra(PHONE_NUMBER_EXTRA, savedNumber)
+                        newIntent.putExtra(START_TIME_EXTRA, Date().toString())
                         LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
                     }
                 } else {
                     isIncoming = true
                     callStartTime = Date()
                     if (context != null) {
-                        newIntent.putExtra(CALL_TYPE_EXTRA,"onIncomingCallAnswered")
-                        newIntent.putExtra(PHONE_NUMBER_EXTRA,savedNumber)
-                        newIntent.putExtra(START_TIME_EXTRA,Date().toString())
+                        newIntent.putExtra(CALL_TYPE_EXTRA, "onIncomingCallAnswered")
+                        newIntent.putExtra(PHONE_NUMBER_EXTRA, savedNumber)
+                        newIntent.putExtra(START_TIME_EXTRA, Date().toString())
                         LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
                     }
                 }
@@ -101,25 +101,25 @@ import java.util.*
                 if (lastState == TelephonyManager.CALL_STATE_RINGING) {
                     //Ring but no pickup-  a miss
                     if (context != null) {
-                        newIntent.putExtra(CALL_TYPE_EXTRA,"onMissedCall")
-                        newIntent.putExtra(PHONE_NUMBER_EXTRA,savedNumber)
-                        newIntent.putExtra(START_TIME_EXTRA,callStartTime.toString())
+                        newIntent.putExtra(CALL_TYPE_EXTRA, "onMissedCall")
+                        newIntent.putExtra(PHONE_NUMBER_EXTRA, savedNumber)
+                        newIntent.putExtra(START_TIME_EXTRA, callStartTime.toString())
                         LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
                     }
                 } else if (isIncoming) {
                     if (context != null) {
-                        newIntent.putExtra(CALL_TYPE_EXTRA,"onIncomingCallEnded")
-                        newIntent.putExtra(PHONE_NUMBER_EXTRA,savedNumber)
-                        newIntent.putExtra(START_TIME_EXTRA,callStartTime.toString())
-                        newIntent.putExtra(END_TIME_EXTRA,Date().toString())
+                        newIntent.putExtra(CALL_TYPE_EXTRA, "onIncomingCallEnded")
+                        newIntent.putExtra(PHONE_NUMBER_EXTRA, savedNumber)
+                        newIntent.putExtra(START_TIME_EXTRA, callStartTime.toString())
+                        newIntent.putExtra(END_TIME_EXTRA, Date().toString())
                         LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
                     }
                 } else {
                     if (context != null) {
-                        newIntent.putExtra(CALL_TYPE_EXTRA,"onOutgoingCallEnded")
-                        newIntent.putExtra(PHONE_NUMBER_EXTRA,savedNumber)
-                        newIntent.putExtra(START_TIME_EXTRA,callStartTime.toString())
-                        newIntent.putExtra(END_TIME_EXTRA,Date().toString())
+                        newIntent.putExtra(CALL_TYPE_EXTRA, "onOutgoingCallEnded")
+                        newIntent.putExtra(PHONE_NUMBER_EXTRA, savedNumber)
+                        newIntent.putExtra(START_TIME_EXTRA, callStartTime.toString())
+                        newIntent.putExtra(END_TIME_EXTRA, Date().toString())
                         LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
                     }
                 }

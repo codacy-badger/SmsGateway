@@ -15,7 +15,7 @@ object RabbitmqConnector {
         connectionFactory.password = "test"
 //        connectionFactory.networkRecoveryInterval=10000
 //        connectionFactory.connectionTimeout=10000
-        connectionFactory.isAutomaticRecoveryEnabled=true
+        connectionFactory.isAutomaticRecoveryEnabled = true
 //        connectionFactory.isTopologyRecoveryEnabled = false
     }
 

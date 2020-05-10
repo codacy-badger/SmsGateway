@@ -7,11 +7,11 @@
 
         <variable
             name="messageText"
-            type="com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo" />
+            type="com.didahdx.smsgatewaysync.model.SmsInboxInfo" />
 
         <variable
             name="clickListener"
-            type="com.didahdx.smsgatewaysync.ui.adapters.MessageAdapterListener" />
+            type="com.didahdx.smsgatewaysync.ui.adapters.SmsInboxAdapterListener" />
     </data>
 
 
@@ -34,49 +34,49 @@
             android:layout_margin="4dp">
 
             <TextView
-                android:id="@+id/text_view_sender1"
+                android:id="@+id/text_view_sender3"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Sender :" />
+                android:text="@string/sender" />
 
             <TextView
-                android:id="@+id/text_view_sender"
+                android:id="@+id/text_view_sender2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentTop="true"
                 android:layout_marginStart="4dp"
                 android:layout_marginBottom="5dp"
-                android:layout_toEndOf="@id/text_view_sender1"
+                android:layout_toEndOf="@id/text_view_sender3"
                 android:textColor="@color/black"
                 android:textStyle="italic|bold"
-                app:Sender="@{messageText}"
+                app:sSender="@{messageText}"
                 tools:text="Mpesa" />
 
             <TextView
-                android:id="@+id/text_view_mpesaId"
+                android:id="@+id/text_view_mpesaId2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentBottom="true"
                 android:layout_marginStart="4dp"
-                app:MpesaId="@{messageText}"
+                app:sMpesaId="@{messageText}"
                 tools:text="mpesaId" />
 
 
             <TextView
-                android:id="@+id/text_view_name"
+                android:id="@+id/text_view_name2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/text_view_sender1"
+                android:layout_below="@id/text_view_sender3"
                 android:layout_marginStart="5dp"
                 android:layout_marginTop="7dp"
                 android:layout_marginBottom="7dp"
                 android:textStyle="bold"
-                app:Name="@{messageText}"
+                app:sName="@{messageText}"
                 tools:text="mpesa message body" />
 
 
             <TextView
-                android:id="@+id/text_view_time"
+                android:id="@+id/text_view_time2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentTop="true"
@@ -84,16 +84,16 @@
                 android:layout_marginBottom="5dp"
                 android:ellipsize="end"
                 android:textStyle="italic"
-                app:Time="@{messageText}"
+                app:sTime="@{messageText}"
                 tools:text="5:00pm" />
 
             <TextView
-                android:id="@+id/text_view_amount"
+                android:id="@+id/text_view_amount2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true"
                 android:layout_alignParentBottom="true"
-                app:Amount="@{messageText}"
+                app:sAmount="@{messageText}"
                 tools:text="2,000.00" />
 
 

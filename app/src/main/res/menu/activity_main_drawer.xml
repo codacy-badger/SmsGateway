@@ -20,10 +20,9 @@
             android:title="@string/menu_about" />
 
         <item
-            android:icon="@drawable/ic_phone_status"
             android:id="@+id/phoneStatusFragment"
-            android:title="@string/menu_phone_status"
-            />
+            android:icon="@drawable/ic_phone_status"
+            android:title="@string/menu_phone_status" />
 
         <item
             android:id="@+id/settingsFragment"

@@ -29,18 +29,18 @@ class AboutFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
-        val view:View= inflater.inflate(R.layout.fragment_about, container, false)
+        val view: View = inflater.inflate(R.layout.fragment_about, container, false)
 
-        view.text_about_phone.text="Battery"
-        view.text_network.text="Network"
-        return  view
+        view.text_about_phone.text = "Battery"
+        view.text_network.text = "Network"
+        return view
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-       val versionName = BuildConfig.VERSION_NAME
+        val versionName = BuildConfig.VERSION_NAME
 
-        text_network.text="\nApp name: $APP_NAME  \n\nVersion number: $versionName "
+        text_network.text = "\nApp name: $APP_NAME  \n\nVersion number: $versionName "
     }
 }

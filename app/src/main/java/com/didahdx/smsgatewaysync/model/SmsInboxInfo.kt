@@ -1,11 +1,7 @@
-package com.didahdx.smsgatewaysync.data.db.entities
+package com.didahdx.smsgatewaysync.model
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-import java.io.Serializable
-
-@Entity
-data class MpesaMessageInfo(
+data class SmsInboxInfo(
+    val id: Int,
     val messageBody: String,
     val time: String,
     val sender: String,
@@ -18,7 +14,4 @@ data class MpesaMessageInfo(
     val status: Boolean,
     val longitude: String,
     val latitude: String
-) : Serializable {
-    @PrimaryKey(autoGenerate = true)
-    var id: Int = 0
-}
+)

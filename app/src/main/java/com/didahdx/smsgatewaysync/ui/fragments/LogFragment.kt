@@ -25,19 +25,19 @@ import kotlinx.android.synthetic.main.fragment_log.view.*
  */
 class LogFragment : Fragment() {
 
-    val appLog=AppLog()
+    val appLog = AppLog()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
-        val view= inflater.inflate(R.layout.fragment_log, container, false)
+        val view = inflater.inflate(R.layout.fragment_log, container, false)
         return view;
     }
 
     override fun onStart() {
         super.onStart()
-        text_view_log.text=appLog.readLog(activity as Activity)
+        text_view_log.text = appLog.readLog(activity as Activity)
     }
 }

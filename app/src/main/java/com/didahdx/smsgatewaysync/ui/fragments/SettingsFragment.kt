@@ -64,9 +64,10 @@ class SettingsFragment : PreferenceFragmentCompat(),
                 simCard?.summary = preferenceScreen.sharedPreferences.getString(PREF_SIM_CARD, "")
             }
 
-            PREF_PRINT_TYPE->{
-                val printType:Preference?=findPreference<Preference>(key)
-                printType?.summary=preferenceScreen.sharedPreferences.getString(PREF_PRINT_TYPE,"")
+            PREF_PRINT_TYPE -> {
+                val printType: Preference? = findPreference<Preference>(key)
+                printType?.summary =
+                    preferenceScreen.sharedPreferences.getString(PREF_PRINT_TYPE, "")
             }
 
             PREF_CONNECT_PRINTER -> {
@@ -124,19 +125,23 @@ class SettingsFragment : PreferenceFragmentCompat(),
         hostUrl?.summary = preferenceScreen.sharedPreferences.getString(PREF_HOST_URL, "")
 
         val mpesaType = findPreference<Preference>(PREF_MPESA_TYPE)
-        mpesaType?.summary = preferenceScreen.sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
+        mpesaType?.summary =
+            preferenceScreen.sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
 
         val phoneNumber = findPreference<Preference>(PREF_PHONE_NUMBER)
         phoneNumber?.summary =
             preferenceScreen.sharedPreferences.getString(PREF_PHONE_NUMBER, "+2547xxxxxxxx")
 
-        val simCard=findPreference<Preference>(PREF_SIM_CARD)
-        simCard?.summary=preferenceScreen.sharedPreferences.getString(
-            PREF_SIM_CARD,"Choose your default sim card to use for the application")
+        val simCard = findPreference<Preference>(PREF_SIM_CARD)
+        simCard?.summary = preferenceScreen.sharedPreferences.getString(
+            PREF_SIM_CARD, "Choose your default sim card to use for the application"
+        )
 
-        val printTypes=findPreference<Preference>(PREF_PRINT_TYPE)
-        printTypes?.summary=preferenceScreen.sharedPreferences.getString(PREF_PRINT_TYPE,
-        "Types of mpesa transaction to be printed")
+        val printTypes = findPreference<Preference>(PREF_PRINT_TYPE)
+        printTypes?.summary = preferenceScreen.sharedPreferences.getString(
+            PREF_PRINT_TYPE,
+            "Types of mpesa transaction to be printed"
+        )
     }
 
     override fun onPause() {

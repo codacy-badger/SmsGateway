@@ -11,17 +11,19 @@ import com.didahdx.smsgatewaysync.utilities.CHANNEL_ID
 import com.didahdx.smsgatewaysync.utilities.INPUT_EXTRAS
 
 
-class AppServices :Service(){
+class AppServices : Service() {
 
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val input=intent?.getStringExtra(INPUT_EXTRAS)
+        val input = intent?.getStringExtra(INPUT_EXTRAS)
 
-        val notificationIntent=Intent(this, MainActivity::class.java)
-        val pendingIntent=PendingIntent.getActivity(this,
-            0,notificationIntent,0)
+        val notificationIntent = Intent(this, MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0, notificationIntent, 0
+        )
 
-        val notification=NotificationCompat.Builder(this,CHANNEL_ID)
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.app_name))
             .setContentText(input)
             .setSmallIcon(R.drawable.ic_home)
@@ -31,7 +33,7 @@ class AppServices :Service(){
 
 
 
-            startForeground(1,notification)
+        startForeground(1, notification)
 
         return START_NOT_STICKY
     }
@@ -47,6 +49,7 @@ class AppServices :Service(){
         startService(restartServiceIntent)
         super.onTaskRemoved(rootIntent)
     }
+
     override fun onLowMemory() { //Send broadcast to the Activity to kill this service and restart it.
         super.onLowMemory()
     }

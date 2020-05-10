@@ -11,9 +11,9 @@ data class IncomingMessages(
     val date: Long,
     val sender: String,
     val status: Boolean,
-    val longitude:String,
-    val latitude:String
-):Serializable {
+    val longitude: String,
+    val latitude: String
+) : Serializable {
     @PrimaryKey(autoGenerate = true)
     var id: Int = 0
 }

@@ -16,18 +16,6 @@
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right" />
-        <action
-            android:id="@+id/action_homeFragment_to_aboutFragment"
-            app:destination="@id/aboutFragment" />
-        <action
-            android:id="@+id/action_homeFragment_to_phoneStatusFragment"
-            app:destination="@id/phoneStatusFragment" />
-        <action
-            android:id="@+id/action_homeFragment_to_logFragment"
-            app:destination="@id/logFragment" />
-        <action
-            android:id="@+id/action_homeFragment_to_settingsFragment"
-            app:destination="@id/settingsFragment" />
     </fragment>
     <fragment
         android:id="@+id/aboutFragment"
@@ -54,14 +42,14 @@
         android:id="@+id/smsInboxFragment"
         android:name="com.didahdx.smsgatewaysync.ui.fragments.SmsInboxFragment"
         android:label="Sms Inbox"
-        tools:layout="@layout/fragment_sms_inbox" >
+        tools:layout="@layout/fragment_sms_inbox">
         <action
             android:id="@+id/action_smsInboxFragment_to_smsDetailsFragment"
             app:destination="@id/smsDetailsFragment"
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
     <fragment
         android:id="@+id/smsDetailsFragment"

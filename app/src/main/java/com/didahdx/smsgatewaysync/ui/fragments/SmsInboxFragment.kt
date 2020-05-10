@@ -1,39 +1,121 @@
 package com.didahdx.smsgatewaysync.ui.fragments
 
 import android.Manifest
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Bundle
-import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
+import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
-import androidx.navigation.NavController
-import androidx.navigation.Navigation
-import androidx.preference.PreferenceManager
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.GridLayoutManager
 import com.didahdx.smsgatewaysync.R
-import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
-import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
-import com.didahdx.smsgatewaysync.model.SmsInfo
-import com.didahdx.smsgatewaysync.ui.adapters.MessageAdapter
-import com.didahdx.smsgatewaysync.utilities.*
-import kotlinx.android.synthetic.main.fragment_sms_inbox.*
+import com.didahdx.smsgatewaysync.databinding.FragmentSmsInboxBinding
+import com.didahdx.smsgatewaysync.model.SmsInboxInfo
+import com.didahdx.smsgatewaysync.ui.adapters.SmsInboxAdapter
+import com.didahdx.smsgatewaysync.ui.adapters.SmsInboxAdapterListener
+import com.didahdx.smsgatewaysync.ui.viewmodels.SmsInboxViewModel
+import com.didahdx.smsgatewaysync.ui.viewmodels.SmsInboxViewModelFactory
+import com.didahdx.smsgatewaysync.utilities.hide
+import com.didahdx.smsgatewaysync.utilities.toast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.text.SimpleDateFormat
-import java.util.*
-import kotlin.collections.ArrayList
 
 /**
  * A simple [Fragment] subclass.
  */
-class SmsInboxFragment : Fragment(R.layout.fragment_sms_inbox){}
+class SmsInboxFragment : Fragment() {
+
+    private lateinit var smsInboxViewModel:SmsInboxViewModel
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        val binding: FragmentSmsInboxBinding = DataBindingUtil.inflate(
+            inflater, R.layout.fragment_sms_inbox, container, false)
+
+        val application = requireNotNull(this.activity).application
+        val factory= SmsInboxViewModelFactory(application)
+        smsInboxViewModel= ViewModelProvider(this,factory).get(SmsInboxViewModel::class.java)
+
+        binding.smsInboxViewModel=smsInboxViewModel
+        val adapter = SmsInboxAdapter(SmsInboxAdapterListener {
+            smsInboxViewModel.onMessageDetailClicked(it)
+        })
+
+        val manager = GridLayoutManager(activity, 1, GridLayoutManager.VERTICAL, false)
+        binding.recyclerViewMessageList2.layoutManager = manager
+        binding.recyclerViewMessageList2.adapter = adapter
+        binding.lifecycleOwner=this
+
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_SMS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            activity?.onBackPressed()
+        }
+
+        //navigating to sms detail screen
+        smsInboxViewModel.eventMessageClicked.observe(viewLifecycleOwner, Observer {
+            it?.let {
+                val bundle = bundleOf("SmsInfo" to smsInboxViewModel.setUpSmsInfo(it))
+                this.findNavController()
+                    .navigate(R.id.action_smsInboxFragment_to_smsDetailsFragment, bundle)
+                smsInboxViewModel.onMessageDetailNavigated()
+            }
+        })
+
+        smsInboxViewModel.messageArrayList.observe(viewLifecycleOwner, Observer {
+            it?.let {
+                binding.progressBar2.hide()
+                binding.textLoading2.hide()
+                adapter.submitList(it)
+//                used to
+//                (binding.recyclerViewMessageList.layoutManager as GridLayoutManager).scrollToPositionWithOffset(0, 0)
+            }
+        })
+
+
+
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        CoroutineScope(IO).launch {
+          smsInboxViewModel.getDbSmsMessages()
+        }
+
+
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+    }
+
+
+    override fun onPause() {
+        super.onPause()
+        CoroutineScope(IO).cancel()
+    }
+
+}
+
+
+
+
 //    , MessageAdapter.OnItemClickListener {
 //
 //    private lateinit var sharedPreferences: SharedPreferences
@@ -85,133 +167,7 @@ class SmsInboxFragment : Fragment(R.layout.fragment_sms_inbox){}
 //    }
 //
 //
-//    private suspend fun getDbSmsMessages() {
 //
-//        val messageArrayList = ArrayList<MpesaMessageInfo>()
-//
-//        val cursor = activity?.contentResolver?.query(
-//            Uri.parse("content://sms/inbox"),
-//            null,
-//            null,
-//            null,
-//            null
-//        )
-//
-//        var messageCount = 0
-//
-//        if (cursor != null && cursor.moveToNext()) {
-//            val nameId = cursor.getColumnIndex("address")
-//            val messageId = cursor.getColumnIndex("body")
-//            val dateId = cursor.getColumnIndex("date")
-//            val mpesaType = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
-//
-//
-//            Log.d("TAG", "mpesa sms $mpesaType ")
-//
-//            do {
-//                val dateString = cursor.getString(dateId)
-//
-////                if (cursor.getString(nameId) == "MPESA") {
-//
-//                var mpesaId: String =
-//                    cursor.getString(messageId).split("\\s".toRegex()).first().trim()
-//                if (!MPESA_ID_PATTERN.toRegex().matches(mpesaId)) {
-//                    mpesaId = NOT_AVAILABLE
-//                }
-//
-//                var smsFilter = SmsFilter(cursor.getString(messageId))
-//
-//
-//                when (mpesaType) {
-//                    PAY_BILL -> {
-//                        if (smsFilter.mpesaType == PAY_BILL) {
-//                            messageArrayList.add(
-//                                MpesaMessageInfo(
-//
-//                                    cursor.getString(messageId),
-//                                    sdf.format(Date(dateString.toLong())).toString(),
-//                                    cursor.getString(nameId),
-//                                    mpesaId,
-//                                    "",
-//                                    smsFilter.amount,
-//                                    "",
-//                                    smsFilter.name,
-//                                    dateString.toLong(), true, "", ""
-//                                )
-//                            )
-//                            updateCounter(messageCount)
-//                            messageCount++
-//                        }
-//                    }
-//                    DIRECT_MPESA -> {
-//                        if (smsFilter.mpesaType == DIRECT_MPESA) {
-//                            messageArrayList.add(
-//                                MpesaMessageInfo(
-//                                    messageId,
-//                                    cursor.getString(messageId),
-//                                    sdf.format(Date(dateString.toLong())).toString(),
-//                                    cursor.getString(nameId),
-//                                    mpesaId,
-//                                    "",
-//                                    smsFilter.amount,
-//                                    "",
-//                                    smsFilter.name,
-//                                    dateString.toLong(), true, "", ""
-//                                )
-//                            )
-//                            updateCounter(messageCount)
-//                            messageCount++
-//                        }
-//                    }
-//
-//                    BUY_GOODS_AND_SERVICES -> {
-//                        if (smsFilter.mpesaType == BUY_GOODS_AND_SERVICES) {
-//                            messageArrayList.add(
-//                                MpesaMessageInfo(
-//                                    messageId,
-//                                    cursor.getString(messageId),
-//                                    sdf.format(Date(dateString.toLong())).toString(),
-//                                    cursor.getString(nameId),
-//                                    mpesaId,
-//                                    "",
-//                                    smsFilter.amount,
-//                                    "",
-//                                    smsFilter.name,
-//                                    dateString.toLong(), true, "", ""
-//                                )
-//                            )
-//                            updateCounter(messageCount)
-//                            messageCount++
-//                        }
-//                    }
-//
-//                    else -> {
-//                        messageArrayList.add(
-//                            MpesaMessageInfo(
-//                                messageId,
-//                                cursor.getString(messageId),
-//                                sdf.format(Date(dateString.toLong())).toString(),
-//                                cursor.getString(nameId),
-//                                mpesaId,
-//                                "",
-//                                smsFilter.amount,
-//                                "",
-//                                smsFilter.name,
-//                                dateString.toLong(), true, "", ""
-//                            )
-//                        )
-//                        updateCounter(messageCount)
-//                        messageCount++
-//                    }
-//                }
-////                }
-//            } while (cursor.moveToNext())
-//
-//            cursor.close()
-//        }
-//
-//        passMessagesToMain(messageArrayList)
-//    }
 //
 //    //updates the counter on the screen
 //    private suspend fun updateCounter(messageCount: Int) {
@@ -265,17 +221,9 @@ class SmsInboxFragment : Fragment(R.layout.fragment_sms_inbox){}
 //                    val bundle= bundleOf("SmsInfo" to smsInfo)
 //                    navController.navigate(R.id.action_smsInboxFragment_to_smsDetailsFragment,bundle)
 //
-//
 //                }
-//
 //            }
-//
 //        }
-//
-//
 //    }
 //
-//    override fun onPrintPdf(position: Int) {
-//
-//    }
 //}

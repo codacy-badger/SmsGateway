@@ -16,7 +16,7 @@ import timber.log.Timber
 class App : MultiDexApplication() {
 
 
-     override fun attachBaseContext(context: Context) {
+    override fun attachBaseContext(context: Context) {
         super.attachBaseContext(context)
         MultiDex.install(this)
     }
@@ -24,7 +24,7 @@ class App : MultiDexApplication() {
 
     override fun onCreate() {
         super.onCreate()
-        instance=this
+        instance = this
         createNotificationChannel()
         Printooth.init(this)
         Timber.plant(Timber.DebugTree())
@@ -32,24 +32,27 @@ class App : MultiDexApplication() {
 
     }
 
-    companion object{
+    companion object {
         @get:Synchronized
-        lateinit var instance:App
+        lateinit var instance: App
     }
 
 
     private fun createNotificationChannel() {
-        if(Build.VERSION.SDK_INT>Build.VERSION_CODES.O){
-            val notificationChannel=NotificationChannel(CHANNEL_ID,
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.O) {
+            val notificationChannel = NotificationChannel(
+                CHANNEL_ID,
                 CHANNEL_SMS_SERVICE_NAME,
-                NotificationManager.IMPORTANCE_LOW)
+                NotificationManager.IMPORTANCE_LOW
+            )
 
-            val updateNotificationChannel=NotificationChannel(
+            val updateNotificationChannel = NotificationChannel(
                 CHANNEL_ID_2,
                 CHANNEL_CLIENT_NOTIFICATION_NAME,
-                NotificationManager.IMPORTANCE_LOW)
+                NotificationManager.IMPORTANCE_LOW
+            )
 
-            val manager : NotificationManager?= getSystemService(NotificationManager::class.java)
+            val manager: NotificationManager? = getSystemService(NotificationManager::class.java)
             manager?.createNotificationChannel(notificationChannel)
             manager?.createNotificationChannel(updateNotificationChannel)
         }

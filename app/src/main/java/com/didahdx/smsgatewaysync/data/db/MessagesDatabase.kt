@@ -9,28 +9,29 @@ import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
 import com.didahdx.smsgatewaysync.utilities.MESSAGE_DATABASE
 
 @Database(
-    entities = [MpesaMessageInfo::class],exportSchema = false,
+    entities = [MpesaMessageInfo::class], exportSchema = false,
     version = 1
 )
-abstract class MessagesDatabase:RoomDatabase() {
+abstract class MessagesDatabase : RoomDatabase() {
 
     abstract fun getIncomingMessageDao(): IncomingMessagesDao
 
-    companion object{
-        @Volatile private var instance: MessagesDatabase?=null
-        private val LOCK=Any()
+    companion object {
+        @Volatile
+        private var instance: MessagesDatabase? = null
+        private val LOCK = Any()
 
-        operator fun invoke(context: Context)= instance
-            ?: synchronized(LOCK){
-            instance
-                ?: buildDatabase(
-                    context
-                ).also {
-                instance =it
+        operator fun invoke(context: Context) = instance
+            ?: synchronized(LOCK) {
+                instance
+                    ?: buildDatabase(
+                        context
+                    ).also {
+                        instance = it
+                    }
             }
-        }
 
-        private fun buildDatabase(context: Context)= Room.databaseBuilder(
+        private fun buildDatabase(context: Context) = Room.databaseBuilder(
             context.applicationContext,
             MessagesDatabase::class.java, MESSAGE_DATABASE
         ).build()

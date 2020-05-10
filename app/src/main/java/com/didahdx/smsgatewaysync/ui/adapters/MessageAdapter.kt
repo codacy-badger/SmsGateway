@@ -16,7 +16,7 @@ class MessageAdapter(val clickListener: MessageAdapterListener) :
     class MessageViewHolder private constructor(val binding: MessageContainerBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(item: MpesaMessageInfo,clickListener: MessageAdapterListener) {
+        fun bind(item: MpesaMessageInfo, clickListener: MessageAdapterListener) {
             binding.messageText = item
             binding.clickListener = clickListener
             binding.executePendingBindings()
@@ -40,7 +40,7 @@ class MessageAdapter(val clickListener: MessageAdapterListener) :
 
     override fun onBindViewHolder(holder: MessageViewHolder, position: Int) {
         val item = getItem(position)
-        holder.bind(item,clickListener)
+        holder.bind(item, clickListener)
     }
 
 }
@@ -63,5 +63,4 @@ class MessageAdapterDiffCallback : DiffUtil.ItemCallback<MpesaMessageInfo>() {
     ): Boolean {
         return oldItem == newItem
     }
-
 }

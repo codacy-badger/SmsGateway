@@ -12,12 +12,12 @@ import com.mazenrashed.printooth.utilities.Printing
 import com.mazenrashed.printooth.utilities.PrintingCallback
 
 class BluetoothPrinter : PrintingCallback {
-    var context:Context?=null
+    var context: Context? = null
     var printing: Printing? = null
 
 
-    fun printText(message: String,context : Context, appName:String) {
-        this.context=context
+    fun printText(message: String, context: Context, appName: String) {
+        this.context = context
         initPrinter()
         val printables = ArrayList<Printable>()
         printables.add(RawPrintable.Builder(byteArrayOf(27, 100, 4)).build())
@@ -52,20 +52,16 @@ class BluetoothPrinter : PrintingCallback {
             printing?.printingCallback = this
         }
 
-        if (Printooth.hasPairedPrinter()){
-            printing= Printooth.printer()
-        }else{
-            Toast.makeText(context,"Connect to printer",Toast.LENGTH_LONG).show()
+        if (Printooth.hasPairedPrinter()) {
+            printing = Printooth.printer()
+        } else {
+            Toast.makeText(context, "Connect to printer", Toast.LENGTH_LONG).show()
         }
 
-        if (printing!=null){
-            printing?.printingCallback=this
+        if (printing != null) {
+            printing?.printingCallback = this
         }
     }
-
-
-
-
 
 
     /*********************************************************************************************************
@@ -73,23 +69,23 @@ class BluetoothPrinter : PrintingCallback {
      **********************************************************************************************************/
 
     override fun connectingWithPrinter() {
-        Toast.makeText(context,"Connecting to printer", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "Connecting to printer", Toast.LENGTH_SHORT).show()
     }
 
     override fun connectionFailed(error: String) {
-        Toast.makeText(context,"Connecting to printer failed $error", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "Connecting to printer failed $error", Toast.LENGTH_SHORT).show()
     }
 
     override fun onError(error: String) {
-        Toast.makeText(context,"Error $error", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "Error $error", Toast.LENGTH_SHORT).show()
     }
 
     override fun onMessage(message: String) {
-        Toast.makeText(context,"Message $message", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "Message $message", Toast.LENGTH_SHORT).show()
     }
 
     override fun printingOrderSentSuccessfully() {
-        Toast.makeText(context,"Order sent to printer", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "Order sent to printer", Toast.LENGTH_SHORT).show()
     }
 
     /***************************************************************************************************************************/

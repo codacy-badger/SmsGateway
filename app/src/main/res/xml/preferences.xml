@@ -8,11 +8,11 @@
         android:title="Services"
         app:iconSpaceReserved="false">
         <SwitchPreferenceCompat
-            app:iconSpaceReserved="false"
             android:key="services_key"
             android:summary="Used to enable or disable the running services of the application"
             android:title="Enable or Disable services"
-            app:defaultValue="true" />
+            app:defaultValue="true"
+            app:iconSpaceReserved="false" />
 
     </PreferenceCategory>
 
@@ -78,8 +78,7 @@
             android:key="sim_card"
             android:summary="Choose your default sim card to use for the application"
             android:title="Sending Out Sms Sim"
-            app:iconSpaceReserved="false"
-            />
+            app:iconSpaceReserved="false" />
 
 
     </PreferenceCategory>

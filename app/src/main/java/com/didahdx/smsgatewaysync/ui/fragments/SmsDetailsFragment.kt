@@ -348,7 +348,7 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details), PrintingCall
         }
     }
 
-    private fun shareMessage(){
+    private fun shareMessage() {
         val shareIntent = Intent()
         shareIntent.action = Intent.ACTION_SEND
         shareIntent.putExtra(Intent.EXTRA_TEXT, smsBody)

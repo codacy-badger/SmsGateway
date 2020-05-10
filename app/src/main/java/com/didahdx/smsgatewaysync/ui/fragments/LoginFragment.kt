@@ -53,7 +53,6 @@ class LoginFragment : Fragment(R.layout.fragment_login), View.OnClickListener {
     }
 
 
-
     private fun validatePassword(): Boolean {
         val email: String =
             edit_text_sign_up_password.editText?.text.toString().trim()
@@ -99,17 +98,19 @@ class LoginFragment : Fragment(R.layout.fragment_login), View.OnClickListener {
     private fun loginUser() {
         val email: String = edit_text_sign_up_email.editText?.text.toString().trim()
         val password: String = edit_text_sign_up_password.editText?.text.toString().trim()
-        auth.signInWithEmailAndPassword(email, password).addOnCompleteListener(activity as Activity
-        ) { task ->  if (task.isSuccessful) { // Sign in success, update UI with the signed-in user's information
-            requireContext().toast("signInWithEmail:success")
-            val user: FirebaseUser? = auth.currentUser
-            if (user != null) {
-                navController?.navigate(R.id.action_loginFragment_to_mainActivity)
-                requireActivity().onBackPressed()
+        auth.signInWithEmailAndPassword(email, password).addOnCompleteListener(
+            activity as Activity
+        ) { task ->
+            if (task.isSuccessful) { // Sign in success, update UI with the signed-in user's information
+                requireContext().toast("signInWithEmail:success")
+                val user: FirebaseUser? = auth.currentUser
+                if (user != null) {
+                    navController?.navigate(R.id.action_loginFragment_to_mainActivity)
+                    requireActivity().onBackPressed()
+                }
+            } else { // If sign in fails, display a message to the user.
+                requireContext().toast("Authentication failed. ${task.exception}")
             }
-        } else { // If sign in fails, display a message to the user.
-            requireContext().toast("Authentication failed. ${task.exception}")
-        }
 
         }
 

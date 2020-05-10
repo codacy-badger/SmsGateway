@@ -14,16 +14,16 @@ import kotlinx.android.synthetic.main.fragment_forgot_password.*
  * A simple [Fragment] subclass.
  */
 class ForgotPasswordFragment : Fragment(R.layout.fragment_forgot_password), View.OnClickListener {
-    val validation= Validation()
+    val validation = Validation()
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         btn_reset_password.setOnClickListener(this)
     }
 
     override fun onClick(v: View?) {
-        if(v==btn_reset_password){
+        if (v == btn_reset_password) {
 
-            if (validateEmail()){
+            if (validateEmail()) {
                 sendResetPassowrdEmail()
             }
         }

@@ -61,7 +61,6 @@ import java.util.*
 import kotlin.collections.ArrayList
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
-import com.didahdx.smsgatewaysync.model.SmsInfo
 
 /**
  * A simple [Fragment] subclass.
@@ -69,16 +68,11 @@ import com.didahdx.smsgatewaysync.model.SmsInfo
 class HomeFragment : Fragment(),
     UiUpdaterInterface {
 
-    private var messageList: ArrayList<MpesaMessageInfo> = ArrayList<MpesaMessageInfo>()
-
     @Volatile
     var isConnected = false
     val appLog = AppLog()
     lateinit var mHomeViewModel: HomeViewModel
-    var mMessageAdapter: MessageAdapter? = null
-    var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT)
     private lateinit var sharedPreferences: SharedPreferences
-    val TAG = HomeFragment::class.java.simpleName
 
 
     private val appPermissions = arrayOf(
@@ -180,8 +174,7 @@ class HomeFragment : Fragment(),
     ): View? {
 
         val binding: FragmentHomeBinding = DataBindingUtil.inflate(
-            inflater, R.layout.fragment_home, container, false
-        )
+            inflater, R.layout.fragment_home, container, false)
         val application = requireNotNull(this.activity).application
         val database = MessagesDatabase(application).getIncomingMessageDao()
         val factory = HomeViewModelFactory(database, application)
@@ -203,25 +196,17 @@ class HomeFragment : Fragment(),
                 binding.progressBar.hide()
                 binding.textLoading.hide()
                 adapter.submitList(it)
+//                used to
+//                (binding.recyclerViewMessageList.layoutManager as GridLayoutManager).scrollToPositionWithOffset(0, 0)
             }
         })
-
 
         //navigating to sms detail screen
         mHomeViewModel.eventMessageClicked.observe(viewLifecycleOwner, Observer {
             it?.let {
-
-                val smsStatus = if (it.status) {
-                    "Uploaded"
-                } else {
-                    "pending"
-                }
-
-                val smsInfo = SmsInfo(it.messageBody, it.time, it.sender, smsStatus, it.longitude,
-                    it.latitude)
-
-                val bundle = bundleOf("SmsInfo" to smsInfo)
-               this.findNavController().navigate(R.id.action_homeFragment_to_smsDetailsFragment, bundle)
+                val bundle = bundleOf("SmsInfo" to mHomeViewModel.setUpSmsInfo(it))
+                this.findNavController()
+                    .navigate(R.id.action_homeFragment_to_smsDetailsFragment, bundle)
                 mHomeViewModel.onMessageDetailNavigated()
             }
         })
@@ -445,47 +430,6 @@ class HomeFragment : Fragment(),
 //    }
 
 
-//    override fun onDestroyView() {
-//        super.onDestroyView()
-//        if (locationBroadcastReceiver != null) {
-//
-//        }
-//    }
-
-//    private fun setUpAdapter() {
-//        progress_bar?.hide()
-//        text_loading?.hide()
-//        recycler_view_message_list?.layoutManager = LinearLayoutManager(activity)
-//        mMessageAdapter = MessageAdapter()
-//        recycler_view_message_list?.adapter = mMessageAdapter
-//        refresh_layout_home?.isRefreshing = false
-//
-//        if (messageList.size <= 0) {
-//            text_loading?.show()
-//            text_loading?.text = "No messages available at the moment"
-//        }
-//    }
-
-    //used to get sms from the phone
-//    private fun backgroundCoroutineCall() {
-//        if (checkSelfPermission(requireContext(), Manifest.permission.READ_SMS)
-//            == PackageManager.PERMISSION_GRANTED
-//        ) {
-//            refresh_layout_home?.isRefreshing = true
-//           text_loading?.text = getString(R.string.loading_messages, 0)
-//            //coroutine background job
-//            CoroutineScope(IO).launch {
-//                getDatabaseMessages()
-//            }
-//        } else {
-//           progress_bar?.hide()
-//            text_loading?.hide()
-//            setUpAdapter()
-//        }
-//
-//    }
-
-
     //updates the counter on the screen
     private suspend fun updateCounter(messageCount: Int) {
         withContext(Main) {
@@ -498,53 +442,6 @@ class HomeFragment : Fragment(),
         super.onPause()
         CoroutineScope(IO).cancel()
     }
-
-
-//    override fun onItemClick(position: Int) {
-//        val messageInfo: MpesaMessageInfo = messageList[position]
-//
-//        val date = messageInfo.dateTime
-//        var smsStatus: String
-//
-//        CoroutineScope(IO).launch {
-//            context?.let {
-//                val messagesList = MessagesDatabase(it).getIncomingMessageDao().getMessage(date)
-//
-//
-//
-//                CoroutineScope(Main).launch {
-//
-//                    smsStatus = if (!messagesList.isNullOrEmpty() && messagesList[0].status) {
-//                        if (messageInfo.status) {
-//                            "Uploaded"
-//                        } else {
-//                            "pending"
-//                        }
-//                    } else {
-//                        NOT_AVAILABLE
-//                    }
-//
-//
-//                    val smsInfo = SmsInfo(
-//                        messageInfo.messageBody,
-//                        messageInfo.time,
-//                        messageInfo.sender,
-//                        smsStatus,
-//                        messageInfo.longitude,
-//                        messageInfo.latitude)
-//
-//                    val bundle= bundleOf("SmsInfo" to smsInfo)
-//                    navController.navigate(R.id.action_homeFragment_to_smsDetailsFragment,bundle)
-//
-//
-//                }
-//
-//            }
-//
-//        }
-//
-//
-//    }
 
 
     private fun startServices(input: String) {
@@ -595,11 +492,11 @@ class HomeFragment : Fragment(),
 
     //used to show toast messages
     override fun toasterMessage(message: String) {
-        Log.d("Rabbit", "called $message")
-        Log.d("Rabbit", "thread name ${Thread.currentThread().name}")
+        Timber.d("called $message")
+        Timber.d("thread name ${Thread.currentThread().name}")
         CoroutineScope(Main).launch {
             context?.toast(message)
-            Log.d("Rabbit", "thread name ${Thread.currentThread().name}")
+            Timber.d("thread name ${Thread.currentThread().name}")
         }
     }
 
@@ -904,6 +801,7 @@ class HomeFragment : Fragment(),
                     userLatitude = currentLocation?.latitude?.toString()
 
 //                    context?.toast(" long $userLongitude  lati $userLatitude")
+                    Timber.i(" long $userLongitude  lati $userLatitude")
 
                 })
 
