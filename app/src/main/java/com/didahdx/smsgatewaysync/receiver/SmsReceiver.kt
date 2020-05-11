@@ -60,31 +60,31 @@ class SmsReceiver : BroadcastReceiver() {
                 newIntent.putExtra("messageText", messageText)
                 newIntent.putExtra("date", time)
                 var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT)
-                CoroutineScope(IO).launch {
-                    val message2: MpesaMessageInfo?
-
-                    if (messageText != null && time != null && phoneNumber != null) {
-                        val smsFilter = SmsFilter(messageText!!)
-                        message2 = MpesaMessageInfo(
-                            messageText!!.trim(),
-                            sdf.format(Date(time!!)).toString(),
-                            phoneNumber!!,
-                            smsFilter.mpesaId,
-                            smsFilter.phoneNumber,
-                            smsFilter.amount,
-                            smsFilter.accountNumber,
-                            smsFilter.name,
-                            time!!,
-                            true, "", ""
-                        )
-
-                        context.let { tex ->
-                            MessagesDatabase(tex).getIncomingMessageDao()
-                                .addMessage(message2)
-                        }
-
-                    }
-                }
+//                CoroutineScope(IO).launch {
+//                    val message2: MpesaMessageInfo?
+//
+//                    if (messageText != null && time != null && phoneNumber != null) {
+//                        val smsFilter = SmsFilter(messageText!!)
+//                        message2 = MpesaMessageInfo(
+//                            messageText!!.trim(),
+//                            sdf.format(Date(time!!)).toString(),
+//                            phoneNumber!!,
+//                            smsFilter.mpesaId,
+//                            smsFilter.phoneNumber,
+//                            smsFilter.amount,
+//                            smsFilter.accountNumber,
+//                            smsFilter.name,
+//                            time!!,
+//                            true, "", ""
+//                        )
+//
+//                        context.let { tex ->
+//                            MessagesDatabase(tex).getIncomingMessageDao()
+//                                .addMessage(message2)
+//                        }
+//
+//                    }
+//                }
 
                 LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
                 if ("MPESA" == phoneNumber) {

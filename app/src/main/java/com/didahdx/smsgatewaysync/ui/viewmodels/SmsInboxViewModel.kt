@@ -26,6 +26,8 @@ class SmsInboxViewModel(application: Application) : ViewModel() {
 
     var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT)
 
+
+
     val app = application
     private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(application)
 
@@ -33,6 +35,16 @@ class SmsInboxViewModel(application: Application) : ViewModel() {
     private val _eventMessageClicked = MutableLiveData<SmsInboxInfo>()
     val eventMessageClicked: LiveData<SmsInboxInfo>
         get() = _eventMessageClicked
+
+
+    //data to be passed to next screen
+    private val _messageCount = MutableLiveData<Int>()
+    val messageCount: LiveData<Int>
+        get() = _messageCount
+
+    init {
+        _messageCount.value=0
+    }
 
     fun onMessageDetailClicked(id: SmsInboxInfo) {
         _eventMessageClicked.value = id
@@ -70,7 +82,7 @@ class SmsInboxViewModel(application: Application) : ViewModel() {
             val dateId = cursor.getColumnIndex("date")
             val mpesaType = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
 
-
+            var count=0
             Timber.i("mpesa sms $mpesaType ")
 
             do {
@@ -103,7 +115,7 @@ class SmsInboxViewModel(application: Application) : ViewModel() {
                                     dateString.toLong(), true, "", ""
                                 )
                             )
-
+                            count++
                         }
                     }
                     DIRECT_MPESA -> {
@@ -122,6 +134,7 @@ class SmsInboxViewModel(application: Application) : ViewModel() {
                                     dateString.toLong(), true, "", ""
                                 )
                             )
+                            count++
                         }
                     }
 
@@ -141,6 +154,7 @@ class SmsInboxViewModel(application: Application) : ViewModel() {
                                     dateString.toLong(), true, "", ""
                                 )
                             )
+                            count++
                         }
                     }
 
@@ -156,14 +170,24 @@ class SmsInboxViewModel(application: Application) : ViewModel() {
                                 true, "", ""
                             )
                         )
+                        count++
                     }
                 }
+
+                setCount(count)
+
 //                }
             } while (cursor.moveToNext())
             cursor.close()
         }
 
         setInputMessage(messageList)
+    }
+
+    private suspend fun setCount(count: Int) {
+        withContext(Main){
+            _messageCount.value=count
+        }
     }
 
     fun setUpSmsInfo(it: SmsInboxInfo): SmsInfo {
