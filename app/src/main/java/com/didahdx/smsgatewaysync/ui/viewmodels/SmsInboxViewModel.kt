@@ -96,7 +96,8 @@ class SmsInboxViewModel(application: Application) : ViewModel() {
                     mpesaId = NOT_AVAILABLE
                 }
 
-                val smsFilter = SmsFilter(cursor.getString(messageId))
+                val maskedPhoneNumber=sharedPreferences.getBoolean(PREF_MASKED_NUMBER,false)
+                val smsFilter = SmsFilter(cursor.getString(messageId),maskedPhoneNumber)
 
                 when (mpesaType) {
                     PAY_BILL -> {

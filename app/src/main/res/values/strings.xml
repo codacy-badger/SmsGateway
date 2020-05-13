@@ -61,5 +61,10 @@
     <string name="loading_messages_0">Loading Messages… 0</string>
     <string name="sender">Sender :</string>
 
+    <string name="email_subject">Feed back  %1$s</string>
+    <string name="email_to">test@gmail.com</string>
+
+    <string name="preference_masked_key">masked_phone_number</string>
+
 
 </resources>

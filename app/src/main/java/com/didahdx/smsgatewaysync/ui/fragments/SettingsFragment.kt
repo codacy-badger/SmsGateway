@@ -2,14 +2,17 @@ package com.didahdx.smsgatewaysync.ui.fragments
 
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.SharedPreferences
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import com.didahdx.smsgatewaysync.BuildConfig
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.utilities.*
@@ -17,6 +20,7 @@ import com.mazenrashed.printooth.Printooth
 import com.mazenrashed.printooth.ui.ScanningActivity
 import com.mazenrashed.printooth.utilities.Printing
 import com.mazenrashed.printooth.utilities.PrintingCallback
+import timber.log.Timber
 
 
 /**
@@ -103,11 +107,10 @@ class SettingsFragment : PreferenceFragmentCompat(),
     }
 
     override fun onPreferenceClick(preference: Preference?): Boolean {
-        val feedBack =
-            findPreference(PREF_FEEDBACK) as Preference?
+        val feedBack = findPreference(PREF_FEEDBACK) as Preference?
         when (preference) {
             feedBack -> {
-
+                sendEmail()
             }
         }
 
@@ -201,6 +204,27 @@ class SettingsFragment : PreferenceFragmentCompat(),
             val connectPrinter = findPreference<Preference>(PREF_CONNECT_PRINTER)
             connectPrinter?.setDefaultValue(false)
         }
+    }
+
+    /**
+     * E-mail intent for sending attachment
+     */
+    private fun sendEmail() {
+        Timber.i("Sending Log ...###### ")
+        val versionName = BuildConfig.VERSION_NAME
+
+        val emailIntent: Intent = Intent(Intent.ACTION_SEND)
+        emailIntent.type = "message/rfc822"
+        emailIntent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.email_subject, versionName))
+        emailIntent.putExtra(Intent.EXTRA_EMAIL, getString(R.string.email_to))
+//        emailIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file))
+//        emailIntent.putExtra(Intent.EXTRA_TEXT, BODY_EMAIL)
+        try {
+            requireContext().startActivity(emailIntent)
+        } catch (ex: ActivityNotFoundException) {
+            Timber.i("No Intent matcher found")
+        }
+
     }
 
     private fun initPrinter() {

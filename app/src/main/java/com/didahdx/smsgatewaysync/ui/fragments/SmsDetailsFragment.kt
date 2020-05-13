@@ -103,7 +103,8 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details), PrintingCall
         text_view_longitude_act.text = longitude
         text_view_latitude_act.text = latitude
         if (smsBody != null) {
-            val smsFilter = SmsFilter(smsBody!!)
+            val maskedPhoneNumber=sharedPrferences.getBoolean(PREF_MASKED_NUMBER,false)
+            val smsFilter = SmsFilter(smsBody!!,maskedPhoneNumber)
             text_view_voucher_no_act.text = smsFilter.mpesaId
             text_view_transaction_date_act.text = "${smsFilter.date}  ${smsFilter.time}"
             text_view_name_act.text = smsFilter.name
@@ -251,7 +252,8 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details), PrintingCall
     private fun print() {
         if (smsBody != null) {
             val bluetoothPrinter = BluetoothPrinter()
-            val smsprint = SmsFilter().checkSmsType(smsBody!!)
+            val maskedPhoneNumber=sharedPrferences.getBoolean(PREF_MASKED_NUMBER,false)
+            val smsprint = SmsFilter().checkSmsType(smsBody!!,maskedPhoneNumber)
 
             if (!Printooth.hasPairedPrinter()) {
                 startActivityForResult(

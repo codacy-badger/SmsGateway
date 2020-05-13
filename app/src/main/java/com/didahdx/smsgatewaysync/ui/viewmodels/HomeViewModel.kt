@@ -34,8 +34,9 @@ class HomeViewModel(
             it?.let {
                 val mpesaType = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
                 var count = 0
+                val maskedPhoneNumber=sharedPreferences.getBoolean(PREF_MASKED_NUMBER,false)
                 for (i in it.indices) {
-                    val smsFilter = SmsFilter(it[i].messageBody)
+                    val smsFilter = SmsFilter(it[i].messageBody,maskedPhoneNumber)
                     when (mpesaType) {
                         PAY_BILL -> {
                             if (smsFilter.mpesaType == PAY_BILL) {

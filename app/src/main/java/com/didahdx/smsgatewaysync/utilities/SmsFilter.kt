@@ -15,12 +15,12 @@ class SmsFilter() {
     var accountNumber: String = NOT_AVAILABLE
 
 
-    constructor(messageBody: String) : this() {
-        checkSmsType(messageBody.trim())
+    constructor(messageBody: String,maskedPhoneNumber:Boolean) : this() {
+        checkSmsType(messageBody.trim(),maskedPhoneNumber)
     }
 
     //returns the sms format to be printed
-    fun checkSmsType(message: String): String {
+    fun checkSmsType(message: String,maskedPhoneNumber:Boolean): String {
 
         try {
             mpesaId = message.trim().split("\\s".toRegex()).first().trim()
@@ -38,7 +38,8 @@ class SmsFilter() {
             e.printStackTrace()
         }
 
-        return messageFormat()
+
+        return messageFormat(maskedPhoneNumber)
     }
 
     private fun extractAmount(message: String): String {
@@ -56,8 +57,13 @@ class SmsFilter() {
     /**
      * format used for print out
      ***********/
-    private fun messageFormat(): String {
-        return "Payment details:\n Name: ${name.toUpperCase().trim()} \n Phone No: $phoneNumber " +
+    private fun messageFormat(maskedPhoneNumber:Boolean): String {
+        var mNumber= phoneNumber
+        if(maskedPhoneNumber){
+            mNumber=getMaskedPhoneNumber(mNumber)
+        }
+
+        return "Payment details:\n Name: ${name.toUpperCase().trim()} \n Phone No: $mNumber " +
                 "\n Amount: $amount \n Transaction Date: $date \n Time: $time " +
                 "\n Transaction ID: ${mpesaId.toUpperCase()}\n" +
                 "******** END OF RECEIPT ******* \n\n\n"
@@ -201,4 +207,22 @@ class SmsFilter() {
 
         return name
     }
+
+    //generates masked phone numbers
+    private fun getMaskedPhoneNumber(phoneNumber: String): String {
+        var numberLength=phoneNumber.length-7
+        var unknown =""
+        val lastCount = phoneNumber.length - 3
+
+        while(numberLength>0){
+            unknown+="X"
+            numberLength--
+        }
+
+        return if (phoneNumber.length < 7) {"XXXXXXXXXX"} else{
+             phoneNumber.substring(0, 4) + unknown + phoneNumber.substring(lastCount, lastCount + 3)}
+    }
+
+
+
 }

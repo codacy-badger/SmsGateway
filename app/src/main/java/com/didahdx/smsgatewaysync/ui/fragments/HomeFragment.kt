@@ -359,9 +359,9 @@ class HomeFragment : Fragment(),
 
 //                    context?.toast(" local receiver \n $phoneNumber $messageText ")
                     startGettingLocation()
-
+                    val maskedPhoneNumber=sharedPreferences.getBoolean(PREF_MASKED_NUMBER,false)
                     val obj: JSONObject? = JSONObject()
-                    val smsFilter = messageText?.let { SmsFilter(it) }
+                    val smsFilter = messageText?.let { SmsFilter(it,maskedPhoneNumber) }
                     obj?.put("type", "message")
                     obj?.put("message_body", messageText)
                     obj?.put("receipt_date", date)
@@ -404,7 +404,8 @@ class HomeFragment : Fragment(),
                             val message2: MpesaMessageInfo?
 
                             if (messageText != null && dateTimeStamp != null && phoneNumber != null) {
-                                val smsFilter = SmsFilter(messageText)
+                                val maskedPhoneNumber=sharedPreferences.getBoolean(PREF_MASKED_NUMBER,false)
+                                val smsFilter = SmsFilter(messageText,maskedPhoneNumber)
                                 message2 = MpesaMessageInfo(
                                     messageText.trim(),
                                     sdf.format(Date(dateTimeStamp)).toString(),

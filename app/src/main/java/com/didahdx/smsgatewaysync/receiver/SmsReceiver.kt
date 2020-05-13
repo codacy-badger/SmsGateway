@@ -5,10 +5,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Build
+import android.provider.Settings.Global.getString
 import android.telephony.SmsMessage
 import android.util.Log
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
+import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
 import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
 import com.didahdx.smsgatewaysync.utilities.*
@@ -32,6 +34,8 @@ class SmsReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
         val printingReference = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
+        val autoPrint=sharedPreferences.getBoolean(PREF_AUTO_PRINT,false)
+        val maskedPhoneNumber=sharedPreferences.getBoolean(PREF_MASKED_NUMBER,false)
 
         if (SMS_RECEIVED_INTENT == intent.action) {
             Log.d("sms_rece", "action original ${intent.action}")
@@ -88,8 +92,8 @@ class SmsReceiver : BroadcastReceiver() {
 
                 LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
                 if ("MPESA" == phoneNumber) {
-                    val printMessage = smsFilter.checkSmsType(messageText!!.trim())
-                    if (printingReference == smsFilter.mpesaType) {
+                    val printMessage = smsFilter.checkSmsType(messageText!!.trim(),maskedPhoneNumber)
+                    if (printingReference == smsFilter.mpesaType && autoPrint) {
                         if (Printooth.hasPairedPrinter()) {
                             printer.printText(printMessage, context, APP_NAME)
                         } else {

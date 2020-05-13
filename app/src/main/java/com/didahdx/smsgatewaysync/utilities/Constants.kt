@@ -79,6 +79,7 @@ const val PREF_SERVICES_KEY = "services_key"
 const val PREF_FEEDBACK = "feedback"
 const val PREF_SIM_CARD = "sim_card"
 const val PREF_PRINT_TYPE = "print_types"
+const val PREF_MASKED_NUMBER="masked_phone_number"
 
 /**
  *  user permission codes

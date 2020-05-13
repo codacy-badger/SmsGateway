@@ -95,10 +95,16 @@
 
         <SwitchPreferenceCompat
             android:defaultValue="false"
-            android:dependency="connect_printer"
             android:key="auto_print"
             android:summary="Allow automatic printing on incoming sms"
             android:title="Auto Printing"
+            app:iconSpaceReserved="false" />
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="@string/preference_masked_key"
+            android:summary="Mask phone number on printing"
+            android:title="Mask Phone Number"
             app:iconSpaceReserved="false" />
 
         <ListPreference
