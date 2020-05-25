@@ -72,7 +72,6 @@ class MainActivity : AppCompatActivity() {
         //registering broadcast receiver for battery
         registerReceiver(BatteryReceiver(), IntentFilter(Intent.ACTION_BATTERY_CHANGED))
 
-
         //registering broadcast receiver for connection
         registerReceiver(
             ConnectionReceiver(),
@@ -180,16 +179,14 @@ class MainActivity : AppCompatActivity() {
             stopServices()
         }
 
-    }
-
-    override fun onResume() {
-        super.onResume()
-        //registering broadcast receiver for smsReceiver
-
-    }
-
-    override fun onPause() {
-        super.onPause()
 //        unregisterReceiver(SmsReceiver())
+//
+//        //registering broadcast receiver for battery
+//        unregisterReceiver(BatteryReceiver())
+//
+//        //registering broadcast receiver for connection
+//        unregisterReceiver(ConnectionReceiver())
+
     }
+
 }

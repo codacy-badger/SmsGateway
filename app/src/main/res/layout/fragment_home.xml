@@ -5,7 +5,7 @@
 
         <variable
             name="homeViewModel"
-            type="com.didahdx.smsgatewaysync.ui.viewmodels.HomeViewModel" />
+            type="com.didahdx.smsgatewaysync.ui.home.HomeViewModel" />
     </data>
 
     <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -13,7 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/white"
-        tools:context=".ui.fragments.HomeFragment">
+        tools:context=".ui.home.HomeFragment">
 
 
         <androidx.swiperefreshlayout.widget.SwipeRefreshLayout

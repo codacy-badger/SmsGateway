@@ -6,7 +6,7 @@
     app:startDestination="@id/homeFragment">
     <fragment
         android:id="@+id/homeFragment"
-        android:name="com.didahdx.smsgatewaysync.ui.fragments.HomeFragment"
+        android:name="com.didahdx.smsgatewaysync.ui.home.HomeFragment"
         android:label="Home"
         tools:layout="@layout/fragment_home">
         <action
@@ -19,28 +19,28 @@
     </fragment>
     <fragment
         android:id="@+id/aboutFragment"
-        android:name="com.didahdx.smsgatewaysync.ui.fragments.AboutFragment"
+        android:name="com.didahdx.smsgatewaysync.ui.about.AboutFragment"
         android:label="About"
 
         tools:layout="@layout/fragment_about" />
     <fragment
         android:id="@+id/phoneStatusFragment"
-        android:name="com.didahdx.smsgatewaysync.ui.fragments.PhoneStatusFragment"
+        android:name="com.didahdx.smsgatewaysync.ui.phonestatus.PhoneStatusFragment"
         android:label="Phone Status"
         tools:layout="@layout/fragment_phone_status" />
     <fragment
         android:id="@+id/logFragment"
-        android:name="com.didahdx.smsgatewaysync.ui.fragments.LogFragment"
+        android:name="com.didahdx.smsgatewaysync.ui.log.LogFragment"
         android:label="Logs"
         tools:layout="@layout/fragment_log" />
     <fragment
         android:id="@+id/settingsFragment"
-        android:name="com.didahdx.smsgatewaysync.ui.fragments.SettingsFragment"
+        android:name="com.didahdx.smsgatewaysync.ui.settings.SettingsFragment"
         android:label="Settings"
         tools:layout="@layout/fragment_settings" />
     <fragment
         android:id="@+id/smsInboxFragment"
-        android:name="com.didahdx.smsgatewaysync.ui.fragments.SmsInboxFragment"
+        android:name="com.didahdx.smsgatewaysync.ui.smsInbox.SmsInboxFragment"
         android:label="Sms Inbox"
         tools:layout="@layout/fragment_sms_inbox">
         <action
@@ -53,11 +53,29 @@
     </fragment>
     <fragment
         android:id="@+id/smsDetailsFragment"
-        android:name="com.didahdx.smsgatewaysync.ui.fragments.SmsDetailsFragment"
+        android:name="com.didahdx.smsgatewaysync.ui.smsDetails.SmsDetailsFragment"
         android:label="Sms Details"
         tools:layout="@layout/fragment_sms_details">
         <argument
             android:name="SmsInfo"
             app:argType="com.didahdx.smsgatewaysync.model.SmsInfo" />
     </fragment>
+    <fragment
+        android:id="@+id/printerFragment"
+        android:name="com.didahdx.smsgatewaysync.ui.printer.PrinterFragment"
+        android:label="Printer"
+        tools:layout="@layout/fragment_printer">
+        <action
+            android:id="@+id/action_printerFragment_to_printerDetailFragment"
+            app:destination="@id/printerDetailFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+    </fragment>
+    <fragment
+        android:id="@+id/printerDetailFragment"
+        android:name="com.didahdx.smsgatewaysync.ui.printer.PrinterDetailFragment"
+        android:label="Printer Detail"
+        tools:layout="@layout/fragment_printer_detail" />
 </navigation>

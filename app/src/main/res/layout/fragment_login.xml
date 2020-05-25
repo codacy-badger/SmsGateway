@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@color/white"
     android:orientation="vertical"
-    tools:context=".ui.fragments.LoginFragment">
+    tools:context=".ui.authetication.LoginFragment">
 
     <ScrollView
         android:layout_width="match_parent"
@@ -39,6 +39,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="10dp"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_marginRight="10dp"
                 app:errorEnabled="true">
 
@@ -57,6 +58,7 @@
                 android:id="@+id/edit_text_sign_up_password"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_marginLeft="10dp"
                 android:layout_marginRight="10dp"
                 app:errorEnabled="true"

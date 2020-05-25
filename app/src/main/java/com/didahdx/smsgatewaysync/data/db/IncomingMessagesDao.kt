@@ -22,4 +22,7 @@ interface IncomingMessagesDao {
     @Query("SELECT * FROM mpesaMessageInfo WHERE date=:time")
     fun getMessage(time: Long): LiveData<List<MpesaMessageInfo>>
 
+    @Query("SELECT * FROM mpesaMessageInfo WHERE status=:status ORDER BY id DESC")
+    suspend fun getPeddingMessages(status:Boolean):List<MpesaMessageInfo>
+
 }

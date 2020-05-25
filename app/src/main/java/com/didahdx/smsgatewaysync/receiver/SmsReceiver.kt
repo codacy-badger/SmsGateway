@@ -34,8 +34,8 @@ class SmsReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
         val printingReference = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
-        val autoPrint=sharedPreferences.getBoolean(PREF_AUTO_PRINT,false)
-        val maskedPhoneNumber=sharedPreferences.getBoolean(PREF_MASKED_NUMBER,false)
+        val autoPrint = sharedPreferences.getBoolean(PREF_AUTO_PRINT, false)
+        val maskedPhoneNumber = sharedPreferences.getBoolean(PREF_MASKED_NUMBER, false)
 
         if (SMS_RECEIVED_INTENT == intent.action) {
             Log.d("sms_rece", "action original ${intent.action}")
@@ -91,8 +91,10 @@ class SmsReceiver : BroadcastReceiver() {
 //                }
 
                 LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
+                val printMessage = smsFilter.checkSmsType(messageText!!.trim(), maskedPhoneNumber)
+
+
                 if ("MPESA" == phoneNumber) {
-                    val printMessage = smsFilter.checkSmsType(messageText!!.trim(),maskedPhoneNumber)
                     if (printingReference == smsFilter.mpesaType && autoPrint) {
                         if (Printooth.hasPairedPrinter()) {
                             printer.printText(printMessage, context, APP_NAME)

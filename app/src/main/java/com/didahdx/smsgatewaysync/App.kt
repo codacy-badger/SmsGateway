@@ -7,8 +7,8 @@ import android.os.Build
 import androidx.multidex.MultiDex
 import androidx.multidex.MultiDexApplication
 import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
-import com.didahdx.smsgatewaysync.ui.viewmodels.HomeViewModelFactory
-import com.didahdx.smsgatewaysync.ui.viewmodels.SmsInboxViewModelFactory
+import com.didahdx.smsgatewaysync.ui.home.HomeViewModelFactory
+import com.didahdx.smsgatewaysync.ui.smsInbox.SmsInboxViewModelFactory
 import com.didahdx.smsgatewaysync.utilities.CHANNEL_CLIENT_NOTIFICATION_NAME
 import com.didahdx.smsgatewaysync.utilities.CHANNEL_ID
 import com.didahdx.smsgatewaysync.utilities.CHANNEL_ID_2
@@ -71,7 +71,16 @@ class App : MultiDexApplication(), KodeinAware {
         import(androidXModule(this@App))
 
         bind() from singleton { MessagesDatabase(instance()) }
-        bind() from provider { HomeViewModelFactory(instance(),instance()) }
-        bind() from provider {SmsInboxViewModelFactory(instance())}
+        bind() from provider {
+            HomeViewModelFactory(
+                instance(),
+                instance()
+            )
+        }
+        bind() from provider {
+            SmsInboxViewModelFactory(
+                instance()
+            )
+        }
     }
 }

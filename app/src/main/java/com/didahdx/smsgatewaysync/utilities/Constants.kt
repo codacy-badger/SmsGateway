@@ -3,7 +3,7 @@ package com.didahdx.smsgatewaysync.utilities
 /**
  * Constants used throughout the app.
  */
-const val DATE_FORMAT = "dd/MMM/yy hh:mm aaa"
+const val DATE_FORMAT = "dd/MMM/yy hh:mm:ss aaa"
 const val MPESA_ID_PATTERN = "^[A-Z0-9]*$"
 const val RED_COLOR = "RED_COLOR"
 const val GREEN_COLOR = "GREEN_COLOR"
@@ -19,6 +19,7 @@ const val CHANNEL_SMS_SERVICE_NAME = "$APP_NAME status"
 const val CHANNEL_ID_2 = "update_services"
 const val CHANNEL_CLIENT_NOTIFICATION_NAME = "update messages"
 const val MESSAGE_DATABASE = "messageDatabase"
+
 
 /**
  * Intent variables
@@ -69,6 +70,7 @@ const val ALL = "All"
  * PREFERENCES String
  * */
 const val PREF_HOST_URL = "host_url"
+const val PREF_HOST_URL_ENABLED="push_url"
 const val PREF_MPESA_TYPE = "mpesa_types"
 const val PREF_AUTO_UPLOAD_SMS = "auto_sms_upload"
 const val PREF_CONNECT_PRINTER = "connect_printer"
@@ -80,6 +82,8 @@ const val PREF_FEEDBACK = "feedback"
 const val PREF_SIM_CARD = "sim_card"
 const val PREF_PRINT_TYPE = "print_types"
 const val PREF_MASKED_NUMBER="masked_phone_number"
+const val PREF_HANG_UP="hang_up"
+const val PREF_PRINTER_NAME="PREF_PRINTER_NAME"
 
 /**
  *  user permission codes

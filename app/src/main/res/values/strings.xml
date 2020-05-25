@@ -6,7 +6,7 @@
     <string name="nav_header_subtitle">android.studio@android.com</string>
     <string name="nav_header_desc">Navigation header</string>
     <string name="action_settings">Settings</string>
-    <string name="action_saved_sms">Forward Saved Sms</string>
+    <string name="action_saved_sms">Load Inbox Sms</string>
     <string name="action_print">Print</string>
     <string name="action_forward_sms">Forward sms</string>
     <string name="action_save_phone_number">Save phone number</string>
@@ -64,7 +64,14 @@
     <string name="email_subject">Feed back  %1$s</string>
     <string name="email_to">test@gmail.com</string>
 
+    <!--  preference strings -->
     <string name="preference_masked_key">masked_phone_number</string>
+    <string name="preference_hangup">hang_up</string>
+    <string name="forward_pending_sms">Forward Pending Sms</string>
+    <string name="printer">Printer</string>
+    <string name="bluetooth_devices">Bluetooth Devices</string>
+    <string name="cancel">Cancel</string>
+    <string name="connect_printer">Connect Printer</string>
 
 
 </resources>

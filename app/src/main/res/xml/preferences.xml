@@ -118,6 +118,19 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="Calls"
+        app:iconSpaceReserved="false"
+        >
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="@string/preference_hangup"
+            android:summary="Hang up all incoming calls"
+            android:title="Hang up incoming calls"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
 
     <Preference
         android:title="Send feedback"

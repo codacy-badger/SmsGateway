@@ -25,6 +25,12 @@
             android:title="@string/menu_phone_status" />
 
         <item
+            android:id="@+id/printerFragment"
+            android:title="@string/printer"
+            android:icon="@drawable/ic_print_black"
+            />
+
+        <item
             android:id="@+id/settingsFragment"
             android:icon="@drawable/ic_settings"
             android:title="@string/menu_settings" />

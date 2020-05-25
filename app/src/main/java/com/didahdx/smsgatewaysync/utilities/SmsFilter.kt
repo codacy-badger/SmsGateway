@@ -5,6 +5,8 @@ import java.util.regex.Pattern
 
 class SmsFilter() {
 
+    var otpCode: String = NOT_AVAILABLE
+    var otpWebsite: String = NOT_AVAILABLE
     var name: String = NOT_AVAILABLE
     var phoneNumber: String = NOT_AVAILABLE
     var amount: String = NOT_AVAILABLE
@@ -15,12 +17,18 @@ class SmsFilter() {
     var accountNumber: String = NOT_AVAILABLE
 
 
-    constructor(messageBody: String,maskedPhoneNumber:Boolean) : this() {
-        checkSmsType(messageBody.trim(),maskedPhoneNumber)
+    constructor(messageBody: String, maskedPhoneNumber: Boolean) : this() {
+        checkSmsType(messageBody.trim(), maskedPhoneNumber)
     }
 
     //returns the sms format to be printed
-    fun checkSmsType(message: String,maskedPhoneNumber:Boolean): String {
+    fun checkSmsType(message: String, maskedPhoneNumber: Boolean): String {
+
+        try {
+            getOTPValues(message)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
 
         try {
             mpesaId = message.trim().split("\\s".toRegex()).first().trim()
@@ -57,16 +65,19 @@ class SmsFilter() {
     /**
      * format used for print out
      ***********/
-    private fun messageFormat(maskedPhoneNumber:Boolean): String {
-        var mNumber= phoneNumber
-        if(maskedPhoneNumber){
-            mNumber=getMaskedPhoneNumber(mNumber)
+    private fun messageFormat(maskedPhoneNumber: Boolean): String {
+        var mNumber = phoneNumber
+        if (maskedPhoneNumber) {
+            mNumber = getMaskedPhoneNumber(mNumber)
         }
 
-        return "Payment details:\n Name: ${name.toUpperCase().trim()} \n Phone No: $mNumber " +
-                "\n Amount: $amount \n Transaction Date: $date \n Time: $time " +
-                "\n Transaction ID: ${mpesaId.toUpperCase()}\n" +
-                "******** END OF RECEIPT ******* \n\n\n"
+        return "\n\nPAYMENT DETAILS:" +
+                "-------------------------------"+
+                "\n\n Name: ${name.toUpperCase().trim()} \n\n Phone No: $mNumber " +
+                "\n\n Amount: $amount \n\n Transaction Date: $date \n\n Time: $time " +
+                "\n\n Transaction ID: ${mpesaId.toUpperCase()} \n\n "+
+                "-------------------------------\n"+
+                "******** END OF RECEIPT ******* \n\n"
     }
 
 
@@ -210,19 +221,30 @@ class SmsFilter() {
 
     //generates masked phone numbers
     private fun getMaskedPhoneNumber(phoneNumber: String): String {
-        var numberLength=phoneNumber.length-7
-        var unknown =""
+        var numberLength = phoneNumber.length - 7
+        var unknown = ""
         val lastCount = phoneNumber.length - 3
 
-        while(numberLength>0){
-            unknown+="X"
+        while (numberLength > 0) {
+            unknown += "X"
             numberLength--
         }
 
-        return if (phoneNumber.length < 7) {"XXXXXXXXXX"} else{
-             phoneNumber.substring(0, 4) + unknown + phoneNumber.substring(lastCount, lastCount + 3)}
+        return if (phoneNumber.length < 7) {
+            "XXXXXXXXXX"
+        } else {
+            phoneNumber.substring(0, 4) + unknown + phoneNumber.substring(lastCount, lastCount + 3)
+        }
     }
 
 
+    private fun getOTPValues(messageBody: String) {
+        otpWebsite = messageBody.substring(
+            messageBody.indexOf("@")+1,
+            messageBody.indexOf("#")
+        ).trim()
+        otpCode = messageBody.substring(messageBody.indexOf("#")+1)
+
+    }
 
 }
