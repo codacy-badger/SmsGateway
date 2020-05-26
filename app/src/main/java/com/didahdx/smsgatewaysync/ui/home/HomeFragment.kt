@@ -397,18 +397,18 @@ class HomeFragment : Fragment(),
                     val importantSmsType = sharedPreferences.getString(PREF_IMPORTANT_SMS_NOTIFICATION, " ")
 
                     if (messageText != null && phoneNumber != null &&
-                        smsFilter?.mpesaType == importantSmsType
-                    ) {
+                       ( smsFilter?.mpesaType == importantSmsType || importantSmsType=="All")) {
                         Timber.i(" $messageText \n $phoneNumber ")
                         notificationMessage(messageText, phoneNumber)
                         requireContext().toast("test $importantSmsType $messageText $phoneNumber")
                     }
 
-                    if (printMessage != null && smsFilter?.mpesaType == printType) {
+                    if (printMessage != null && smsFilter?.mpesaType == printType ) {
                         CoroutineScope(IO).launch{
                             intentPrint(printMessage)
                         }
                     }
+
 
                     obj?.put("type", "message")
                     obj?.put("message_body", messageText)
