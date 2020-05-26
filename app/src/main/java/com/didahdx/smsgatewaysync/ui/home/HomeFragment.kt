@@ -121,7 +121,8 @@ class HomeFragment : Fragment(),
 
 
     lateinit var notificationManager: NotificationManagerCompat
-    var notificationCounter = 2
+    var notificationCounter = 3000
+    var importantSmsNotification = 2
 
     @Volatile
     lateinit var rabbitmqClient: RabbitmqClient
@@ -388,13 +389,25 @@ class HomeFragment : Fragment(),
 
                     startGettingLocation()
                     val maskedPhoneNumber = sharedPreferences.getBoolean(PREF_MASKED_NUMBER, false)
+                    val printType = sharedPreferences.getString(PREF_PRINT_TYPE, "")
                     val obj: JSONObject? = JSONObject()
                     val smsFilter = messageText?.let { SmsFilter(it, maskedPhoneNumber) }
                     val printMessage =
                         smsFilter?.checkSmsType(messageText.trim(), maskedPhoneNumber)
+                    val importantSmsType = sharedPreferences.getString(PREF_IMPORTANT_SMS_NOTIFICATION, " ")
 
-                    if (printMessage != null) {
-                        intentPrint(printMessage)
+                    if (messageText != null && phoneNumber != null &&
+                        smsFilter?.mpesaType == importantSmsType
+                    ) {
+                        Timber.i(" $messageText \n $phoneNumber ")
+                        notificationMessage(messageText, phoneNumber)
+                        requireContext().toast("test $importantSmsType $messageText $phoneNumber")
+                    }
+
+                    if (printMessage != null && smsFilter?.mpesaType == printType) {
+                        CoroutineScope(IO).launch{
+                            intentPrint(printMessage)
+                        }
                     }
 
                     obj?.put("type", "message")
@@ -567,6 +580,24 @@ class HomeFragment : Fragment(),
             notificationCounter++
         }
     }
+
+    //used to show to notification
+    fun notificationMessage(message: String, phoneNumber: String) {
+        CoroutineScope(Main).launch {
+            requireContext().toast("notification call")
+            val notification = NotificationCompat.Builder(requireContext(), CHANNEL_ID_3)
+                .setContentTitle(phoneNumber)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setSmallIcon(R.drawable.ic_message)
+                .setStyle(NotificationCompat.BigTextStyle()
+                    .bigText(message))
+                .build()
+
+            notificationManager.notify(importantSmsNotification, notification)
+            importantSmsNotification++
+        }
+    }
+
 
     //used to show toast messages
     override fun toasterMessage(message: String) {
@@ -931,14 +962,17 @@ class HomeFragment : Fragment(),
     }
 
 
-    private fun InitPrinter() {
+   suspend private fun InitPrinter() {
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter() as BluetoothAdapter
         try {
             if (!bluetoothAdapter?.isEnabled!!) {
                 val enableBluetooth = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
                 startActivityForResult(enableBluetooth, 0)
             }
-            val printerName = sharedPreferences.getString(PREF_PRINTER_NAME, "RPP02N");
+            val printerName = sharedPreferences.getString(PREF_PRINTER_NAME, "")
+            if (!(printerName != null && printerName.isNotEmpty())) {
+                return
+            }
             val pairedDevices = bluetoothAdapter?.bondedDevices
             if (pairedDevices?.size!! > 0) {
                 for (device in pairedDevices) {
@@ -962,19 +996,23 @@ class HomeFragment : Fragment(),
                 inputStream = socket?.inputStream
                 beginListenForData()
             } else {
-                value += "No Devices found"
-                requireContext().toast(value)
+                value = "No Devices found"
+                CoroutineScope(Main).launch{
+                    requireContext().toast(value)
+                }
                 return
             }
         } catch (ex: java.lang.Exception) {
-            value += "$ex\n InitPrinter \n"
-            requireContext().toast(value)
+            value = "$ex\n InitPrinter \n"
+            CoroutineScope(Main).launch{
+                requireContext().toast(value)
+            }
         }
 
     }
 
 
-    private fun beginListenForData() {
+   suspend private fun beginListenForData() {
         try {
             val handler = Handler()
 
@@ -1023,22 +1061,26 @@ class HomeFragment : Fragment(),
     }
 
 
-    fun intentPrint(messageBody: String) {
+   suspend fun intentPrint(messageBody: String) {
         val buffer: ByteArray = messageBody.toByteArray()
         val printHeader = byteArrayOf(0xAA.toByte(), 0x55, 2, 0)
         printHeader[3] = buffer.size.toByte()
         InitPrinter()
         if (printHeader.size > 128) {
-            value += "\nValue is more than 128 size\n"
-            requireContext().toast(value)
+            value = "\nValue is more than 128 size\n"
+            CoroutineScope(Main).launch{
+                requireContext().toast(value)
+            }
         } else {
             try {
                 outputStream?.write(messageBody.toByteArray())
                 outputStream?.close()
                 socket?.close()
             } catch (ex: java.lang.Exception) {
-                value += "$ex\nExcep IntentPrint \n"
-                requireContext().toast(value)
+                value = "$ex\nExcep IntentPrint \n"
+                CoroutineScope(Main).launch{
+                    requireContext().toast(value)
+                }
             }
         }
     }

@@ -86,12 +86,6 @@
     <PreferenceCategory
         android:title="Printing"
         app:iconSpaceReserved="false">
-        <SwitchPreferenceCompat
-            android:defaultValue="false"
-            android:key="connect_printer"
-            android:summary="Connect to a printer"
-            android:title="Add Printer"
-            app:iconSpaceReserved="false" />
 
         <SwitchPreferenceCompat
             android:defaultValue="false"
@@ -118,9 +112,9 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="Calls"
-        app:iconSpaceReserved="false"
-        >
+    <PreferenceCategory
+        android:title="Calls"
+        app:iconSpaceReserved="false">
 
         <CheckBoxPreference
             android:defaultValue="false"
@@ -131,11 +125,32 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory
+        android:title="Notification"
+        app:iconSpaceReserved="false">
 
-    <Preference
-        android:title="Send feedback"
-        app:iconSpaceReserved="false"
-        app:key="feedback"
-        app:summary="Report technical issues or suggest new features" />
+        <ListPreference
+            android:defaultValue="None"
+            android:entries="@array/mpesa_types_notification"
+            android:entryValues="@array/mpesa_types_notification"
+            android:key="mpesa_types_notification"
+            android:summary="Types of mpesa transaction to receive notifications of"
+            android:title="Mpesa type"
+            app:iconSpaceReserved="false" />
+
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:iconSpaceReserved="false">
+
+        <Preference
+            android:title="Send feedback"
+            app:iconSpaceReserved="false"
+            app:key="feedback"
+            app:summary="Report technical issues or suggest new features" />
+
+    </PreferenceCategory>
+
 
 </PreferenceScreen>

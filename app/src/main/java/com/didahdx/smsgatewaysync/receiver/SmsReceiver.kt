@@ -5,21 +5,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Build
-import android.provider.Settings.Global.getString
 import android.telephony.SmsMessage
 import android.util.Log
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
-import com.didahdx.smsgatewaysync.R
-import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
-import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
 import com.didahdx.smsgatewaysync.utilities.*
-import com.mazenrashed.printooth.Printooth
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.*
 
 
 class SmsReceiver : BroadcastReceiver() {
@@ -28,7 +19,6 @@ class SmsReceiver : BroadcastReceiver() {
     var phoneNumber: String? = " "
     var messageText: String? = ""
     var time: Long? = null
-    private val printer = BluetoothPrinter()
     private val smsFilter = SmsFilter()
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -95,13 +85,13 @@ class SmsReceiver : BroadcastReceiver() {
 
 
                 if ("MPESA" == phoneNumber) {
-                    if (printingReference == smsFilter.mpesaType && autoPrint) {
-                        if (Printooth.hasPairedPrinter()) {
-                            printer.printText(printMessage, context, APP_NAME)
-                        } else {
-                            context?.toast("Printer not connected  ")
-                        }
-                    }
+//                    if (printingReference == smsFilter.mpesaType && autoPrint) {
+//                        if (Printooth.hasPairedPrinter()) {
+//                            printer.printText(printMessage, context, APP_NAME)
+//                        } else {
+//                            context?.toast("Printer not connected  ")
+//                        }
+//                    }
                 }
 
             }

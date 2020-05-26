@@ -71,13 +71,13 @@ class SmsFilter() {
             mNumber = getMaskedPhoneNumber(mNumber)
         }
 
-        return "\n\nPAYMENT DETAILS:" +
-                "-------------------------------"+
-                "\n\n Name: ${name.toUpperCase().trim()} \n\n Phone No: $mNumber " +
+        return "\n\nPAYMENT DETAILS:\n" +
+                "-------------------------------" +
+                "\n Name: ${name.toUpperCase().trim()} \n\n Phone No: $mNumber " +
                 "\n\n Amount: $amount \n\n Transaction Date: $date \n\n Time: $time " +
-                "\n\n Transaction ID: ${mpesaId.toUpperCase()} \n\n "+
-                "-------------------------------\n"+
-                "******** END OF RECEIPT ******* \n\n"
+                "\n\n Transaction ID: ${mpesaId.toUpperCase()} \n\n " +
+                "-------------------------------\n" +
+                "******** END OF RECEIPT ******* \n\n."
     }
 
 
@@ -171,8 +171,7 @@ class SmsFilter() {
             amount =
                 message.substring(message.indexOf("Ksh") - 1, message.indexOf("from") - 1).trim()
         } else if (message.indexOf("received") != -1 && message.indexOf("+254") != -1 && message.indexOf(
-                "from"
-            ) != -1
+                "from") != -1
         ) {
             name = message.substring(message.indexOf("from") + 4, message.indexOf("+254") - 1)
             phoneNumber =
@@ -180,6 +179,35 @@ class SmsFilter() {
             amount =
                 message.substring(message.indexOf("Ksh") - 1, message.indexOf("from") - 1).trim()
             mpesaType = DIRECT_MPESA
+        }
+
+        if (message.indexOf("received") != -1 && message.indexOf("from") != -1 &&
+            message.toLowerCase().indexOf("via") != -1
+        ) {
+            phoneNumber = NOT_AVAILABLE
+            mpesaType = DIRECT_MPESA
+            name = message.substring(message.indexOf("from") + 4, message.indexOf("in") - 1).trim()
+            amount =
+                message.substring(message.indexOf("Ksh") - 1, message.indexOf("from") - 1).trim()
+        } else if (message.indexOf("received") != -1 && message.indexOf("from") != -1 &&
+            message.toLowerCase().indexOf("via") != -1 &&
+            message.toLowerCase().indexOf("buy goods") != -1
+        ) {
+            mpesaType = DIRECT_MPESA
+            phoneNumber = NOT_AVAILABLE
+            amount =
+                message.substring(message.indexOf("Ksh") - 1, message.indexOf("from") - 1).trim()
+        }
+
+        if (message.indexOf("received") != -1 && message.indexOf("from") != -1 &&
+            message.toLowerCase().indexOf("congratulations!") != -1
+        ) {
+            mpesaType = DIRECT_MPESA
+            phoneNumber = NOT_AVAILABLE
+            amount =
+                message.substring(message.indexOf("Ksh") - 1, message.indexOf("from") - 1).trim()
+            mpesaId = message.split(" ")[1]
+            name = message.substring(message.indexOf("from") + 4, message.indexOf("on") - 1).trim()
         }
 
         /**
@@ -240,10 +268,10 @@ class SmsFilter() {
 
     private fun getOTPValues(messageBody: String) {
         otpWebsite = messageBody.substring(
-            messageBody.indexOf("@")+1,
+            messageBody.indexOf("@") + 1,
             messageBody.indexOf("#")
         ).trim()
-        otpCode = messageBody.substring(messageBody.indexOf("#")+1)
+        otpCode = messageBody.substring(messageBody.indexOf("#") + 1)
 
     }
 

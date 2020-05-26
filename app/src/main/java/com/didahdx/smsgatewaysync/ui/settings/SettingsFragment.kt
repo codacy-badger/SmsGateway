@@ -6,7 +6,6 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.preference.Preference
@@ -15,10 +14,6 @@ import com.didahdx.smsgatewaysync.BuildConfig
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.utilities.*
-import com.mazenrashed.printooth.Printooth
-import com.mazenrashed.printooth.ui.ScanningActivity
-import com.mazenrashed.printooth.utilities.Printing
-import com.mazenrashed.printooth.utilities.PrintingCallback
 import timber.log.Timber
 
 
@@ -27,11 +22,11 @@ import timber.log.Timber
  */
 class SettingsFragment : PreferenceFragmentCompat(),
     SharedPreferences.OnSharedPreferenceChangeListener
-    , PrintingCallback, Preference.OnPreferenceClickListener {
+    , Preference.OnPreferenceClickListener {
 
     lateinit var onSharedPreferenceChangeListener: SharedPreferences.OnSharedPreferenceChangeListener
     lateinit var onPreferenceClickListener: Preference.OnPreferenceClickListener
-    var printing: Printing? = null
+
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.preferences, rootKey)
@@ -73,17 +68,6 @@ class SettingsFragment : PreferenceFragmentCompat(),
                     preferenceScreen.sharedPreferences.getString(PREF_PRINT_TYPE, "")
             }
 
-            PREF_CONNECT_PRINTER -> {
-                val connectPrinter = findPreference<Preference>(key)
-                val isPrinterConnected = preferenceScreen.sharedPreferences
-                    .getBoolean(PREF_CONNECT_PRINTER, false)
-
-                if (isPrinterConnected) {
-                    addPrinter()
-                } else {
-                    removePrinter()
-                }
-            }
 
             PREF_SERVICES_KEY -> {
                 val connectPrinter = findPreference<Preference>(key)
@@ -97,6 +81,12 @@ class SettingsFragment : PreferenceFragmentCompat(),
                     context?.toast("Services is stopped")
                     stopServices()
                 }
+            }
+
+            PREF_IMPORTANT_SMS_NOTIFICATION -> {
+                val importantSmsNotification: Preference? = findPreference<Preference>(key)
+                importantSmsNotification?.summary =
+                    preferenceScreen.sharedPreferences.getString(PREF_IMPORTANT_SMS_NOTIFICATION, "None")
             }
 
             PREF_FEEDBACK -> {
@@ -136,14 +126,15 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
         val simCard = findPreference<Preference>(PREF_SIM_CARD)
         simCard?.summary = preferenceScreen.sharedPreferences.getString(
-            PREF_SIM_CARD, "Choose your default sim card to use for the application"
-        )
+            PREF_SIM_CARD, "Choose your default sim card to use for the application")
 
         val printTypes = findPreference<Preference>(PREF_PRINT_TYPE)
         printTypes?.summary = preferenceScreen.sharedPreferences.getString(
-            PREF_PRINT_TYPE,
-            "Types of mpesa transaction to be printed"
-        )
+            PREF_PRINT_TYPE, "Types of mpesa transaction to be printed")
+
+        val importantSmsNotification= findPreference<Preference>(PREF_IMPORTANT_SMS_NOTIFICATION)
+        importantSmsNotification?.summary =
+            preferenceScreen.sharedPreferences.getString(PREF_IMPORTANT_SMS_NOTIFICATION, "None")
     }
 
     override fun onPause() {
@@ -151,36 +142,6 @@ class SettingsFragment : PreferenceFragmentCompat(),
         preferenceScreen.sharedPreferences.unregisterOnSharedPreferenceChangeListener(
             onSharedPreferenceChangeListener
         )
-    }
-
-
-    //remove bluetooth printer
-    fun addPrinter() {
-        if (Printooth.hasPairedPrinter()) {
-            Printooth.removeCurrentPrinter()
-        } else {
-            startActivityForResult(
-                Intent(activity, ScanningActivity::class.java)
-                , ScanningActivity.SCANNING_FOR_PRINTER
-            )
-            changePairAndUnpair()
-        }
-    }
-
-    //remove bluetooth printer
-    fun removePrinter() {
-        if (Printooth.hasPairedPrinter()) {
-            Printooth.removeCurrentPrinter()
-        }
-        changePairAndUnpair()
-    }
-
-    private fun changePairAndUnpair() {
-        if (!Printooth.hasPairedPrinter()) {
-            context?.toast("Unpair ${Printooth.getPairedPrinter()?.name}")
-        } else {
-            context?.toast("Paired with Printer ${Printooth.getPairedPrinter()?.name}")
-        }
     }
 
     private fun startServices(input: String) {
@@ -194,16 +155,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
         context?.stopService(serviceIntent)
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == ScanningActivity.SCANNING_FOR_PRINTER && resultCode == Activity.RESULT_OK) {
-            initPrinter()
-            changePairAndUnpair()
-        } else {
-            val connectPrinter = findPreference<Preference>(PREF_CONNECT_PRINTER)
-            connectPrinter?.setDefaultValue(false)
-        }
-    }
+
 
     /**
      * E-mail intent for sending attachment
@@ -225,42 +177,5 @@ class SettingsFragment : PreferenceFragmentCompat(),
         }
 
     }
-
-    private fun initPrinter() {
-        if (Printooth.hasPairedPrinter()) {
-            printing = Printooth.printer()
-        }
-
-        if (printing != null) {
-            printing?.printingCallback = this
-        }
-    }
-
-    /*********************************************************************************************************
-     ********************* BLUETOOTH PRINTER CALLBACK METHODS ************************************************
-     **********************************************************************************************************/
-
-    override fun connectingWithPrinter() {
-        Toast.makeText(activity, "Connecting to printer", Toast.LENGTH_SHORT).show()
-    }
-
-    override fun connectionFailed(error: String) {
-        Toast.makeText(activity, "Connecting to printer failed $error", Toast.LENGTH_SHORT).show()
-    }
-
-    override fun onError(error: String) {
-        Toast.makeText(activity, "Error $error", Toast.LENGTH_SHORT).show()
-    }
-
-    override fun onMessage(message: String) {
-        Toast.makeText(activity, "Message $message", Toast.LENGTH_SHORT).show()
-    }
-
-    override fun printingOrderSentSuccessfully() {
-        Toast.makeText(activity, "Order sent to printer", Toast.LENGTH_SHORT).show()
-    }
-
-
-    /***************************************************************************************************************************/
 
 }

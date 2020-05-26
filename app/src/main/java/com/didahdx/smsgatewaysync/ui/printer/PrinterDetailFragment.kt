@@ -31,19 +31,6 @@ class PrinterDetailFragment : Fragment(R.layout.fragment_printer_detail) {
     val printerArray=ArrayList<PrinterInfo>()
 
 
-//    override fun onCreate(savedInstanceState: Bundle?) {
-//        super.onCreate(savedInstanceState)
-//
-//        val filter = IntentFilter()
-//
-//        filter.addAction(BluetoothDevice.ACTION_FOUND)
-//        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
-//        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
-//
-//        requireContext().registerReceiver(mReceiver, filter)
-//    }
-
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -80,12 +67,6 @@ class PrinterDetailFragment : Fragment(R.layout.fragment_printer_detail) {
         }
     }
 
-//    override fun onDestroy() {
-//        super.onDestroy()
-//        mBluetoothAdapter?.cancelDiscovery()
-//        requireContext().unregisterReceiver(mReceiver)
-//    }
-
 
     private val mDeviceClickListener =
         OnItemClickListener { mAdapterView, mView, mPosition, mLong ->
@@ -112,29 +93,5 @@ class PrinterDetailFragment : Fragment(R.layout.fragment_printer_detail) {
             }
         }
 
-//    private val mReceiver: BroadcastReceiver = object : BroadcastReceiver() {
-//        override fun onReceive(context: Context?, intent: Intent) {
-//            val action = intent.action
-//            if (BluetoothAdapter.ACTION_DISCOVERY_STARTED == action) {
-//                //discovery starts, we can show progress dialog or perform other tasks
-//            } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED == action) {
-//                printer_detail_refresh.isRefreshing=false
-//                //discovery finishes, dismis progress dialog
-//            } else if (BluetoothDevice.ACTION_FOUND == action) {
-//                //bluetooth device found
-//                val device =
-//                    intent.getParcelableExtra<Parcelable>(BluetoothDevice.EXTRA_DEVICE) as BluetoothDevice
-//                if (device != null) {
-//                    printerArray.add(PrinterInfo(device?.name, device?.address,device))
-//                    mPairedDevicesArrayAdapter?.add(
-//                        """
-//                        ${device?.name}
-//                        ${device?.address}
-//                        """.trimIndent()
-//                    )
-//                }
-//            }
-//        }
-//    }
 
 }

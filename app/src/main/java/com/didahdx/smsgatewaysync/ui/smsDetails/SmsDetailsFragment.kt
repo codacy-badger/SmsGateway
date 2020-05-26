@@ -3,11 +3,15 @@ package com.didahdx.smsgatewaysync.ui.smsDetails
 import android.Manifest
 import android.app.Activity
 import android.app.PendingIntent
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothSocket
 import android.content.*
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
 import android.telephony.SmsManager
 import android.telephony.SubscriptionInfo
 import android.telephony.SubscriptionManager
@@ -21,11 +25,17 @@ import androidx.preference.PreferenceManager
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.model.SmsInfo
 import com.didahdx.smsgatewaysync.utilities.*
-import com.mazenrashed.printooth.Printooth
-import com.mazenrashed.printooth.ui.ScanningActivity
-import com.mazenrashed.printooth.utilities.Printing
-import com.mazenrashed.printooth.utilities.PrintingCallback
 import kotlinx.android.synthetic.main.fragment_sms_details.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.Dispatchers.Main
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import timber.log.Timber
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
+import java.lang.reflect.Method
 import java.util.*
 
 
@@ -34,33 +44,7 @@ import java.util.*
  * Use the [SmsDetailsFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
-class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details), PrintingCallback {
-
-    /*********************************************************************************************************
-     ********************* BLUETOOTH PRINTER CALLBACK METHODS ************************************************
-     **********************************************************************************************************/
-
-    override fun connectingWithPrinter() {
-        requireContext().toast("Connecting to printer")
-    }
-
-    override fun connectionFailed(error: String) {
-        requireContext().toast("Connecting to printer failed $error")
-    }
-
-    override fun onError(error: String) {
-        requireContext().toast("Error $error")
-    }
-
-    override fun onMessage(message: String) {
-        requireContext().toast("Message $message")
-    }
-
-    override fun printingOrderSentSuccessfully() {
-        requireContext().toast("Order sent to printer")
-    }
-
-    /***************************************************************************************************************************/
+class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details) {
 
     var smsBody: String? = " "
     var smsDate: String? = " "
@@ -68,9 +52,20 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details), PrintingCall
     var smsStatus: String? = " "
     var longitude: String? = " "
     var latitude: String? = " "
-    var printing: Printing? = null
     lateinit var sharedPrferences: SharedPreferences
     private var SmsInfo: SmsInfo? = null
+    var value = ""
+    var bluetoothAdapter: BluetoothAdapter? = null
+    var socket: BluetoothSocket? = null
+    var bluetoothDevice: BluetoothDevice? = null
+    var outputStream: OutputStream? = null
+    var inputStream: InputStream? = null
+    var workerThread: Thread? = null
+    lateinit var readBuffer: ByteArray
+    var readBufferPosition = 0
+
+    @Volatile
+    var stopWorker = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,9 +77,6 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details), PrintingCall
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         sharedPrferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
-        if (printing != null) {
-            printing?.printingCallback = this
-        }
 
         //Retrieve the value
         smsBody = SmsInfo?.messageBody
@@ -102,8 +94,8 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details), PrintingCall
         text_view_longitude_act.text = longitude
         text_view_latitude_act.text = latitude
         if (smsBody != null) {
-            val maskedPhoneNumber=sharedPrferences.getBoolean(PREF_MASKED_NUMBER,false)
-            val smsFilter = SmsFilter(smsBody!!,maskedPhoneNumber)
+            val maskedPhoneNumber = sharedPrferences.getBoolean(PREF_MASKED_NUMBER, false)
+            val smsFilter = SmsFilter(smsBody!!, maskedPhoneNumber)
             text_view_voucher_no_act.text = smsFilter.mpesaId
             text_view_transaction_date_act.text = "${smsFilter.date}  ${smsFilter.time}"
             text_view_name_act.text = smsFilter.name
@@ -250,51 +242,19 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details), PrintingCall
 
     private fun print() {
         if (smsBody != null) {
-            val bluetoothPrinter = BluetoothPrinter()
-            val maskedPhoneNumber=sharedPrferences.getBoolean(PREF_MASKED_NUMBER,false)
-            val smsprint = SmsFilter().checkSmsType(smsBody!!,maskedPhoneNumber)
+            val maskedPhoneNumber = sharedPrferences.getBoolean(PREF_MASKED_NUMBER, false)
+            val printType = sharedPrferences.getString(PREF_PRINT_TYPE, "")
+            val smsprint = SmsFilter().checkSmsType(smsBody!!, maskedPhoneNumber)
 
-            if (!Printooth.hasPairedPrinter()) {
-                startActivityForResult(
-                    Intent(requireContext(), ScanningActivity::class.java)
-                    , ScanningActivity.SCANNING_FOR_PRINTER
-                )
-            } else {
-                bluetoothPrinter.printText(
-                    smsprint,
-                    requireContext(), getString(R.string.app_name)
-                )
-
+            if (smsprint != null) {
+             CoroutineScope(IO).launch{
+                 intentPrint(smsprint)
+             }
             }
+
         }
     }
 
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == ScanningActivity.SCANNING_FOR_PRINTER && resultCode == Activity.RESULT_OK) {
-            initPrinter()
-            changePairAndUnpair()
-        }
-    }
-
-    private fun initPrinter() {
-        if (Printooth.hasPairedPrinter()) {
-            printing = Printooth.printer()
-        }
-
-        if (printing != null) {
-            printing?.printingCallback = this
-        }
-    }
-
-    private fun changePairAndUnpair() {
-        if (!Printooth.hasPairedPrinter()) {
-            requireContext().toast("Unpair ${Printooth.getPairedPrinter()?.name}")
-        } else {
-            requireContext().toast("Paired with Printer ${Printooth.getPairedPrinter()?.name}")
-        }
-    }
 
     private fun checkSendSmsPermission() {
         if (checkSelfPermission(
@@ -357,4 +317,131 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details), PrintingCall
         startActivity(shareIntent)
     }
 
+   suspend fun intentPrint(messageBody: String) {
+        val buffer: ByteArray = messageBody.toByteArray()
+        val printHeader = byteArrayOf(0xAA.toByte(), 0x55, 2, 0)
+        printHeader[3] = buffer.size.toByte()
+        InitPrinter()
+        if (printHeader.size > 128) {
+            value = "\nValue is more than 128 size\n"
+            CoroutineScope(Main).launch{
+                requireContext().toast(value)
+            }
+        } else {
+            try {
+                outputStream?.write(messageBody.toByteArray())
+                outputStream?.close()
+                socket?.close()
+            } catch (ex: java.lang.Exception) {
+                value = "$ex\nExcep IntentPrint \n"
+                CoroutineScope(Main).launch{
+                    requireContext().toast(value)
+                }
+            }
+        }
+    }
+
+   suspend private fun InitPrinter() {
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter() as BluetoothAdapter
+        try {
+            if (!bluetoothAdapter?.isEnabled!!) {
+                val enableBluetooth = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                startActivityForResult(enableBluetooth, 0)
+            }
+            val printerName = sharedPrferences.getString(PREF_PRINTER_NAME, "")
+            if (!(printerName != null && printerName.isNotEmpty())) {
+                return
+            }
+            val pairedDevices = bluetoothAdapter?.bondedDevices
+            if (pairedDevices?.size!! > 0) {
+                for (device in pairedDevices) {
+                    if (device.name == printerName) //Note, you will need to change this to match the name of your device
+                    {
+                        bluetoothDevice = device
+                        break
+                    }
+                }
+                val uuid =
+                    UUID.fromString("00001101-0000-1000-8000-00805F9B34FB") //Standard SerialPortService ID
+                val m: Method = bluetoothDevice!!.javaClass.getMethod(
+                    "createRfcommSocket", *arrayOf<Class<*>?>(
+                        Int::class.javaPrimitiveType
+                    )
+                )
+                socket = m?.invoke(bluetoothDevice, 1) as BluetoothSocket?
+                bluetoothAdapter?.cancelDiscovery()
+                socket?.connect()
+                outputStream = socket?.outputStream
+                inputStream = socket?.inputStream
+                beginListenForData()
+            } else {
+                value = "No Devices found"
+                CoroutineScope(Main).launch{
+                    requireContext().toast(value)
+                }
+                return
+            }
+        } catch (ex: java.lang.Exception) {
+            value = "$ex\n InitPrinter \n"
+            CoroutineScope(Main).launch{
+                requireContext().toast(value)
+            }
+        }
+
+    }
+
+
+   suspend private fun beginListenForData() {
+        try {
+            val handler = Handler()
+
+            // this is the ASCII code for a newline character
+            val delimiter: Byte = 10
+            stopWorker = false
+            readBufferPosition = 0
+            readBuffer = ByteArray(1024)
+            workerThread = Thread(Runnable {
+                while (!Thread.currentThread().isInterrupted && !stopWorker) {
+                    try {
+                        val bytesAvailable = inputStream?.available()
+                        if (bytesAvailable != null && bytesAvailable > 0) {
+                            val packetBytes = ByteArray(bytesAvailable)
+                            inputStream!!.read(packetBytes)
+                            for (i in 0 until bytesAvailable) {
+                                val b = packetBytes[i]
+                                if (b == delimiter) {
+                                    val encodedBytes = ByteArray(readBufferPosition)
+                                    System.arraycopy(
+                                        readBuffer, 0,
+                                        encodedBytes, 0,
+                                        encodedBytes.size
+                                    )
+
+                                    // specify US-ASCII encoding
+                                    val data = String(encodedBytes, Charsets.US_ASCII)
+                                    readBufferPosition = 0
+
+                                    // tell the user data were sent to bluetooth printer device
+                                    handler.post(Runnable { Timber.d(data) })
+                                } else {
+                                    readBuffer[readBufferPosition++] = b
+                                }
+                            }
+                        }
+                    } catch (ex: IOException) {
+                        stopWorker = true
+                    }
+                }
+            })
+            workerThread?.start()
+        } catch (e: java.lang.Exception) {
+            e.printStackTrace()
+        }
+    }
+
+
+    override fun onPause() {
+        super.onPause()
+        CoroutineScope(IO).cancel()
+    }
 }

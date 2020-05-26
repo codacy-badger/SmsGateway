@@ -17,7 +17,9 @@ const val APP_NAME = "Sms Router"
 const val CHANNEL_ID = "sms_services_notification"
 const val CHANNEL_SMS_SERVICE_NAME = "$APP_NAME status"
 const val CHANNEL_ID_2 = "update_services"
+const val CHANNEL_ID_3 = "important_sms"
 const val CHANNEL_CLIENT_NOTIFICATION_NAME = "update messages"
+const val CHANNEL_IMPORTANT_SMS_NOTIFICATION = "important sms "
 const val MESSAGE_DATABASE = "messageDatabase"
 
 
@@ -82,6 +84,7 @@ const val PREF_FEEDBACK = "feedback"
 const val PREF_SIM_CARD = "sim_card"
 const val PREF_PRINT_TYPE = "print_types"
 const val PREF_MASKED_NUMBER="masked_phone_number"
+const val PREF_IMPORTANT_SMS_NOTIFICATION="mpesa_types_notification"
 const val PREF_HANG_UP="hang_up"
 const val PREF_PRINTER_NAME="PREF_PRINTER_NAME"
 

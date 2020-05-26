@@ -9,11 +9,7 @@ import androidx.multidex.MultiDexApplication
 import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
 import com.didahdx.smsgatewaysync.ui.home.HomeViewModelFactory
 import com.didahdx.smsgatewaysync.ui.smsInbox.SmsInboxViewModelFactory
-import com.didahdx.smsgatewaysync.utilities.CHANNEL_CLIENT_NOTIFICATION_NAME
-import com.didahdx.smsgatewaysync.utilities.CHANNEL_ID
-import com.didahdx.smsgatewaysync.utilities.CHANNEL_ID_2
-import com.didahdx.smsgatewaysync.utilities.CHANNEL_SMS_SERVICE_NAME
-import com.mazenrashed.printooth.Printooth
+import com.didahdx.smsgatewaysync.utilities.*
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.android.x.androidXModule
@@ -36,7 +32,6 @@ class App : MultiDexApplication(), KodeinAware {
         super.onCreate()
         instance = this
         createNotificationChannel()
-        Printooth.init(this)
         Timber.plant(Timber.DebugTree())
 
 
@@ -62,9 +57,16 @@ class App : MultiDexApplication(), KodeinAware {
                 NotificationManager.IMPORTANCE_LOW
             )
 
+            val smsNotificationChannel = NotificationChannel(
+                CHANNEL_ID_3,
+                CHANNEL_IMPORTANT_SMS_NOTIFICATION,
+                NotificationManager.IMPORTANCE_HIGH
+            )
+
             val manager: NotificationManager? = getSystemService(NotificationManager::class.java)
             manager?.createNotificationChannel(notificationChannel)
             manager?.createNotificationChannel(updateNotificationChannel)
+            manager?.createNotificationChannel(smsNotificationChannel)
         }
     }
     override val kodein = Kodein.lazy {
