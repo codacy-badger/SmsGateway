@@ -1,6 +1,10 @@
 package com.didahdx.smsgatewaysync.ui.smsInbox
 
 import android.Manifest
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.os.Bundle
@@ -13,7 +17,9 @@ import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.GridLayoutManager
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.databinding.FragmentSmsInboxBinding
@@ -21,6 +27,7 @@ import com.didahdx.smsgatewaysync.ui.adapters.SmsAdapterListener
 import com.didahdx.smsgatewaysync.ui.adapters.SmsInboxAdapter
 import com.didahdx.smsgatewaysync.ui.adapters.SmsInboxAdapterListener
 import com.didahdx.smsgatewaysync.ui.adapters.SmsInboxCursorAdapter
+import com.didahdx.smsgatewaysync.utilities.SMS_LOCAL_BROADCAST_RECEIVER
 
 import com.didahdx.smsgatewaysync.utilities.hide
 import kotlinx.coroutines.CoroutineScope
@@ -34,6 +41,13 @@ import kotlinx.coroutines.launch
 class SmsInboxFragment : Fragment() {
 
     private lateinit var smsInboxViewModel: SmsInboxViewModel
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
+            mSmsReceiver, IntentFilter(SMS_LOCAL_BROADCAST_RECEIVER)
+        )
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -54,17 +68,18 @@ class SmsInboxFragment : Fragment() {
         })
 
 
-        val inboxAdapter=
+        val inboxAdapter =
             smsInboxViewModel.getCursor()?.let {
-                SmsInboxCursorAdapter(it,SmsAdapterListener {
-                    smsInboxViewModel.onMessageDetailClicked(it)
+                SmsInboxCursorAdapter(requireContext(), it, SmsAdapterListener { sms ->
+                    smsInboxViewModel.onMessageDetailClicked(sms)
                 })
             }
 
         val manager = GridLayoutManager(activity, 1, GridLayoutManager.VERTICAL, false)
         binding.recyclerViewMessageList2.layoutManager = manager
-//        binding.recyclerViewMessageList2.adapter = adapter
+
         binding.recyclerViewMessageList2.adapter = inboxAdapter
+        binding.recyclerViewMessageList2.itemAnimator = DefaultItemAnimator()
         binding.lifecycleOwner = this
 
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_SMS)
@@ -85,7 +100,7 @@ class SmsInboxFragment : Fragment() {
 
 
         smsInboxViewModel.messageArrayList.observe(viewLifecycleOwner, Observer {
-            binding.refreshLayoutHome2.isRefreshing=false
+            binding.refreshLayoutHome2.isRefreshing = false
             binding.progressBar2.hide()
             binding.textLoading2.hide()
             it?.let {
@@ -102,13 +117,12 @@ class SmsInboxFragment : Fragment() {
         })
 
         binding.refreshLayoutHome2.setOnRefreshListener {
-            binding.refreshLayoutHome2.isRefreshing=true
+            binding.refreshLayoutHome2.isRefreshing = true
             CoroutineScope(IO).launch {
                 smsInboxViewModel.getDbSmsMessages()
             }
-            binding.refreshLayoutHome2.isRefreshing=false
+            binding.refreshLayoutHome2.isRefreshing = false
         }
-
 
         return binding.root
     }
@@ -134,4 +148,18 @@ class SmsInboxFragment : Fragment() {
         CoroutineScope(IO).cancel()
     }
 
+    //broadcast sms receiver
+    private val mSmsReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent?) {
+            CoroutineScope(IO).launch {
+                smsInboxViewModel?.getDbSmsMessages()
+            }
+        }
+    }
+
+
+    override fun onDestroy() {
+        super.onDestroy()
+        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(mSmsReceiver)
+    }
 }

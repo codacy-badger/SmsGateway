@@ -1,27 +1,26 @@
 package com.didahdx.smsgatewaysync.ui.adapters
 
+import android.content.Context
 import android.database.Cursor
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.RecyclerView
 import com.didahdx.smsgatewaysync.databinding.SmsInboxContainerBinding
 import com.didahdx.smsgatewaysync.model.SmsInboxInfo
 import com.didahdx.smsgatewaysync.ui.adapters.SmsInboxCursorAdapter.SmsViewHolder.Companion.from
-import com.didahdx.smsgatewaysync.utilities.DATE_FORMAT
-import com.didahdx.smsgatewaysync.utilities.SmsFilter
+import com.didahdx.smsgatewaysync.utilities.*
 import java.text.SimpleDateFormat
 import java.util.*
 
 class SmsInboxCursorAdapter(
+    context: Context,
     cursor: Cursor,
     private val clickListener: SmsAdapterListener
 ) :
-    RecyclerView.Adapter<SmsInboxCursorAdapter.SmsViewHolder>() {
+    CustomCursorAdapter<SmsInboxCursorAdapter.SmsViewHolder>(cursor) {
     var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT)
-    var mCursor = cursor
-
-
-
+    val mContext = context
 
     class SmsViewHolder private constructor(val binding: SmsInboxContainerBinding) :
         RecyclerView.ViewHolder(binding.root) {
@@ -45,50 +44,165 @@ class SmsInboxCursorAdapter(
         return from(parent)
     }
 
-    override fun getItemCount() = mCursor.count
 
+    override fun swapCursor(newCursor: Cursor?) {
+        super.swapCursor(newCursor)
+    }
 
-    override fun onBindViewHolder(holder: SmsViewHolder, position: Int) {
-        if (!mCursor.moveToPosition(position)) {
-            return
-        }
-        val nameId = mCursor?.getColumnIndex("address")
-        val messageId = mCursor?.getColumnIndex("body")
-        val dateId = mCursor?.getColumnIndex("date")
-        val dateString = dateId?.let { mCursor.getString(it) }
-        val mpesaId: String =
-            messageId?.let { mCursor.getString(it)?.split("\\s".toRegex())?.first()?.trim() }!!
-        val smsFilter = SmsFilter(mCursor.getString(messageId),false)
+    override fun onBindViewHolder(holder: SmsViewHolder, cursor: Cursor?) {
 
-        val smsinbox= nameId?.let { mCursor.getString(it) }?.let {
-            dateString?.toLong()?.let { it1 ->
-                SmsInboxInfo(
-                    messageId,
-                    mCursor.getString(messageId),
-                    sdf.format(dateString?.toLong()?.let { it1 -> Date(it1) }).toString(),
-                    it,
-                    mpesaId,
-                    smsFilter.phoneNumber,
-                    smsFilter.amount,
-                    smsFilter.accountNumber,
-                    smsFilter.name,
-                    it1, true, "", ""
-                )
+        val nameId = cursor?.getColumnIndex("address")
+        val messageId = cursor?.getColumnIndex("body")
+        val dateId = cursor?.getColumnIndex("date")
+        val dateString = dateId?.let { cursor.getString(it) }
+        val smsFilter = messageId?.let { mMessageId ->
+            cursor?.getString(mMessageId)?.let { mMessage ->
+                SmsFilter(mMessage, false)
             }
         }
 
-        smsinbox?.let { holder.bind(it, clickListener) }
-    }
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext)
+        val mpesaType = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
 
-    fun swapCursor(newCursor: Cursor) {
-        mCursor?.close()
+        var smsInbox = ArrayList<SmsInboxInfo>()
+//        when (mpesaType) {
+//            PAY_BILL -> {
+//                if (smsFilter?.mpesaType == PAY_BILL) {
+//                    nameId?.let {
+//                        cursor.getString(it)
+//                    }?.let { sender ->
+//                        dateString?.toLong()?.let { dateStr ->
+//                            smsFilter?.mpesaId?.let { mpesaId ->
+//                                smsInbox.add(
+//                                    SmsInboxInfo(
+//                                        messageId,
+//                                        cursor.getString(messageId),
+//                                        sdf.format(dateString?.toLong()?.let { it1 -> Date(it1) })
+//                                            .toString(),
+//                                        sender,
+//                                        mpesaId,
+//                                        smsFilter?.phoneNumber,
+//                                        smsFilter?.amount,
+//                                        smsFilter?.accountNumber,
+//                                        smsFilter?.name,
+//                                        dateStr, true, "", ""
+//                                    )
+//                                )
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//            DIRECT_MPESA -> {
+//                if (smsFilter?.mpesaType == DIRECT_MPESA) {
+//                    nameId?.let {
+//                        cursor.getString(it)
+//                    }?.let { sender ->
+//                        dateString?.toLong()?.let { dateStr ->
+//                            smsFilter?.mpesaId?.let { mpesaId ->
+//                                smsInbox.add(
+//                                    SmsInboxInfo(
+//                                        messageId,
+//                                        cursor.getString(messageId),
+//                                        sdf.format(dateString?.toLong()?.let { it1 -> Date(it1) })
+//                                            .toString(),
+//                                        sender,
+//                                        mpesaId,
+//                                        smsFilter?.phoneNumber,
+//                                        smsFilter?.amount,
+//                                        smsFilter?.accountNumber,
+//                                        smsFilter?.name,
+//                                        dateStr, true, "", ""
+//                                    )
+//                                )
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//            BUY_GOODS_AND_SERVICES -> {
+//                if (smsFilter?.mpesaType == BUY_GOODS_AND_SERVICES) {
+//                    nameId?.let {
+//                        cursor.getString(it)
+//                    }?.let { sender ->
+//                        dateString?.toLong()?.let { dateStr ->
+//                            smsFilter?.mpesaId?.let { mpesaId ->
+//                                smsInbox.add(
+//                                    SmsInboxInfo(
+//                                        messageId,
+//                                        cursor.getString(messageId),
+//                                        sdf.format(dateString?.toLong()?.let { it1 -> Date(it1) })
+//                                            .toString(),
+//                                        sender,
+//                                        mpesaId,
+//                                        smsFilter?.phoneNumber,
+//                                        smsFilter?.amount,
+//                                        smsFilter?.accountNumber,
+//                                        smsFilter?.name,
+//                                        dateStr, true, "", ""
+//                                    )
+//                                )
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//            else -> {
+//                nameId?.let {
+//                    cursor.getString(it)
+//                }?.let { sender ->
+//                    dateString?.toLong()?.let { dateStr ->
+//                        smsFilter?.mpesaId?.let { mpesaId ->
+//                            smsInbox.add(
+//                                SmsInboxInfo(
+//                                    messageId,
+//                                    cursor.getString(messageId),
+//                                    sdf.format(dateString?.toLong()?.let { it1 -> Date(it1) })
+//                                        .toString(),
+//                                    sender,
+//                                    mpesaId,
+//                                    smsFilter?.phoneNumber,
+//                                    smsFilter?.amount,
+//                                    smsFilter?.accountNumber,
+//                                    smsFilter?.name,
+//                                    dateStr, true, "", ""
+//                                )
+//                            )
+//                        }
+//                    }
+//                }
+//            }
+//
+//        }
 
-        if(newCursor!=null){
-            mCursor=newCursor
-            notifyDataSetChanged()
+        nameId?.let {
+            cursor.getString(it)
+        }?.let { sender ->
+            dateString?.toLong()?.let { dateStr ->
+                smsFilter?.mpesaId?.let { mpesaId ->
+                    smsInbox.add(
+                        SmsInboxInfo(
+                            messageId,
+                            cursor.getString(messageId),
+                            sdf.format(dateString?.toLong()?.let { it1 -> Date(it1) })
+                                .toString(),
+                            sender,
+                            mpesaId,
+                            smsFilter?.phoneNumber,
+                            smsFilter?.amount,
+                            smsFilter?.accountNumber,
+                            smsFilter?.name,
+                            dateStr, true, "", ""
+                        )
+                    )
+                }
+            }
         }
 
 
+        if (smsInbox.isNotEmpty()) {
+            holder.bind(smsInbox[0], clickListener)
+        }
     }
 
 }
