@@ -3,7 +3,6 @@ package com.didahdx.smsgatewaysync.ui.smsInbox
 import android.app.Application
 import android.database.Cursor
 import android.net.Uri
-
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -11,15 +10,11 @@ import androidx.preference.PreferenceManager
 import com.didahdx.smsgatewaysync.model.SmsInboxInfo
 import com.didahdx.smsgatewaysync.model.SmsInfo
 import com.didahdx.smsgatewaysync.utilities.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.text.SimpleDateFormat
-import java.util.Date
-import kotlin.collections.ArrayList
 
 class SmsInboxViewModel(application: Application) : ViewModel() {
 
@@ -56,13 +51,13 @@ class SmsInboxViewModel(application: Application) : ViewModel() {
 
     private suspend fun setInputMessage(message: Cursor) {
         withContext(Main) {
+            app.toast(" Db Cursot ${message.count}")
             _messageArrayList.value = message
         }
     }
 
 
     suspend fun getDbSmsMessages() {
-        val messageList = ArrayList<SmsInboxInfo>()
         val cursor = app.contentResolver?.query(
             Uri.parse("content://sms/inbox"),
             null,
@@ -71,115 +66,79 @@ class SmsInboxViewModel(application: Application) : ViewModel() {
             null
         )
 
+        val smsItem = ArrayList<String>()
 
-//        if (cursor != null && cursor.moveToNext()) {
-//            val nameId = cursor.getColumnIndex("address")
-//            val messageId = cursor.getColumnIndex("body")
-//            val dateId = cursor.getColumnIndex("date")
-//            val mpesaType = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
-//
-//            var count = 0
-//            Timber.i("mpesa sms $mpesaType ")
-//
-//            do {
-//                val dateString = cursor.getString(dateId)
-//
-////                if (cursor.getString(nameId) == "MPESA") {
-//
-//                var mpesaId: String =
-//                    cursor.getString(messageId).split("\\s".toRegex()).first().trim()
-//                if (!MPESA_ID_PATTERN.toRegex().matches(mpesaId)) {
-//                    mpesaId = NOT_AVAILABLE
+        if (cursor != null && cursor.moveToNext()) {
+            val nameId = cursor.getColumnIndex("address")
+            val messageId = cursor.getColumnIndex("body")
+            val dateId = cursor.getColumnIndex("date")
+            val mpesaType = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
+
+            Timber.i("mpesa sms $mpesaType ")
+
+            do {
+                val dateString = cursor.getString(dateId)
+
+//                if (cursor.getString(nameId) == "MPESA") {
+
+                var mpesaId: String =
+                    cursor.getString(messageId).split("\\s".toRegex()).first().trim()
+                if (!MPESA_ID_PATTERN.toRegex().matches(mpesaId)) {
+                    mpesaId = NOT_AVAILABLE
+                }
+
+                val maskedPhoneNumber = sharedPreferences.getBoolean(PREF_MASKED_NUMBER, false)
+                val smsFilter = SmsFilter(cursor.getString(messageId), maskedPhoneNumber)
+
+                when (mpesaType) {
+                    PAY_BILL -> {
+                        if (smsFilter.mpesaType == PAY_BILL) {
+                            cursor?.position?.let { smsItem.add(dateString) }
+                        }
+                    }
+                    DIRECT_MPESA -> {
+                        if (smsFilter.mpesaType == DIRECT_MPESA) {
+                            cursor?.position?.let { smsItem.add(dateString) }
+                        }
+                    }
+
+                    BUY_GOODS_AND_SERVICES -> {
+                        if (smsFilter.mpesaType == BUY_GOODS_AND_SERVICES) {
+                            cursor?.position?.let { smsItem.add(dateString) }
+                        }
+                    }
+
+                    else -> {
+                        cursor?.position?.let { smsItem.add(dateString) }
+                    }
+                }
 //                }
-//
-//                val maskedPhoneNumber = sharedPreferences.getBoolean(PREF_MASKED_NUMBER, false)
-//                val smsFilter = SmsFilter(cursor.getString(messageId), maskedPhoneNumber)
-//
-//                when (mpesaType) {
-//                    PAY_BILL -> {
-//                        if (smsFilter.mpesaType == PAY_BILL) {
-//                            messageList.add(
-//                                SmsInboxInfo(
-//                                    messageId,
-//                                    cursor.getString(messageId),
-//                                    sdf.format(Date(dateString.toLong())).toString(),
-//                                    cursor.getString(nameId),
-//                                    mpesaId,
-//                                    smsFilter.phoneNumber,
-//                                    smsFilter.amount,
-//                                    smsFilter.accountNumber,
-//                                    smsFilter.name,
-//                                    dateString.toLong(), true, "", ""
-//                                )
-//                            )
-//                            count++
-//                        }
-//                    }
-//                    DIRECT_MPESA -> {
-//                        if (smsFilter.mpesaType == DIRECT_MPESA) {
-//                            messageList.add(
-//                                SmsInboxInfo(
-//                                    messageId,
-//                                    cursor.getString(messageId),
-//                                    sdf.format(Date(dateString.toLong())).toString(),
-//                                    cursor.getString(nameId),
-//                                    mpesaId,
-//                                    smsFilter.phoneNumber,
-//                                    smsFilter.amount,
-//                                    smsFilter.accountNumber,
-//                                    smsFilter.name,
-//                                    dateString.toLong(), true, "", ""
-//                                )
-//                            )
-//                            count++
-//                        }
-//                    }
-//
-//                    BUY_GOODS_AND_SERVICES -> {
-//                        if (smsFilter.mpesaType == BUY_GOODS_AND_SERVICES) {
-//                            messageList.add(
-//                                SmsInboxInfo(
-//                                    messageId,
-//                                    cursor.getString(messageId),
-//                                    sdf.format(Date(dateString.toLong())).toString(),
-//                                    cursor.getString(nameId),
-//                                    mpesaId,
-//                                    smsFilter.phoneNumber,
-//                                    smsFilter.amount,
-//                                    smsFilter.accountNumber,
-//                                    smsFilter.name,
-//                                    dateString.toLong(), true, "", ""
-//                                )
-//                            )
-//                            count++
-//                        }
-//                    }
-//
-//                    else -> {
-//                        messageList.add(
-//                            SmsInboxInfo(
-//                                messageId,
-//                                cursor.getString(messageId),
-//                                sdf.format(Date(dateString.toLong())).toString(),
-//                                cursor.getString(nameId),
-//                                mpesaId, smsFilter.phoneNumber, smsFilter.amount,
-//                                smsFilter.accountNumber, smsFilter.name, dateString.toLong(),
-//                                true, "", ""
-//                            )
-//                        )
-//                        count++
-//                    }
-//                }
-//
-//                setCount(count)
-//
-////                }
-//            } while (cursor.moveToNext())
-//            cursor.close()
-//        }
+            } while (cursor.moveToNext())
+            cursor.close()
+        }
+
+        sortCursor(smsItem)
+    }
+
+
+    private suspend fun sortCursor(rowNumbers: ArrayList<String>) {
+        val projections = arrayOf("address", "body", "date")
+        var inClause: String = rowNumbers.toString()
+        inClause = inClause.replace('[', '(');
+        inClause = inClause.replace(']', ')');
+        val selection = "date IN  $inClause"
+
+        val cursor = app.contentResolver?.query(
+            Uri.parse("content://sms/inbox"),
+            projections,
+            selection,
+            null,
+            null
+        )
 
         cursor?.let { setInputMessage(it) }
     }
+
 
     private suspend fun setCount(count: Int) {
         withContext(Main) {
@@ -198,15 +157,88 @@ class SmsInboxViewModel(application: Application) : ViewModel() {
     }
 
     fun getCursor(): Cursor? {
-        val cursor = app.contentResolver?.query(
-            Uri.parse("content://sms/inbox"),
-            null,
-            null,
-            null,
-            null
-        )
+        var mCursor: Cursor? = null
+        CoroutineScope(IO).launch {
+            val cursor = app.contentResolver?.query(
+                Uri.parse("content://sms/inbox"),
+                null,
+                null,
+                null,
+                null
+            )
 
-        return cursor
+            val smsItem = ArrayList<String>()
+
+            if (cursor != null && cursor.moveToNext()) {
+                val nameId = cursor.getColumnIndex("address")
+                val messageId = cursor.getColumnIndex("body")
+                val dateId = cursor.getColumnIndex("date")
+                val mpesaType = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
+
+                Timber.i("mpesa sms $mpesaType ")
+
+                do {
+                    val dateString = cursor.getString(dateId)
+
+//                if (cursor.getString(nameId) == "MPESA") {
+
+                    var mpesaId: String =
+                        cursor.getString(messageId).split("\\s".toRegex()).first().trim()
+                    if (!MPESA_ID_PATTERN.toRegex().matches(mpesaId)) {
+                        mpesaId = NOT_AVAILABLE
+                    }
+
+                    val maskedPhoneNumber = sharedPreferences.getBoolean(PREF_MASKED_NUMBER, false)
+                    val smsFilter = SmsFilter(cursor.getString(messageId), maskedPhoneNumber)
+
+                    when (mpesaType) {
+                        PAY_BILL -> {
+                            if (smsFilter.mpesaType == PAY_BILL) {
+                                cursor?.position?.let { smsItem.add(dateString) }
+                            }
+                        }
+                        DIRECT_MPESA -> {
+                            if (smsFilter.mpesaType == DIRECT_MPESA) {
+                                cursor?.position?.let { smsItem.add(dateString) }
+                            }
+                        }
+
+                        BUY_GOODS_AND_SERVICES -> {
+                            if (smsFilter.mpesaType == BUY_GOODS_AND_SERVICES) {
+                                cursor?.position?.let { smsItem.add(dateString) }
+                            }
+                        }
+
+                        else -> {
+                            cursor?.position?.let { smsItem.add(dateString) }
+                        }
+                    }
+//                }
+                } while (cursor.moveToNext())
+                cursor.close()
+            }
+
+            val projections = arrayOf("address", "body", "date")
+            var inClause: String = smsItem.toString()
+            inClause = inClause.replace('[', '(');
+            inClause = inClause.replace(']', ')');
+            val selection = "date IN  $inClause"
+            val selectionArgs: String = smsItem.toArray().toString()
+
+           val valueCursor = app.contentResolver?.query(
+                Uri.parse("content://sms/inbox"),
+                projections,
+                selection,
+                null,
+                null
+            )
+
+            withContext(Main){
+                mCursor=valueCursor
+            }
+
+        }
+        return mCursor
     }
 
     override fun onCleared() {

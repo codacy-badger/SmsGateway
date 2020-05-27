@@ -14,13 +14,13 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class SmsInboxCursorAdapter(
-    context: Context,
     cursor: Cursor,
     private val clickListener: SmsAdapterListener
 ) :
-    CustomCursorAdapter<SmsInboxCursorAdapter.SmsViewHolder>(cursor) {
+    RecyclerView.Adapter<SmsInboxCursorAdapter.SmsViewHolder>() {
     var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT)
-    val mContext = context
+
+    var mCursor=cursor
 
     class SmsViewHolder private constructor(val binding: SmsInboxContainerBinding) :
         RecyclerView.ViewHolder(binding.root) {
@@ -45,163 +45,44 @@ class SmsInboxCursorAdapter(
     }
 
 
-    override fun swapCursor(newCursor: Cursor?) {
-        super.swapCursor(newCursor)
+    override fun onBindViewHolder(holder: SmsViewHolder, position: Int) {
+        if (!mCursor.moveToPosition(position)) {
+            return
+        }
+        val nameId = mCursor?.getColumnIndex("address")
+        val messageId = mCursor?.getColumnIndex("body")
+        val dateId = mCursor?.getColumnIndex("date")
+        val dateString = dateId?.let { mCursor.getString(it) }
+        val smsFilter = SmsFilter(mCursor.getString(messageId),false)
+        var smsinbox=ArrayList<SmsInboxInfo>()
+         nameId?.let { mCursor.getString(it) }?.let {
+            dateString?.toLong()?.let { it1 ->
+                smsinbox.add(SmsInboxInfo(
+                    messageId,
+                    mCursor.getString(messageId),
+                    sdf.format(dateString?.toLong()?.let { it1 -> Date(it1) }).toString(),
+                    it,
+                    smsFilter.mpesaId,
+                    smsFilter.phoneNumber,
+                    smsFilter.amount,
+                    smsFilter.accountNumber,
+                    smsFilter.name,
+                    it1, true, "", ""
+                ))
+            }
+        }
+
+        smsinbox?.let { holder.bind(it[0], clickListener) }
     }
 
-    override fun onBindViewHolder(holder: SmsViewHolder, cursor: Cursor?) {
+    override fun getItemCount()= mCursor.count
 
-        val nameId = cursor?.getColumnIndex("address")
-        val messageId = cursor?.getColumnIndex("body")
-        val dateId = cursor?.getColumnIndex("date")
-        val dateString = dateId?.let { cursor.getString(it) }
-        val smsFilter = messageId?.let { mMessageId ->
-            cursor?.getString(mMessageId)?.let { mMessage ->
-                SmsFilter(mMessage, false)
-            }
-        }
+    fun swapCursor(newCursor: Cursor) {
+        mCursor?.close()
 
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext)
-        val mpesaType = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
-
-        var smsInbox = ArrayList<SmsInboxInfo>()
-//        when (mpesaType) {
-//            PAY_BILL -> {
-//                if (smsFilter?.mpesaType == PAY_BILL) {
-//                    nameId?.let {
-//                        cursor.getString(it)
-//                    }?.let { sender ->
-//                        dateString?.toLong()?.let { dateStr ->
-//                            smsFilter?.mpesaId?.let { mpesaId ->
-//                                smsInbox.add(
-//                                    SmsInboxInfo(
-//                                        messageId,
-//                                        cursor.getString(messageId),
-//                                        sdf.format(dateString?.toLong()?.let { it1 -> Date(it1) })
-//                                            .toString(),
-//                                        sender,
-//                                        mpesaId,
-//                                        smsFilter?.phoneNumber,
-//                                        smsFilter?.amount,
-//                                        smsFilter?.accountNumber,
-//                                        smsFilter?.name,
-//                                        dateStr, true, "", ""
-//                                    )
-//                                )
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//            DIRECT_MPESA -> {
-//                if (smsFilter?.mpesaType == DIRECT_MPESA) {
-//                    nameId?.let {
-//                        cursor.getString(it)
-//                    }?.let { sender ->
-//                        dateString?.toLong()?.let { dateStr ->
-//                            smsFilter?.mpesaId?.let { mpesaId ->
-//                                smsInbox.add(
-//                                    SmsInboxInfo(
-//                                        messageId,
-//                                        cursor.getString(messageId),
-//                                        sdf.format(dateString?.toLong()?.let { it1 -> Date(it1) })
-//                                            .toString(),
-//                                        sender,
-//                                        mpesaId,
-//                                        smsFilter?.phoneNumber,
-//                                        smsFilter?.amount,
-//                                        smsFilter?.accountNumber,
-//                                        smsFilter?.name,
-//                                        dateStr, true, "", ""
-//                                    )
-//                                )
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//            BUY_GOODS_AND_SERVICES -> {
-//                if (smsFilter?.mpesaType == BUY_GOODS_AND_SERVICES) {
-//                    nameId?.let {
-//                        cursor.getString(it)
-//                    }?.let { sender ->
-//                        dateString?.toLong()?.let { dateStr ->
-//                            smsFilter?.mpesaId?.let { mpesaId ->
-//                                smsInbox.add(
-//                                    SmsInboxInfo(
-//                                        messageId,
-//                                        cursor.getString(messageId),
-//                                        sdf.format(dateString?.toLong()?.let { it1 -> Date(it1) })
-//                                            .toString(),
-//                                        sender,
-//                                        mpesaId,
-//                                        smsFilter?.phoneNumber,
-//                                        smsFilter?.amount,
-//                                        smsFilter?.accountNumber,
-//                                        smsFilter?.name,
-//                                        dateStr, true, "", ""
-//                                    )
-//                                )
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//            else -> {
-//                nameId?.let {
-//                    cursor.getString(it)
-//                }?.let { sender ->
-//                    dateString?.toLong()?.let { dateStr ->
-//                        smsFilter?.mpesaId?.let { mpesaId ->
-//                            smsInbox.add(
-//                                SmsInboxInfo(
-//                                    messageId,
-//                                    cursor.getString(messageId),
-//                                    sdf.format(dateString?.toLong()?.let { it1 -> Date(it1) })
-//                                        .toString(),
-//                                    sender,
-//                                    mpesaId,
-//                                    smsFilter?.phoneNumber,
-//                                    smsFilter?.amount,
-//                                    smsFilter?.accountNumber,
-//                                    smsFilter?.name,
-//                                    dateStr, true, "", ""
-//                                )
-//                            )
-//                        }
-//                    }
-//                }
-//            }
-//
-//        }
-
-        nameId?.let {
-            cursor.getString(it)
-        }?.let { sender ->
-            dateString?.toLong()?.let { dateStr ->
-                smsFilter?.mpesaId?.let { mpesaId ->
-                    smsInbox.add(
-                        SmsInboxInfo(
-                            messageId,
-                            cursor.getString(messageId),
-                            sdf.format(dateString?.toLong()?.let { it1 -> Date(it1) })
-                                .toString(),
-                            sender,
-                            mpesaId,
-                            smsFilter?.phoneNumber,
-                            smsFilter?.amount,
-                            smsFilter?.accountNumber,
-                            smsFilter?.name,
-                            dateStr, true, "", ""
-                        )
-                    )
-                }
-            }
-        }
-
-
-        if (smsInbox.isNotEmpty()) {
-            holder.bind(smsInbox[0], clickListener)
+        if(newCursor!=null){
+            mCursor=newCursor
+            notifyDataSetChanged()
         }
     }
 
@@ -210,3 +91,4 @@ class SmsInboxCursorAdapter(
 class SmsAdapterListener(val clickListener: (messageId: SmsInboxInfo) -> Unit) {
     fun onClick(mMessage: SmsInboxInfo) = clickListener(mMessage)
 }
+

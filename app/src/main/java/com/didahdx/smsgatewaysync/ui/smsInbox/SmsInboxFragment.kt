@@ -67,19 +67,15 @@ class SmsInboxFragment : Fragment() {
             smsInboxViewModel.onMessageDetailClicked(it)
         })
 
-
-        val inboxAdapter =
-            smsInboxViewModel.getCursor()?.let {
-                SmsInboxCursorAdapter(requireContext(), it, SmsAdapterListener { sms ->
+        val inboxAdapter = smsInboxViewModel.getCursor()?.let { cursor ->
+                SmsInboxCursorAdapter(cursor, SmsAdapterListener { sms ->
                     smsInboxViewModel.onMessageDetailClicked(sms)
                 })
             }
 
         val manager = GridLayoutManager(activity, 1, GridLayoutManager.VERTICAL, false)
         binding.recyclerViewMessageList2.layoutManager = manager
-
         binding.recyclerViewMessageList2.adapter = inboxAdapter
-        binding.recyclerViewMessageList2.itemAnimator = DefaultItemAnimator()
         binding.lifecycleOwner = this
 
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_SMS)
@@ -156,7 +152,6 @@ class SmsInboxFragment : Fragment() {
             }
         }
     }
-
 
     override fun onDestroy() {
         super.onDestroy()
