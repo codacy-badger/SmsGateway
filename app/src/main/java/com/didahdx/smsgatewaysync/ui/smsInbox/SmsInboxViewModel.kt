@@ -22,19 +22,13 @@ import kotlin.collections.ArrayList
 
 class SmsInboxViewModel(application: Application) : ViewModel() {
 
-
     var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT)
-
-
-
     val app = application
     private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(application)
-
     //data to be passed to next screen
     private val _eventMessageClicked = MutableLiveData<SmsInboxInfo>()
     val eventMessageClicked: LiveData<SmsInboxInfo>
         get() = _eventMessageClicked
-
 
     //data to be passed to next screen
     private val _messageCount = MutableLiveData<Int>()
