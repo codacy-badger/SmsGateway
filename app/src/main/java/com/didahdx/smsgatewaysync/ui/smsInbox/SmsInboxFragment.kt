@@ -2,6 +2,7 @@ package com.didahdx.smsgatewaysync.ui.smsInbox
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.database.Cursor
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -16,8 +17,10 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.databinding.FragmentSmsInboxBinding
+import com.didahdx.smsgatewaysync.ui.adapters.SmsAdapterListener
 import com.didahdx.smsgatewaysync.ui.adapters.SmsInboxAdapter
 import com.didahdx.smsgatewaysync.ui.adapters.SmsInboxAdapterListener
+import com.didahdx.smsgatewaysync.ui.adapters.SmsInboxCursorAdapter
 
 import com.didahdx.smsgatewaysync.utilities.hide
 import kotlinx.coroutines.CoroutineScope
@@ -50,9 +53,18 @@ class SmsInboxFragment : Fragment() {
             smsInboxViewModel.onMessageDetailClicked(it)
         })
 
+
+        val inboxAdapter=
+            smsInboxViewModel.getCursor()?.let {
+                SmsInboxCursorAdapter(it,SmsAdapterListener {
+                    smsInboxViewModel.onMessageDetailClicked(it)
+                })
+            }
+
         val manager = GridLayoutManager(activity, 1, GridLayoutManager.VERTICAL, false)
         binding.recyclerViewMessageList2.layoutManager = manager
-        binding.recyclerViewMessageList2.adapter = adapter
+//        binding.recyclerViewMessageList2.adapter = adapter
+        binding.recyclerViewMessageList2.adapter = inboxAdapter
         binding.lifecycleOwner = this
 
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_SMS)
@@ -72,13 +84,12 @@ class SmsInboxFragment : Fragment() {
         })
 
 
-
         smsInboxViewModel.messageArrayList.observe(viewLifecycleOwner, Observer {
+            binding.refreshLayoutHome2.isRefreshing=false
+            binding.progressBar2.hide()
+            binding.textLoading2.hide()
             it?.let {
-                binding.progressBar2.hide()
-                binding.textLoading2.hide()
-                binding.refreshLayoutHome2.isRefreshing=false
-                adapter.submitList(it)
+                inboxAdapter?.swapCursor(it)
 //                used to
 //                (binding.recyclerViewMessageList.layoutManager as GridLayoutManager).scrollToPositionWithOffset(0, 0)
             }
@@ -108,9 +119,15 @@ class SmsInboxFragment : Fragment() {
             smsInboxViewModel.getDbSmsMessages()
         }
 
-
     }
 
+
+    override fun onStart() {
+        super.onStart()
+        CoroutineScope(IO).launch {
+            smsInboxViewModel.getDbSmsMessages()
+        }
+    }
 
     override fun onPause() {
         super.onPause()

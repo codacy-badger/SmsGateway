@@ -19,7 +19,7 @@ class SmsInboxAdapter(private val clickListener: SmsInboxAdapterListener) :
 
         fun bind(item: SmsInboxInfo, clickListener: SmsInboxAdapterListener) {
             binding.messageText = item
-            binding.clickListener = clickListener
+//            binding.clickListener = clickListener
             binding.executePendingBindings()
         }
 
