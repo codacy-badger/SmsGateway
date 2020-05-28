@@ -122,6 +122,8 @@ class HomeViewModel(
         return SmsInfo(it.messageBody, it.time, it.sender, smsStatus, it.longitude, it.latitude)
     }
 
+
+
     fun refreshIncomingDatabase() {
         incomingMessages = database.getAllMessages()
     }

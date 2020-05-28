@@ -30,6 +30,7 @@ import com.didahdx.smsgatewaysync.ui.adapters.SmsInboxCursorAdapter
 import com.didahdx.smsgatewaysync.utilities.SMS_LOCAL_BROADCAST_RECEIVER
 
 import com.didahdx.smsgatewaysync.utilities.hide
+import com.didahdx.smsgatewaysync.utilities.toast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.cancel
@@ -121,17 +122,12 @@ class SmsInboxFragment : Fragment() {
             binding.refreshLayoutHome2.isRefreshing = false
         }
 
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
         CoroutineScope(IO).launch {
             smsInboxViewModel.getDbSmsMessages()
         }
 
+        return binding.root
     }
-
 
     override fun onPause() {
         super.onPause()

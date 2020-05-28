@@ -75,9 +75,11 @@ class SmsInboxViewModel(application: Application) : ViewModel() {
             val mpesaType = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
 
             Timber.i("mpesa sms $mpesaType ")
+            var count= 0
 
             do {
                 val dateString = cursor.getString(dateId)
+
 
 //                if (cursor.getString(nameId) == "MPESA") {
 
@@ -94,25 +96,31 @@ class SmsInboxViewModel(application: Application) : ViewModel() {
                     PAY_BILL -> {
                         if (smsFilter.mpesaType == PAY_BILL) {
                             cursor?.position?.let { smsItem.add(dateString) }
+                            count++
                         }
                     }
                     DIRECT_MPESA -> {
                         if (smsFilter.mpesaType == DIRECT_MPESA) {
                             cursor?.position?.let { smsItem.add(dateString) }
+                            count++
                         }
                     }
 
                     BUY_GOODS_AND_SERVICES -> {
                         if (smsFilter.mpesaType == BUY_GOODS_AND_SERVICES) {
                             cursor?.position?.let { smsItem.add(dateString) }
+                            count++
                         }
                     }
 
                     else -> {
                         cursor?.position?.let { smsItem.add(dateString) }
+                        count++
                     }
                 }
 //                }
+
+                setCount(count)
             } while (cursor.moveToNext())
             cursor.close()
         }
