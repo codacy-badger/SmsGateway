@@ -12,9 +12,8 @@ import com.didahdx.smsgatewaysync.ui.adapters.SmsInboxCursorAdapter.SmsViewHolde
 import com.didahdx.smsgatewaysync.utilities.*
 import java.text.SimpleDateFormat
 import java.util.*
-
 class SmsInboxCursorAdapter(
-    cursor: Cursor,
+    cursor: Cursor?,
     private val clickListener: SmsAdapterListener
 ) :
     RecyclerView.Adapter<SmsInboxCursorAdapter.SmsViewHolder>() {
@@ -46,36 +45,50 @@ class SmsInboxCursorAdapter(
 
 
     override fun onBindViewHolder(holder: SmsViewHolder, position: Int) {
-        if (!mCursor.moveToPosition(position)) {
+        if (mCursor!=null){
+        if (!mCursor?.moveToPosition(position)!!) {
             return
         }
         val nameId = mCursor?.getColumnIndex("address")
         val messageId = mCursor?.getColumnIndex("body")
         val dateId = mCursor?.getColumnIndex("date")
-        val dateString = dateId?.let { mCursor.getString(it) }
-        val smsFilter = SmsFilter(mCursor.getString(messageId),false)
+        val dateString = dateId?.let { mCursor?.getString(it) }
+        val smsFilter = messageId?.let { mCursor?.getString(it)?.let { SmsFilter(it,false) } }
         var smsinbox=ArrayList<SmsInboxInfo>()
-         nameId?.let { mCursor.getString(it) }?.let {
+         nameId?.let { mCursor?.getString(it) }?.let {
             dateString?.toLong()?.let { it1 ->
-                smsinbox.add(SmsInboxInfo(
-                    messageId,
-                    mCursor.getString(messageId),
-                    sdf.format(dateString?.toLong()?.let { it1 -> Date(it1) }).toString(),
-                    it,
-                    smsFilter.mpesaId,
-                    smsFilter.phoneNumber,
-                    smsFilter.amount,
-                    smsFilter.accountNumber,
-                    smsFilter.name,
-                    it1, true, "", ""
-                ))
+                if (messageId != null) {
+                    if (smsFilter != null) {
+                        mCursor?.getString(messageId)?.let { it2 ->
+                            SmsInboxInfo(
+                                messageId,
+                                it2,
+                                sdf.format(dateString?.toLong()?.let { it1 -> Date(it1) }).toString(),
+                                it,
+                                smsFilter.mpesaId,
+                                smsFilter.phoneNumber,
+                                smsFilter.amount,
+                                smsFilter.accountNumber,
+                                smsFilter.name,
+                                it1, true, "", ""
+                            )
+                        }?.let { it3 -> smsinbox.add(it3) }
+                    }
+                }
             }
         }
 
-        smsinbox?.let { holder.bind(it[0], clickListener) }
+        smsinbox?.let { holder.bind(it[0], clickListener) }}
     }
 
-    override fun getItemCount()= mCursor.count
+    override fun getItemCount():Int{
+        try{
+            return mCursor?.count!!
+        }catch(e:Exception){
+            e.printStackTrace()
+        }
+        return 0
+    }
 
     fun swapCursor(newCursor: Cursor) {
         mCursor?.close()
@@ -87,6 +100,7 @@ class SmsInboxCursorAdapter(
     }
 
 }
+
 
 class SmsAdapterListener(val clickListener: (messageId: SmsInboxInfo) -> Unit) {
     fun onClick(mMessage: SmsInboxInfo) = clickListener(mMessage)

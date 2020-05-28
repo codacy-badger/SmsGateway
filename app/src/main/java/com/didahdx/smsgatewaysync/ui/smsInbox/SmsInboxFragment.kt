@@ -67,11 +67,12 @@ class SmsInboxFragment : Fragment() {
             smsInboxViewModel.onMessageDetailClicked(it)
         })
 
-        val inboxAdapter = smsInboxViewModel.getCursor()?.let { cursor ->
-                SmsInboxCursorAdapter(cursor, SmsAdapterListener { sms ->
+        val cursor:Cursor?=null
+
+        val inboxAdapter = SmsInboxCursorAdapter(cursor, SmsAdapterListener { sms ->
                     smsInboxViewModel.onMessageDetailClicked(sms)
                 })
-            }
+
 
         val manager = GridLayoutManager(activity, 1, GridLayoutManager.VERTICAL, false)
         binding.recyclerViewMessageList2.layoutManager = manager
@@ -131,13 +132,6 @@ class SmsInboxFragment : Fragment() {
 
     }
 
-
-    override fun onStart() {
-        super.onStart()
-        CoroutineScope(IO).launch {
-            smsInboxViewModel.getDbSmsMessages()
-        }
-    }
 
     override fun onPause() {
         super.onPause()
