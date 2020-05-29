@@ -16,7 +16,10 @@ interface IncomingMessagesDao {
     @Delete
     suspend fun deleteMessage(incomingMessages: MpesaMessageInfo)
 
-    @Query("SELECT * FROM mpesaMessageInfo ORDER BY id DESC")
+    @Query("SELECT * FROM mpesaMessageInfo WHERE mpesaId=:MpesaId")
+    suspend fun getMessage(MpesaId: String):List<MpesaMessageInfo>
+
+    @Query("SELECT * FROM mpesaMessageInfo ORDER BY date DESC")
     fun getAllMessages(): LiveData<List<MpesaMessageInfo>>
 
     @Query("SELECT * FROM mpesaMessageInfo WHERE date=:time")

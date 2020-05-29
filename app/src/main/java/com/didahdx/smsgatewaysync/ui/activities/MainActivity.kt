@@ -21,21 +21,12 @@ import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
 import androidx.preference.PreferenceManager
 import com.didahdx.smsgatewaysync.R
-import com.didahdx.smsgatewaysync.receiver.BatteryReceiver
-import com.didahdx.smsgatewaysync.receiver.ConnectionReceiver
-import com.didahdx.smsgatewaysync.receiver.PhoneCallReceiver
-import com.didahdx.smsgatewaysync.receiver.SmsReceiver
+import com.didahdx.smsgatewaysync.receiver.*
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.ui.IMainActivity
-import com.didahdx.smsgatewaysync.utilities.INPUT_EXTRAS
-import com.didahdx.smsgatewaysync.utilities.PERMISSION_FOREGROUND_SERVICES_CODE
-import com.didahdx.smsgatewaysync.utilities.PREF_SERVICES_KEY
-import com.didahdx.smsgatewaysync.utilities.SMS_RECEIVED_INTENT
+import com.didahdx.smsgatewaysync.utilities.*
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.auth.FirebaseAuth
-import com.microsoft.appcenter.AppCenter
-import com.microsoft.appcenter.analytics.Analytics
-import com.microsoft.appcenter.crashes.Crashes
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_layout.*
 import kotlinx.android.synthetic.main.navigation_header.view.*
@@ -60,14 +51,12 @@ class MainActivity : AppCompatActivity() {
         NavigationUI.setupWithNavController(navigation_view, navController)
         NavigationUI.setupActionBarWithNavController(this, navController, drawer_layout)
 
-        AppCenter.start(
-            application, "e55e44cf-eac5-49fc-a785-d6956b386176",
-            Analytics::class.java, Crashes::class.java
-        )
+
 
         // Obtain the FirebaseAnalytics instance.
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this)
         registerReceiver(SmsReceiver(), IntentFilter(SMS_RECEIVED_INTENT))
+        registerReceiver(MmsReceiver(), IntentFilter(ACTION_MMS_RECEIVED))
 
         //registering broadcast receiver for battery
         registerReceiver(BatteryReceiver(), IntentFilter(Intent.ACTION_BATTERY_CHANGED))

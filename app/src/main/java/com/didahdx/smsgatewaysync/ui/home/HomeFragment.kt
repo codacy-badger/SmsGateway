@@ -394,17 +394,19 @@ class HomeFragment : Fragment(),
                     val smsFilter = messageText?.let { SmsFilter(it, maskedPhoneNumber) }
                     val printMessage =
                         smsFilter?.checkSmsType(messageText.trim(), maskedPhoneNumber)
-                    val importantSmsType = sharedPreferences.getString(PREF_IMPORTANT_SMS_NOTIFICATION, " ")
+                    val importantSmsType =
+                        sharedPreferences.getString(PREF_IMPORTANT_SMS_NOTIFICATION, " ")
 
                     if (messageText != null && phoneNumber != null &&
-                       ( smsFilter?.mpesaType == importantSmsType || importantSmsType=="All")) {
+                        (smsFilter?.mpesaType == importantSmsType || importantSmsType == "All")
+                    ) {
                         Timber.i(" $messageText \n $phoneNumber ")
                         notificationMessage(messageText, phoneNumber)
                         requireContext().toast("test $importantSmsType $messageText $phoneNumber")
                     }
 
-                    if (printMessage != null && smsFilter?.mpesaType == printType ) {
-                        CoroutineScope(IO).launch{
+                    if (printMessage != null && smsFilter?.mpesaType == printType) {
+                        CoroutineScope(IO).launch {
                             intentPrint(printMessage)
                         }
                     }
@@ -589,8 +591,10 @@ class HomeFragment : Fragment(),
                 .setContentTitle(phoneNumber)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setSmallIcon(R.drawable.ic_message)
-                .setStyle(NotificationCompat.BigTextStyle()
-                    .bigText(message))
+                .setStyle(
+                    NotificationCompat.BigTextStyle()
+                        .bigText(message)
+                )
                 .build()
 
             notificationManager.notify(importantSmsNotification, notification)
@@ -962,7 +966,7 @@ class HomeFragment : Fragment(),
     }
 
 
-   suspend private fun InitPrinter() {
+    suspend private fun InitPrinter() {
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter() as BluetoothAdapter
         try {
             if (!bluetoothAdapter?.isEnabled!!) {
@@ -997,14 +1001,14 @@ class HomeFragment : Fragment(),
                 beginListenForData()
             } else {
                 value = "No Devices found"
-                CoroutineScope(Main).launch{
+                CoroutineScope(Main).launch {
                     requireContext().toast(value)
                 }
                 return
             }
         } catch (ex: java.lang.Exception) {
             value = "$ex\n InitPrinter \n"
-            CoroutineScope(Main).launch{
+            CoroutineScope(Main).launch {
                 requireContext().toast(value)
             }
         }
@@ -1012,7 +1016,7 @@ class HomeFragment : Fragment(),
     }
 
 
-   suspend private fun beginListenForData() {
+    suspend private fun beginListenForData() {
         try {
             val handler = Handler()
 
@@ -1061,14 +1065,14 @@ class HomeFragment : Fragment(),
     }
 
 
-   suspend fun intentPrint(messageBody: String) {
+    suspend fun intentPrint(messageBody: String) {
         val buffer: ByteArray = messageBody.toByteArray()
         val printHeader = byteArrayOf(0xAA.toByte(), 0x55, 2, 0)
         printHeader[3] = buffer.size.toByte()
         InitPrinter()
         if (printHeader.size > 128) {
             value = "\nValue is more than 128 size\n"
-            CoroutineScope(Main).launch{
+            CoroutineScope(Main).launch {
                 requireContext().toast(value)
             }
         } else {
@@ -1078,7 +1082,7 @@ class HomeFragment : Fragment(),
                 socket?.close()
             } catch (ex: java.lang.Exception) {
                 value = "$ex\nExcep IntentPrint \n"
-                CoroutineScope(Main).launch{
+                CoroutineScope(Main).launch {
                     requireContext().toast(value)
                 }
             }
@@ -1103,8 +1107,8 @@ class HomeFragment : Fragment(),
                         val post = PostSms(
                             message.accountNumber,
                             amount.toDouble(),
-                            message.latitude.toDouble(),
-                            message.longitude.toDouble(),
+                            userLatitude.toDouble(),
+                            userLongitude.toDouble(),
                             message.messageBody,
                             message.name,
                             message.receiver,
@@ -1143,10 +1147,9 @@ class HomeFragment : Fragment(),
                                     message.name,
                                     message.date,
                                     true,
-                                    message.longitude,
-                                    message.latitude
+                                    userLongitude,
+                                    userLatitude
                                 )
-
                                 updateMessage.id = message.id
 
                                 CoroutineScope(IO).launch {

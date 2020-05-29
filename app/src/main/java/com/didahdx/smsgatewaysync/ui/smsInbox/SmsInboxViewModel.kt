@@ -5,8 +5,11 @@ import android.database.Cursor
 import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import androidx.preference.PreferenceManager
+import com.didahdx.smsgatewaysync.data.db.IncomingMessagesDao
+import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
 import com.didahdx.smsgatewaysync.model.SmsInboxInfo
 import com.didahdx.smsgatewaysync.model.SmsInfo
 import com.didahdx.smsgatewaysync.utilities.*
@@ -15,11 +18,14 @@ import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
 import timber.log.Timber
 import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.collections.ArrayList
 
-class SmsInboxViewModel(application: Application) : ViewModel() {
+class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Application) : ViewModel() {
 
     var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT)
     val app = application
+    val database = dataSource
     private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(application)
 
     //data to be passed to next screen
@@ -51,7 +57,6 @@ class SmsInboxViewModel(application: Application) : ViewModel() {
 
     private suspend fun setInputMessage(message: Cursor) {
         withContext(Main) {
-            app.toast(" Db Cursot ${message.count}")
             _messageArrayList.value = message
         }
     }
@@ -75,7 +80,7 @@ class SmsInboxViewModel(application: Application) : ViewModel() {
             val mpesaType = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
 
             Timber.i("mpesa sms $mpesaType ")
-            var count= 0
+            var count = 0
 
             do {
                 val dateString = cursor.getString(dateId)
@@ -190,12 +195,6 @@ class SmsInboxViewModel(application: Application) : ViewModel() {
 
 //                if (cursor.getString(nameId) == "MPESA") {
 
-                    var mpesaId: String =
-                        cursor.getString(messageId).split("\\s".toRegex()).first().trim()
-                    if (!MPESA_ID_PATTERN.toRegex().matches(mpesaId)) {
-                        mpesaId = NOT_AVAILABLE
-                    }
-
                     val maskedPhoneNumber = sharedPreferences.getBoolean(PREF_MASKED_NUMBER, false)
                     val smsFilter = SmsFilter(cursor.getString(messageId), maskedPhoneNumber)
 
@@ -226,14 +225,14 @@ class SmsInboxViewModel(application: Application) : ViewModel() {
                 cursor.close()
             }
 
-            val projections = arrayOf("address", "body", "date")
+            val projections = arrayOf("_id","address", "body", "date")
             var inClause: String = smsItem.toString()
             inClause = inClause.replace('[', '(');
             inClause = inClause.replace(']', ')');
             val selection = "date IN  $inClause"
             val selectionArgs: String = smsItem.toArray().toString()
 
-           val valueCursor = app.contentResolver?.query(
+            val valueCursor = app.contentResolver?.query(
                 Uri.parse("content://sms/inbox"),
                 projections,
                 selection,
@@ -241,8 +240,8 @@ class SmsInboxViewModel(application: Application) : ViewModel() {
                 null
             )
 
-            withContext(Main){
-                mCursor=valueCursor
+            withContext(Main) {
+                mCursor = valueCursor
             }
 
         }
@@ -252,5 +251,87 @@ class SmsInboxViewModel(application: Application) : ViewModel() {
     override fun onCleared() {
         super.onCleared()
         CoroutineScope(Dispatchers.IO).cancel()
+    }
+
+    fun getAllDbSms() {
+        CoroutineScope(IO).launch {
+            val cursor = app.contentResolver?.query(
+                Uri.parse("content://sms/inbox"),
+                null,
+                null,
+                null,
+                null
+            )
+            Timber.i("get all Db message calledv")
+
+            if (cursor != null && cursor.moveToNext()) {
+                val message_id = cursor.getColumnIndex("_id")
+                val nameId = cursor.getColumnIndex("address")
+                val messageId = cursor.getColumnIndex("body")
+                val dateId = cursor.getColumnIndex("date")
+                val mpesaType = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
+
+                Timber.i("mpesa sms $mpesaType ")
+                var count = 0
+
+                do {
+                    val dateString = cursor.getString(dateId)
+                    val messageBody = cursor.getString(messageId)
+                    val sender = cursor.getString(nameId)
+//                if (cursor.getString(nameId) == "MPESA") {
+
+                    val maskedPhoneNumber = sharedPreferences.getBoolean(PREF_MASKED_NUMBER, false)
+                    val smsFilter = SmsFilter(cursor.getString(messageId), maskedPhoneNumber)
+                    val data = database.getMessage(smsFilter.mpesaId)
+
+                    val message = MpesaMessageInfo(
+                        messageBody,
+                        sdf.format(Date(dateString.toLong())),
+                        sender,
+                        smsFilter.mpesaId,
+                        smsFilter.phoneNumber,
+                        smsFilter.amount,
+                        smsFilter.accountNumber,
+                        smsFilter.name,
+                        dateString.toLong(),
+                        false,
+                        "",
+                        ""
+                    )
+
+                    when (mpesaType) {
+                        PAY_BILL -> {
+                            if (smsFilter.mpesaType == PAY_BILL) {
+                                val data = database.getMessage(smsFilter.mpesaId)
+                                if (data.isNullOrEmpty()) {
+                                    database.addMessage(message)
+                                }
+                            }
+                        }
+                        DIRECT_MPESA -> {
+                            if (smsFilter.mpesaType == DIRECT_MPESA) {
+                                val data = database.getMessage(smsFilter.mpesaId)
+                                if (data.isNullOrEmpty()) {
+                                    database.addMessage(message)
+                                }
+                            }
+                        }
+
+                        BUY_GOODS_AND_SERVICES -> {
+                            if (smsFilter.mpesaType == BUY_GOODS_AND_SERVICES) {
+                                val data = database.getMessage(smsFilter.mpesaId)
+                                if (data.isNullOrEmpty()) {
+                                    database.addMessage(message)
+                                }
+                            }
+                        }
+                    }
+//                }
+
+                } while (cursor.moveToNext())
+                cursor.close()
+                Timber.i("done ")
+            }
+        }
     }
 }

@@ -81,6 +81,7 @@
     <string name="bluetooth_devices">Bluetooth Devices</string>
     <string name="cancel">Cancel</string>
     <string name="connect_printer">Connect Printer</string>
+    <string name="action_import">Import all sms</string>
 
 
 </resources>

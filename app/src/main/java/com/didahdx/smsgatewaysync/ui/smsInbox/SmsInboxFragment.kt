@@ -1,16 +1,11 @@
 package com.didahdx.smsgatewaysync.ui.smsInbox
 
 import android.Manifest
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.*
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.databinding.DataBindingUtil
@@ -19,18 +14,19 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.DefaultItemAnimator
+import androidx.navigation.ui.NavigationUI
 import androidx.recyclerview.widget.GridLayoutManager
 import com.didahdx.smsgatewaysync.R
+import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
 import com.didahdx.smsgatewaysync.databinding.FragmentSmsInboxBinding
+import com.didahdx.smsgatewaysync.ui.activities.LoginActivity
 import com.didahdx.smsgatewaysync.ui.adapters.SmsAdapterListener
 import com.didahdx.smsgatewaysync.ui.adapters.SmsInboxAdapter
 import com.didahdx.smsgatewaysync.ui.adapters.SmsInboxAdapterListener
 import com.didahdx.smsgatewaysync.ui.adapters.SmsInboxCursorAdapter
 import com.didahdx.smsgatewaysync.utilities.SMS_LOCAL_BROADCAST_RECEIVER
-
 import com.didahdx.smsgatewaysync.utilities.hide
-import com.didahdx.smsgatewaysync.utilities.toast
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.cancel
@@ -45,6 +41,7 @@ class SmsInboxFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
         LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
             mSmsReceiver, IntentFilter(SMS_LOCAL_BROADCAST_RECEIVER)
         )
@@ -60,7 +57,8 @@ class SmsInboxFragment : Fragment() {
         )
 
         val application = requireNotNull(this.activity).application
-        val factory = SmsInboxViewModelFactory(application)
+        val database = MessagesDatabase(application).getIncomingMessageDao()
+        val factory = SmsInboxViewModelFactory(database,application)
         smsInboxViewModel = ViewModelProvider(this, factory).get(SmsInboxViewModel::class.java)
 
         binding.smsInboxViewModel = smsInboxViewModel
@@ -102,7 +100,8 @@ class SmsInboxFragment : Fragment() {
             binding.progressBar2.hide()
             binding.textLoading2.hide()
             it?.let {
-                inboxAdapter?.swapCursor(it)
+                it.count
+                inboxAdapter.swapCursor(it)
 //                used to
 //                (binding.recyclerViewMessageList.layoutManager as GridLayoutManager).scrollToPositionWithOffset(0, 0)
             }
@@ -142,6 +141,24 @@ class SmsInboxFragment : Fragment() {
             }
         }
     }
+
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.sms_inbox_menu, menu)
+        super.onCreateOptionsMenu(menu, inflater)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+
+            R.id.action_import -> {
+                smsInboxViewModel.getAllDbSms()
+            }
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+
 
     override fun onDestroy() {
         super.onDestroy()

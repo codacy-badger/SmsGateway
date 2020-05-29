@@ -6,20 +6,10 @@ import android.content.Context
 import android.os.Build
 import androidx.multidex.MultiDex
 import androidx.multidex.MultiDexApplication
-import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
-import com.didahdx.smsgatewaysync.ui.home.HomeViewModelFactory
-import com.didahdx.smsgatewaysync.ui.smsInbox.SmsInboxViewModelFactory
 import com.didahdx.smsgatewaysync.utilities.*
-import org.kodein.di.Kodein
-import org.kodein.di.KodeinAware
-import org.kodein.di.android.x.androidXModule
-import org.kodein.di.generic.bind
-import org.kodein.di.generic.instance
-import org.kodein.di.generic.provider
-import org.kodein.di.generic.singleton
 import timber.log.Timber
 
-class App : MultiDexApplication(), KodeinAware {
+class App : MultiDexApplication() {
 
 
     override fun attachBaseContext(context: Context) {
@@ -69,20 +59,5 @@ class App : MultiDexApplication(), KodeinAware {
             manager?.createNotificationChannel(smsNotificationChannel)
         }
     }
-    override val kodein = Kodein.lazy {
-        import(androidXModule(this@App))
 
-        bind() from singleton { MessagesDatabase(instance()) }
-        bind() from provider {
-            HomeViewModelFactory(
-                instance(),
-                instance()
-            )
-        }
-        bind() from provider {
-            SmsInboxViewModelFactory(
-                instance()
-            )
-        }
-    }
 }

@@ -17,9 +17,9 @@ buildscript {
         // Check that you have the Google Services Gradle plugin v4.3.2 or later
         // (if not, add it).
         classpath 'com.google.gms:google-services:4.3.3'
-
+        classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:1.0.2'
         // Add the Crashlytics Gradle plugin.
-        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.0.0'
+        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.1.1'
         def nav_version = "2.3.0-alpha06"
         classpath "androidx.navigation:navigation-safe-args-gradle-plugin:$nav_version"
     }

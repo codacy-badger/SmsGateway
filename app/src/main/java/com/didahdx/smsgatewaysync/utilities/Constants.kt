@@ -21,6 +21,7 @@ const val CHANNEL_ID_3 = "important_sms"
 const val CHANNEL_CLIENT_NOTIFICATION_NAME = "update messages"
 const val CHANNEL_IMPORTANT_SMS_NOTIFICATION = "important sms "
 const val MESSAGE_DATABASE = "messageDatabase"
+const val ACTION_MMS_RECEIVED = "android.provider.Telephony.WAP_PUSH_RECEIVED"
 
 
 /**
