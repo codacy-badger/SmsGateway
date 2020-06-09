@@ -11,16 +11,9 @@ import androidx.lifecycle.*
 import androidx.preference.PreferenceManager
 import com.didahdx.smsgatewaysync.data.db.IncomingMessagesDao
 import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
-import com.didahdx.smsgatewaysync.data.network.PostSms
-import com.didahdx.smsgatewaysync.data.network.SmsApi
-import com.didahdx.smsgatewaysync.model.SmsInboxInfo
 import com.didahdx.smsgatewaysync.model.SmsInfo
 import com.didahdx.smsgatewaysync.utilities.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.Dispatchers.IO
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 import timber.log.Timber
 import java.lang.reflect.Method
 import java.text.SimpleDateFormat
@@ -40,7 +33,7 @@ class HomeViewModel(
 
     // Create a Coroutine scope using a job to be able to cancel when needed
     private var viewModelJob = Job()
-    val sdf = SimpleDateFormat(DATE_FORMAT)
+    val sdf = SimpleDateFormat(DATE_FORMAT,Locale.US)
 
     // the Coroutine runs using the Main (UI) dispatcher
     private val coroutineScope = CoroutineScope(viewModelJob + Dispatchers.Main)
@@ -49,49 +42,50 @@ class HomeViewModel(
     private val app = application
     private var incomingMessages = database.getAllMessages()
 
-    val filteredMessages = Transformations.map(incomingMessages) {
-        val messagesFilled = ArrayList<MpesaMessageInfo>()
-        viewModelScope.launch {
-            it?.let {
-                val mpesaType = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
-                var count = 0
-                val maskedPhoneNumber = sharedPreferences.getBoolean(PREF_MASKED_NUMBER, false)
-                for (i in it.indices) {
-                    val smsFilter = SmsFilter(it[i].messageBody, maskedPhoneNumber)
-                    when (mpesaType) {
-                        PAY_BILL -> {
-                            if (smsFilter.mpesaType == PAY_BILL) {
-                                messagesFilled.add(it[i])
-                                count++
+   fun getFilteredData(): LiveData<List<MpesaMessageInfo>> {
+        return Transformations.map(incomingMessages) {
+            val messagesFilled = ArrayList<MpesaMessageInfo>()
+            viewModelScope.launch {
+                it?.let {
+                    val mpesaType = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
+                    var count = 0
+                    val maskedPhoneNumber = sharedPreferences.getBoolean(PREF_MASKED_NUMBER, false)
+                    for (i in it.indices) {
+                        val smsFilter = SmsFilter(it[i].messageBody, maskedPhoneNumber)
+                        when (mpesaType) {
+                            PAY_BILL -> {
+                                if (smsFilter.mpesaType == PAY_BILL) {
+                                    messagesFilled.add(it[i])
+                                    count++
+                                }
                             }
-                        }
 
-                        DIRECT_MPESA -> {
-                            if (smsFilter.mpesaType == DIRECT_MPESA) {
-                                messagesFilled.add(it[i])
-                                count++
+                            DIRECT_MPESA -> {
+                                if (smsFilter.mpesaType == DIRECT_MPESA) {
+                                    messagesFilled.add(it[i])
+                                    count++
+                                    app.toast(" $count")
+                                }
                             }
-                        }
 
-                        BUY_GOODS_AND_SERVICES -> {
-                            if (smsFilter.mpesaType == BUY_GOODS_AND_SERVICES) {
+                            BUY_GOODS_AND_SERVICES -> {
+                                if (smsFilter.mpesaType == BUY_GOODS_AND_SERVICES) {
+                                    messagesFilled.add(it[i])
+                                    count++
+                                }
+                            }
+                            else -> {
                                 messagesFilled.add(it[i])
                                 count++
                             }
                         }
-                        else -> {
-                            messagesFilled.add(it[i])
-                            count++
-                        }
+                        setCount(i)
                     }
-                    setCount(count)
                 }
             }
+            return@map messagesFilled.toList()
         }
-        return@map messagesFilled.toList()
     }
-
-
 
 
     private suspend fun setCount(count: Int) {

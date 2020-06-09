@@ -11,7 +11,7 @@
 
         <variable
             name="clickListener"
-            type="com.didahdx.smsgatewaysync.ui.adapters.MessageAdapterListener" />
+            type="com.didahdx.smsgatewaysync.ui.home.MessageAdapterListener" />
     </data>
 
 

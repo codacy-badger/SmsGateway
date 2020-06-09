@@ -1,7 +1,10 @@
 package com.didahdx.smsgatewaysync.ui.smsInbox
 
 import android.Manifest
-import android.content.*
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.os.Bundle
@@ -14,19 +17,12 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.ui.NavigationUI
 import androidx.recyclerview.widget.GridLayoutManager
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
 import com.didahdx.smsgatewaysync.databinding.FragmentSmsInboxBinding
-import com.didahdx.smsgatewaysync.ui.activities.LoginActivity
-import com.didahdx.smsgatewaysync.ui.adapters.SmsAdapterListener
-import com.didahdx.smsgatewaysync.ui.adapters.SmsInboxAdapter
-import com.didahdx.smsgatewaysync.ui.adapters.SmsInboxAdapterListener
-import com.didahdx.smsgatewaysync.ui.adapters.SmsInboxCursorAdapter
 import com.didahdx.smsgatewaysync.utilities.SMS_LOCAL_BROADCAST_RECEIVER
 import com.didahdx.smsgatewaysync.utilities.hide
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.cancel
@@ -62,16 +58,13 @@ class SmsInboxFragment : Fragment() {
         smsInboxViewModel = ViewModelProvider(this, factory).get(SmsInboxViewModel::class.java)
 
         binding.smsInboxViewModel = smsInboxViewModel
-        val adapter = SmsInboxAdapter(SmsInboxAdapterListener {
-            smsInboxViewModel.onMessageDetailClicked(it)
-        })
-
         val cursor:Cursor?=null
-
-        val inboxAdapter = SmsInboxCursorAdapter(cursor, SmsAdapterListener { sms ->
+        val inboxAdapter =
+            SmsInboxCursorAdapter(
+                cursor,
+                SmsAdapterListener { sms ->
                     smsInboxViewModel.onMessageDetailClicked(sms)
                 })
-
 
         val manager = GridLayoutManager(activity, 1, GridLayoutManager.VERTICAL, false)
         binding.recyclerViewMessageList2.layoutManager = manager

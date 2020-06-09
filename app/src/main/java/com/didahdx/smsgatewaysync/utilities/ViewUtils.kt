@@ -2,8 +2,6 @@ package com.didahdx.smsgatewaysync.utilities
 
 import android.content.Context
 import android.view.View
-import android.widget.ProgressBar
-import android.widget.TextView
 import android.widget.Toast
 import com.didahdx.smsgatewaysync.R
 import com.google.android.material.snackbar.Snackbar
@@ -27,20 +25,20 @@ fun View.hide(): View {
     return this
 }
 
-fun TextView.backgroundRed() {
+fun View.backgroundRed() {
     background =
-        resources.getDrawable(R.drawable.item_background_red)
+        resources.getDrawable(R.drawable.item_background_red,null)
 }
 
-fun TextView.backgroundGreen() {
+fun View.backgroundGreen() {
     background =
-        resources.getDrawable(R.drawable.item_background_green)
+        resources.getDrawable(R.drawable.item_background_green,null)
 }
 
-fun View.snackbar(message: String) {
-    Snackbar.make(this, message, Snackbar.LENGTH_LONG).also { snackbar ->
-        snackbar.setAction("Ok") {
-            snackbar.dismiss()
+fun View.snackBar(message: String) {
+    Snackbar.make(this, message, Snackbar.LENGTH_LONG).also { snackBar ->
+        snackBar.setAction("Ok") {
+            snackBar.dismiss()
         }
     }.show()
 }

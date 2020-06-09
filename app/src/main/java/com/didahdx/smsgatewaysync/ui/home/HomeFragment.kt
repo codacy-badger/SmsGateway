@@ -2,6 +2,7 @@ package com.didahdx.smsgatewaysync.ui.home
 
 import android.Manifest
 import android.app.Activity
+import android.app.ActivityManager
 import android.app.PendingIntent
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
@@ -11,19 +12,19 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.net.ConnectivityManager
 import android.net.Uri
-import android.os.Build
-import android.os.Bundle
-import android.os.Handler
+import android.os.*
 import android.provider.Settings
 import android.telephony.SmsManager
 import android.telephony.SubscriptionInfo
 import android.telephony.SubscriptionManager
+import android.telephony.TelephonyManager
 import android.view.*
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.checkSelfPermission
+import androidx.core.content.PermissionChecker
 import androidx.core.os.bundleOf
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
@@ -49,8 +50,6 @@ import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.services.LocationGpsService
 import com.didahdx.smsgatewaysync.ui.UiUpdaterInterface
 import com.didahdx.smsgatewaysync.ui.activities.LoginActivity
-import com.didahdx.smsgatewaysync.ui.adapters.MessageAdapter
-import com.didahdx.smsgatewaysync.ui.adapters.MessageAdapterListener
 import com.didahdx.smsgatewaysync.utilities.*
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.OnFailureListener
@@ -72,6 +71,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.lang.reflect.Method
+import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
@@ -100,7 +100,7 @@ class HomeFragment : Fragment(),
     @Volatile
     var stopWorker = false
     var value = ""
-    val sdf = SimpleDateFormat(DATE_FORMAT)
+    private val sdf = SimpleDateFormat(DATE_FORMAT, Locale.US)
 
     private val appPermissions = arrayOf(
         Manifest.permission.ACCESS_FINE_LOCATION,
@@ -145,6 +145,10 @@ class HomeFragment : Fragment(),
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
         UiUpdaterInterface = this
+        context?.registerReceiver(
+            locationBroadcastReceiver,
+            IntentFilter(LOCATION_UPDATE_INTENT)
+        )
         Timber.i("isConnected $isConnected")
         CoroutineScope(IO).launch {
             rabbitmqClient = RabbitmqClient(UiUpdaterInterface, user?.email!!)
@@ -214,16 +218,17 @@ class HomeFragment : Fragment(),
         mHomeViewModel = ViewModelProvider(this, factory).get(HomeViewModel::class.java)
 
         binding.homeViewModel = mHomeViewModel
-        val adapter = MessageAdapter(MessageAdapterListener {
-            mHomeViewModel.onMessageDetailClicked(it)
-        })
+        val adapter =
+            MessageAdapter(MessageAdapterListener {
+                mHomeViewModel.onMessageDetailClicked(it)
+            })
 
         val manager = GridLayoutManager(activity, 1, GridLayoutManager.VERTICAL, false)
         binding.recyclerViewMessageList.layoutManager = manager
         binding.recyclerViewMessageList.adapter = adapter
         binding.lifecycleOwner = this
 
-        mHomeViewModel.filteredMessages.observe(viewLifecycleOwner, Observer {
+        mHomeViewModel.getFilteredData().observe(viewLifecycleOwner, Observer {
             it?.let {
                 binding.progressBar.hide()
                 binding.textLoading.hide()
@@ -250,14 +255,16 @@ class HomeFragment : Fragment(),
             }
         })
 
+
         binding.refreshLayoutHome.setOnRefreshListener {
             binding.refreshLayoutHome.isRefreshing = true
             mHomeViewModel.refreshIncomingDatabase()
             binding.refreshLayoutHome.isRefreshing = false
         }
 
-        val intent = Intent(requireContext(), LocationGpsService::class.java)
-        context?.startService(intent)
+        val LocationIntent = Intent(requireContext(), LocationGpsService::class.java)
+        context?.startService(LocationIntent)
+//        ContextCompat.startForegroundService(requireContext(),LocationIntent)
 
         // Inflate the layout for this fragment
         return binding.root
@@ -310,7 +317,41 @@ class HomeFragment : Fragment(),
                     val batteryChargingStatus =
                         intent.extras!!.getString(BATTERY_CHARGING_STATUS_EXTRA)
                     val batteryTechnology = intent.extras!!.getString(BATTERY_TECHNOLOGY_EXTRA)
+
                     startGettingLocation()
+                    var imei = ""
+                    var networkName = ""
+                    var simSerialNumber = ""
+                    var imsi = ""
+                    val telephonyManager = requireContext()
+                        .getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+                    if (PermissionChecker.checkSelfPermission(
+                            requireContext(),
+                            Manifest.permission.READ_PHONE_STATE
+                        ) == PackageManager.PERMISSION_GRANTED
+                    ) {
+                        imei = telephonyManager.deviceId
+                        networkName = telephonyManager.networkOperatorName
+                        simSerialNumber = telephonyManager.simSerialNumber
+                        imsi = telephonyManager.subscriberId
+
+                    }
+
+                    //internal storage
+                    val df2 = DecimalFormat("###,###,###,###.00")
+                    val stat = StatFs(Environment.getExternalStorageDirectory().path)
+                    val bytesAvailable: Long = stat.blockSizeLong * stat.availableBlocksLong
+                    val megAvailable: Double = (bytesAvailable.toDouble() / (GIGABYTE).toDouble())
+                    val megTotal: Double =
+                        (stat.blockSizeLong * stat.blockCountLong).toDouble() / (GIGABYTE).toDouble()
+
+                    //ram space
+                    val mi = ActivityManager.MemoryInfo()
+                    val activityManager =
+                        requireContext().getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager?
+                    activityManager!!.getMemoryInfo(mi)
+                    val availableRAM: Double = mi.availMem / (0x100000L).toDouble()
+                    val TotalRam: Double = mi.totalMem / (0x100000L).toDouble()
 
                     val obj: JSONObject? = JSONObject()
                     obj?.put("type", "phoneStatus")
@@ -323,6 +364,17 @@ class HomeFragment : Fragment(),
                     obj?.put("batteryVoltage", batteryVoltage)
                     obj?.put("longitude", userLongitude)
                     obj?.put("latitude", userLatitude)
+                    obj?.put("imei", imei)
+                    obj?.put("imsi", imsi)
+                    obj?.put("simSerialNumber", simSerialNumber)
+                    obj?.put("networkName", networkName)
+                    obj?.put("PhoneManufacturer", Build.MANUFACTURER)
+                    obj?.put("PhoneModel", Build.MODEL)
+                    obj?.put("PhoneBrand", Build.BRAND)
+                    obj?.put("TotalStorage", "${df2.format(megTotal)} GB")
+                    obj?.put("FreeStorage", "${df2.format(megAvailable)} GB")
+                    obj?.put("TotalRam", "${df2.format(TotalRam)} MB")
+                    obj?.put("FreeRam", "${df2.format(availableRAM)} MB")
                     obj?.put("client_sender", user?.email!!)
                     obj?.put("date", Date().toString())
                     obj?.put("client_gateway_type", "android_phone")
@@ -388,7 +440,8 @@ class HomeFragment : Fragment(),
                     val date = Date(dateTimeStamp).toString()
 
                     startGettingLocation()
-                    val maskedPhoneNumber = sharedPreferences.getBoolean(PREF_MASKED_NUMBER, false)
+                    val maskedPhoneNumber =
+                        sharedPreferences.getBoolean(PREF_MASKED_NUMBER, false)
                     val printType = sharedPreferences.getString(PREF_PRINT_TYPE, "")
                     val obj: JSONObject? = JSONObject()
                     val smsFilter = messageText?.let { SmsFilter(it, maskedPhoneNumber) }
@@ -616,6 +669,8 @@ class HomeFragment : Fragment(),
     //used to update status bar
     override fun updateStatusViewWith(status: String, color: String) {
         CoroutineScope(Main).launch {
+            val appLog = AppLog()
+            appLog.writeToLog(requireContext(), " $status\n")
             text_view_status?.text = status
             startServices(status)
             when (color) {
@@ -746,7 +801,6 @@ class HomeFragment : Fragment(),
 
     override fun onResume() {
         super.onResume()
-        context?.registerReceiver(locationBroadcastReceiver, IntentFilter(LOCATION_UPDATE_INTENT))
         if (locationBroadcastReceiver == null) {
             locationBroadcastReceiver = object : BroadcastReceiver() {
                 override fun onReceive(context: Context, intent: Intent) {
@@ -754,11 +808,9 @@ class HomeFragment : Fragment(),
                         val longitude = intent.getStringExtra(LONGITUDE_EXTRA)
                         val latitude = intent.getStringExtra(LATITUDE_EXTRA)
                         val altitude = intent.getStringExtra(ALTITUDE_EXTRA)
-                        userLatitude = latitude
-                        userLongitude = longitude
 
-                        context.toast("$latitude ${intent.getStringExtra(LONGITUDE_EXTRA)}")
-
+                        latitude?.let { userLatitude = it }
+                        longitude?.let { userLongitude = it }
                     }
                 }
             }
@@ -1199,13 +1251,16 @@ class HomeFragment : Fragment(),
                             Timber.i("Localised message ${t.localizedMessage}")
                         }
 
-                        override fun onResponse(call: Call<PostSms>, response: Response<PostSms>) {
+                        override fun onResponse(
+                            call: Call<PostSms>,
+                            response: Response<PostSms>
+                        ) {
                             if (!response.isSuccessful) {
                                 Timber.i("Code: %s", response.code());
                                 return;
                             }
 
-                            Timber.i("Code: ${response.code()} call ${call.toString()} ");
+                            Timber.i("Code: ${response.code()} call $call ");
                         }
 
                     })
@@ -1216,5 +1271,6 @@ class HomeFragment : Fragment(),
             }
         }
     }
+
 
 }

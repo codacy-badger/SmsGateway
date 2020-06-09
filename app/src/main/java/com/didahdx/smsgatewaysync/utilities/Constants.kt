@@ -3,6 +3,7 @@ package com.didahdx.smsgatewaysync.utilities
 /**
  * Constants used throughout the app.
  */
+const val GIGABYTE = 1073741824
 const val DATE_FORMAT = "dd/MMM/yy hh:mm:ss aaa"
 const val MPESA_ID_PATTERN = "^[A-Z0-9]*$"
 const val RED_COLOR = "RED_COLOR"

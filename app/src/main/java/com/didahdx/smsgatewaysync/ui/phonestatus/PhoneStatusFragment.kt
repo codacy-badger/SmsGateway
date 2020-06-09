@@ -2,14 +2,16 @@ package com.didahdx.smsgatewaysync.ui.phonestatus
 
 import android.Manifest
 import android.app.Activity
+import android.app.ActivityManager
 import android.content.*
+import android.content.Context.ACTIVITY_SERVICE
 import android.content.pm.PackageManager
+import android.net.TrafficStats
 import android.net.Uri
 import android.os.*
 import android.provider.Settings
 import android.telephony.TelephonyManager
 import android.telephony.TelephonyManager.UssdResponseCallback
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,9 +19,15 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.PermissionChecker.checkSelfPermission
 import androidx.fragment.app.Fragment
 import com.didahdx.smsgatewaysync.R
+import com.didahdx.smsgatewaysync.utilities.GIGABYTE
 import com.didahdx.smsgatewaysync.utilities.PERMISSION_REQUEST_ALL_CODE
 import com.didahdx.smsgatewaysync.utilities.toast
 import kotlinx.android.synthetic.main.fragment_phone_status.*
+import timber.log.Timber
+import java.text.DecimalFormat
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 
 /**
@@ -62,7 +70,7 @@ class PhoneStatusFragment : Fragment() {
             activity?.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager?
         val handler: Handler = object : Handler(Looper.getMainLooper()) {
             override fun handleMessage(message: Message) {
-                Log.e("ussd", message.toString())
+                Timber.e(message.toString())
             }
         }
         var callback: UssdResponseCallback? = null
@@ -84,7 +92,7 @@ class PhoneStatusFragment : Fragment() {
                         text_view_phone_status?.append("\nAirtime Balance KSh: $bal")
 
 //                        context?.toast("ussd response: $response")
-                        Log.e("ussd", "Success with response : $response  ")
+                        Timber.e("Success with response : $response  ")
                     }
 
                     override fun onReceiveUssdResponseFailed(
@@ -94,7 +102,7 @@ class PhoneStatusFragment : Fragment() {
                     ) {
                         super.onReceiveUssdResponseFailed(telephonyManager, request, failureCode)
                         context?.toast(" request $request  \n failureCode $failureCode ")
-                        Log.e("ussd", "failed with code $failureCode")
+                        Timber.e("failed with code $failureCode")
                     }
                 }
         }
@@ -103,7 +111,7 @@ class PhoneStatusFragment : Fragment() {
             == PackageManager.PERMISSION_GRANTED
         ) {
             try {
-                Log.e("ussd", "trying to send ussd request")
+                Timber.e("trying to send ussd request")
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     telephonyManager!!.sendUssdRequest(
@@ -113,8 +121,7 @@ class PhoneStatusFragment : Fragment() {
                     )
                 }
             } catch (e: Exception) {
-                val msg = e.message
-                Log.e("DEBUG", e.toString())
+                Timber.e("${e.message} $e")
                 e.printStackTrace()
             }
         }
@@ -183,8 +190,7 @@ class PhoneStatusFragment : Fragment() {
                 stringBuilder.append("\nIMEI number : ${telephonyManager.deviceId} \n  ")
                 stringBuilder.append("\nNetwork Name : ${telephonyManager.networkOperatorName} \n  ")
                 stringBuilder.append("\nSim Serial Number : ${telephonyManager.simSerialNumber}  \n ")
-                var imsi: String = ""
-                imsi=telephonyManager.subscriberId
+                val imsi: String = telephonyManager.subscriberId
                 stringBuilder.append("\nIMSI : $imsi \n ")
             }
 
@@ -192,12 +198,73 @@ class PhoneStatusFragment : Fragment() {
             stringBuilder.append("\nPhone model : ${Build.MODEL} \n")
             stringBuilder.append("\nPhone brand : ${Build.BRAND} \n")
 
+//            val maxMemory = Runtime.getRuntime().maxMemory() / 1024 / 1024
+//            val totalMemory = Runtime.getRuntime().totalMemory() / 1024 / 1024
+//            val freeMemory = Runtime.getRuntime().freeMemory() / 1024 / 1024
+//
+//            stringBuilder.append("\nTotal Memory  : $totalMemory MiB\n")
+//            stringBuilder.append("\nMax Memory  : $maxMemory MiB\n")
+//            stringBuilder.append("\nUsed Memory  : ${(maxMemory - freeMemory)} MiB\n")
+//            stringBuilder.append("\nFree Memory  : $freeMemory MiB\n")
+
+            val df2 = DecimalFormat("###,###,###,###.00")
+            val stat = StatFs(Environment.getExternalStorageDirectory().path)
+            val bytesAvailable: Long = stat.blockSizeLong * stat.availableBlocksLong
+            val megAvailable: Double = (bytesAvailable.toDouble() / (GIGABYTE).toDouble())
+            val megTotal: Double =
+                (stat.blockSizeLong * stat.blockCountLong).toDouble() / (GIGABYTE).toDouble()
+
+            val freePercent: Double = (megAvailable / megTotal) * (100).toDouble()
+            stringBuilder.append("\nTotal Storage : ${df2.format(megTotal)} GB\n")
+            stringBuilder.append("\nFree Storage : ${df2.format(megAvailable)} GB  " +
+                    "(${df2.format(freePercent)}%)\n")
+
+            val mi = ActivityManager.MemoryInfo()
+            val activityManager = requireContext().getSystemService(ACTIVITY_SERVICE) as ActivityManager?
+            activityManager!!.getMemoryInfo(mi)
+            val availableRAM: Double = mi.availMem / (0x100000L).toDouble()
+            val TotalRam: Double = mi.totalMem / (0x100000L).toDouble()
+            val percentAvail: Double = mi.availMem / mi.totalMem.toDouble() * 100.0
+            stringBuilder.append("\nTotal Ram : ${df2.format(TotalRam)} MB \n")
+            stringBuilder.append("\nAvailable Ram : ${df2.format(availableRAM)} MB (${df2.format(percentAvail)})% \n")
+
+
             text_view_phone_status?.text = stringBuilder.toString()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 checkBalance()
             }
+            stringBuilder.append(networkUsage())
+        }
+    }
+
+    fun networkUsage(): String {
+        var message = " "
+        // Get running processes
+        val manager =
+            requireContext().getSystemService(ACTIVITY_SERVICE) as ActivityManager?
+        val runningApps =
+            manager!!.runningAppProcesses
+        for (runningApp in runningApps) {
+            val received = TrafficStats.getUidRxBytes(runningApp.uid)
+            val sent = TrafficStats.getUidTxBytes(runningApp.uid)
+            Timber.d(
+                String.format(
+                    Locale.getDefault(),
+                    "uid: %1d - name: %s: Sent = %1d, Rcvd = %1d",
+                    runningApp.uid,
+                    runningApp.processName,
+                    sent,
+                    received
+                )
+            )
+
+            message += "${Locale.getDefault()} uid: ${runningApp.uid} - name:" +
+                    " ${runningApp.processName}: Sent = $sent, Rcvd = $received"
+
 
         }
+
+        return message
     }
 
 
@@ -218,9 +285,9 @@ class PhoneStatusFragment : Fragment() {
                 listPermissionsNeeded.toArray(arrayOf(listPermissionsNeeded.size.toString()))
                 , PERMISSION_REQUEST_ALL_CODE
             )
-            return false;
+            return false
         }
-        return true;
+        return true
     }
 
 
@@ -237,7 +304,7 @@ class PhoneStatusFragment : Fragment() {
 
             for (i in grantResults) {
                 if (i >= 0 && grantResults.isNotEmpty() && grantResults[i] == PackageManager.PERMISSION_DENIED) {
-                    permissionResults.put(permissions[i], grantResults[i])
+                    permissionResults[permissions[i]] = grantResults[i]
                     deniedCount++
                 }
             }
@@ -246,17 +313,17 @@ class PhoneStatusFragment : Fragment() {
                 //initialise app
             } else {
                 for (entry in permissionResults) {
-                    var permName = entry.key
-                    var permResult = entry.value
+                    val permName = entry.key
+//                    var permResult = entry.value
 
                     if (shouldShowRequestPermissionRationale(permName)) {
                         showDialog("", "This app needs $permName to work properly",
                             "Grant Permission"
-                            , DialogInterface.OnClickListener { dialog, which ->
+                            , DialogInterface.OnClickListener { dialog, _ ->
                                 dialog.dismiss()
                                 checkAndRequestPermissions()
                             },
-                            "Exit App", DialogInterface.OnClickListener { dialog, which ->
+                            "Exit App", DialogInterface.OnClickListener { dialog, _ ->
                                 dialog.dismiss()
                                 activity?.finish()
                             }
@@ -266,7 +333,7 @@ class PhoneStatusFragment : Fragment() {
                             "You have denied some permissions. Allow all permissions at [Setting] > Permission",
                             "Go to Settings"
                             ,
-                            DialogInterface.OnClickListener { dialog, which ->
+                            DialogInterface.OnClickListener { dialog, _ ->
                                 dialog.dismiss()
                                 val intent = Intent(
                                     Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
@@ -278,7 +345,7 @@ class PhoneStatusFragment : Fragment() {
 
                             },
                             "Exit App",
-                            DialogInterface.OnClickListener { dialog, which ->
+                            DialogInterface.OnClickListener { dialog, _ ->
                                 dialog.dismiss()
                                 activity?.finish()
                             }
@@ -308,7 +375,7 @@ class PhoneStatusFragment : Fragment() {
         builder.setNegativeButton(negativeLabel, negativeOnClick)
         val alert = builder.create()
         alert.show()
-        return alert;
+        return alert
     }
 
 

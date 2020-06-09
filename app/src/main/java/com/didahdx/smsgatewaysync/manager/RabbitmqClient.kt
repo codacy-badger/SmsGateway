@@ -29,7 +29,6 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
 
         try {
 
-
             connection = RabbitmqConnector.connection
             channel = RabbitmqConnector.channel
 

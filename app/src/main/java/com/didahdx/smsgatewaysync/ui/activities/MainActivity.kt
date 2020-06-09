@@ -163,10 +163,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
-        if (isServiceRunning) {
-            stopServices()
-        }
+//        val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
+//        if (isServiceRunning) {
+//            stopServices()
+//        }
 
 //        unregisterReceiver(SmsReceiver())
 //

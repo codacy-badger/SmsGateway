@@ -5,7 +5,6 @@ import android.database.Cursor
 import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import androidx.preference.PreferenceManager
 import com.didahdx.smsgatewaysync.data.db.IncomingMessagesDao
@@ -23,7 +22,7 @@ import kotlin.collections.ArrayList
 
 class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Application) : ViewModel() {
 
-    var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT)
+    var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT, Locale.US)
     val app = application
     val database = dataSource
     private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(application)
@@ -74,7 +73,7 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
         val smsItem = ArrayList<String>()
 
         if (cursor != null && cursor.moveToNext()) {
-            val nameId = cursor.getColumnIndex("address")
+//            val nameId = cursor.getColumnIndex("address")
             val messageId = cursor.getColumnIndex("body")
             val dateId = cursor.getColumnIndex("date")
             val mpesaType = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
@@ -85,14 +84,7 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
             do {
                 val dateString = cursor.getString(dateId)
 
-
 //                if (cursor.getString(nameId) == "MPESA") {
-
-                var mpesaId: String =
-                    cursor.getString(messageId).split("\\s".toRegex()).first().trim()
-                if (!MPESA_ID_PATTERN.toRegex().matches(mpesaId)) {
-                    mpesaId = NOT_AVAILABLE
-                }
 
                 val maskedPhoneNumber = sharedPreferences.getBoolean(PREF_MASKED_NUMBER, false)
                 val smsFilter = SmsFilter(cursor.getString(messageId), maskedPhoneNumber)
@@ -100,26 +92,26 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
                 when (mpesaType) {
                     PAY_BILL -> {
                         if (smsFilter.mpesaType == PAY_BILL) {
-                            cursor?.position?.let { smsItem.add(dateString) }
+                            cursor.position.let { smsItem.add(dateString) }
                             count++
                         }
                     }
                     DIRECT_MPESA -> {
                         if (smsFilter.mpesaType == DIRECT_MPESA) {
-                            cursor?.position?.let { smsItem.add(dateString) }
+                            cursor.position.let { smsItem.add(dateString) }
                             count++
                         }
                     }
 
                     BUY_GOODS_AND_SERVICES -> {
                         if (smsFilter.mpesaType == BUY_GOODS_AND_SERVICES) {
-                            cursor?.position?.let { smsItem.add(dateString) }
+                            cursor.position.let { smsItem.add(dateString) }
                             count++
                         }
                     }
 
                     else -> {
-                        cursor?.position?.let { smsItem.add(dateString) }
+                        cursor.position.let { smsItem.add(dateString) }
                         count++
                     }
                 }
@@ -137,8 +129,7 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
     private suspend fun sortCursor(rowNumbers: ArrayList<String>) {
         val projections = arrayOf("address", "body", "date")
         var inClause: String = rowNumbers.toString()
-        inClause = inClause.replace('[', '(');
-        inClause = inClause.replace(']', ')');
+        inClause = inClause.replace('[', '(').replace(']', ')')
         val selection = "date IN  $inClause"
 
         val cursor = app.contentResolver?.query(
@@ -159,14 +150,26 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
         }
     }
 
-    fun setUpSmsInfo(it: SmsInboxInfo): SmsInfo {
-        val smsStatus = if (it.status) {
+    fun setUpSmsInfo(info: SmsInboxInfo): SmsInfo {
+        var smsStatus = NOT_AVAILABLE
+        try{
+        smsStatus = if (info.status) {
             "Uploaded"
         } else {
             "pending"
+        }}catch (e:Exception){
+            e.printStackTrace()
         }
 
-        return SmsInfo(it.messageBody, it.time, it.sender, smsStatus, it.longitude, it.latitude)
+
+        return SmsInfo(
+            info.messageBody,
+            info.time,
+            info.sender,
+            smsStatus,
+            info.longitude,
+            info.latitude
+        )
     }
 
     fun getCursor(): Cursor? {
@@ -183,11 +186,10 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
             val smsItem = ArrayList<String>()
 
             if (cursor != null && cursor.moveToNext()) {
-                val nameId = cursor.getColumnIndex("address")
+//                val nameId = cursor.getColumnIndex("address")
                 val messageId = cursor.getColumnIndex("body")
                 val dateId = cursor.getColumnIndex("date")
                 val mpesaType = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
-
                 Timber.i("mpesa sms $mpesaType ")
 
                 do {
@@ -201,23 +203,22 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
                     when (mpesaType) {
                         PAY_BILL -> {
                             if (smsFilter.mpesaType == PAY_BILL) {
-                                cursor?.position?.let { smsItem.add(dateString) }
+                                cursor.position.let { smsItem.add(dateString) }
                             }
                         }
                         DIRECT_MPESA -> {
                             if (smsFilter.mpesaType == DIRECT_MPESA) {
-                                cursor?.position?.let { smsItem.add(dateString) }
+                                cursor.position.let { smsItem.add(dateString) }
                             }
                         }
 
                         BUY_GOODS_AND_SERVICES -> {
                             if (smsFilter.mpesaType == BUY_GOODS_AND_SERVICES) {
-                                cursor?.position?.let { smsItem.add(dateString) }
+                                cursor.position.let { smsItem.add(dateString) }
                             }
                         }
-
                         else -> {
-                            cursor?.position?.let { smsItem.add(dateString) }
+                            cursor.position.let { smsItem.add(dateString) }
                         }
                     }
 //                }
@@ -225,13 +226,10 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
                 cursor.close()
             }
 
-            val projections = arrayOf("_id","address", "body", "date")
+            val projections = arrayOf("_id", "address", "body", "date")
             var inClause: String = smsItem.toString()
-            inClause = inClause.replace('[', '(');
-            inClause = inClause.replace(']', ')');
+            inClause = inClause.replace('[', '(').replace(']', ')')
             val selection = "date IN  $inClause"
-            val selectionArgs: String = smsItem.toArray().toString()
-
             val valueCursor = app.contentResolver?.query(
                 Uri.parse("content://sms/inbox"),
                 projections,
@@ -250,7 +248,7 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
 
     override fun onCleared() {
         super.onCleared()
-        CoroutineScope(Dispatchers.IO).cancel()
+        CoroutineScope(IO).cancel()
     }
 
     fun getAllDbSms() {
@@ -265,15 +263,13 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
             Timber.i("get all Db message calledv")
 
             if (cursor != null && cursor.moveToNext()) {
-                val message_id = cursor.getColumnIndex("_id")
+//                val message_id = cursor.getColumnIndex("_id")
                 val nameId = cursor.getColumnIndex("address")
                 val messageId = cursor.getColumnIndex("body")
                 val dateId = cursor.getColumnIndex("date")
                 val mpesaType = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
 
                 Timber.i("mpesa sms $mpesaType ")
-                var count = 0
-
                 do {
                     val dateString = cursor.getString(dateId)
                     val messageBody = cursor.getString(messageId)
@@ -302,7 +298,6 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
                     when (mpesaType) {
                         PAY_BILL -> {
                             if (smsFilter.mpesaType == PAY_BILL) {
-                                val data = database.getMessage(smsFilter.mpesaId)
                                 if (data.isNullOrEmpty()) {
                                     database.addMessage(message)
                                 }
@@ -310,7 +305,6 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
                         }
                         DIRECT_MPESA -> {
                             if (smsFilter.mpesaType == DIRECT_MPESA) {
-                                val data = database.getMessage(smsFilter.mpesaId)
                                 if (data.isNullOrEmpty()) {
                                     database.addMessage(message)
                                 }
@@ -319,7 +313,6 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
 
                         BUY_GOODS_AND_SERVICES -> {
                             if (smsFilter.mpesaType == BUY_GOODS_AND_SERVICES) {
-                                val data = database.getMessage(smsFilter.mpesaId)
                                 if (data.isNullOrEmpty()) {
                                     database.addMessage(message)
                                 }

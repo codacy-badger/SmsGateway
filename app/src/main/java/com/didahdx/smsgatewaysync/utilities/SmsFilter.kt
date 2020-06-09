@@ -254,7 +254,7 @@ class SmsFilter() {
                 .substring(message.indexOf("cash to") + 7, message.indexOf("New") - 1)
             amount =
                 message.substring(message.indexOf("Ksh") - 1, message.indexOf("cash to") - 1).trim()
-            mpesaType = DIRECT_MPESA
+            mpesaType = NOT_AVAILABLE
         }
 
 

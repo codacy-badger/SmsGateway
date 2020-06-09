@@ -62,7 +62,6 @@ class PrinterFragment : Fragment(R.layout.fragment_printer), View.OnClickListene
     val mReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
            val action = intent?.action
-            val device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE) as BluetoothDevice
 
             if (BluetoothDevice.ACTION_FOUND == action) {
                 //Device found

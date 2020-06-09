@@ -18,10 +18,8 @@ class AppServices : Service() {
         val input = intent?.getStringExtra(INPUT_EXTRAS)
 
         val notificationIntent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            0, notificationIntent, 0
-        )
+        val pendingIntent = PendingIntent.getActivity(this, 0,
+            notificationIntent, 0)
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.app_name))
@@ -31,11 +29,9 @@ class AppServices : Service() {
             .setContentIntent(pendingIntent)
             .build()
 
-
-
         startForeground(1, notification)
 
-        return START_NOT_STICKY
+        return START_REDELIVER_INTENT
     }
 
     override fun onBind(intent: Intent?): IBinder? {

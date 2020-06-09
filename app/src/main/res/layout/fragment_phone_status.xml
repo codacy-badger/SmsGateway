@@ -13,7 +13,9 @@
             android:id="@+id/text_view_phone_status"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="15dp" />
+            android:fontFamily="@font/metropolis_medium"
+            android:layout_margin="15dp"
+            android:padding="4dp"/>
     </ScrollView>
 
 

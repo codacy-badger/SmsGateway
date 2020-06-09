@@ -70,7 +70,6 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
 
             PREF_SERVICES_KEY -> {
-                val connectPrinter = findPreference<Preference>(key)
                 val isServiceRunning = preferenceScreen.sharedPreferences
                     .getBoolean(PREF_SERVICES_KEY, true)
 

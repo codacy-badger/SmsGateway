@@ -243,13 +243,10 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details) {
     private fun print() {
         if (smsBody != null) {
             val maskedPhoneNumber = sharedPrferences.getBoolean(PREF_MASKED_NUMBER, false)
-            val printType = sharedPrferences.getString(PREF_PRINT_TYPE, "")
-            val smsprint = SmsFilter().checkSmsType(smsBody!!, maskedPhoneNumber)
+            val smsPrint = SmsFilter().checkSmsType(smsBody!!, maskedPhoneNumber)
 
-            if (smsprint != null) {
-             CoroutineScope(IO).launch{
-                 intentPrint(smsprint)
-             }
+            CoroutineScope(IO).launch{
+                intentPrint(smsPrint)
             }
 
         }
@@ -317,11 +314,11 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details) {
         startActivity(shareIntent)
     }
 
-   suspend fun intentPrint(messageBody: String) {
+   private suspend fun intentPrint(messageBody: String) {
         val buffer: ByteArray = messageBody.toByteArray()
         val printHeader = byteArrayOf(0xAA.toByte(), 0x55, 2, 0)
         printHeader[3] = buffer.size.toByte()
-        InitPrinter()
+        initPrinter()
         if (printHeader.size > 128) {
             value = "\nValue is more than 128 size\n"
             CoroutineScope(Main).launch{
@@ -341,7 +338,7 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details) {
         }
     }
 
-   suspend private fun InitPrinter() {
+   private suspend fun initPrinter() {
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter() as BluetoothAdapter
         try {
             if (!bluetoothAdapter?.isEnabled!!) {
@@ -361,14 +358,12 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details) {
                         break
                     }
                 }
-                val uuid =
-                    UUID.fromString("00001101-0000-1000-8000-00805F9B34FB") //Standard SerialPortService ID
-                val m: Method = bluetoothDevice!!.javaClass.getMethod(
+                 val m: Method = bluetoothDevice!!.javaClass.getMethod(
                     "createRfcommSocket", *arrayOf<Class<*>?>(
                         Int::class.javaPrimitiveType
                     )
                 )
-                socket = m?.invoke(bluetoothDevice, 1) as BluetoothSocket?
+                socket = m.invoke(bluetoothDevice, 1) as BluetoothSocket?
                 bluetoothAdapter?.cancelDiscovery()
                 socket?.connect()
                 outputStream = socket?.outputStream
@@ -391,7 +386,7 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details) {
     }
 
 
-   suspend private fun beginListenForData() {
+   private fun beginListenForData() {
         try {
             val handler = Handler()
 
@@ -422,7 +417,7 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details) {
                                     readBufferPosition = 0
 
                                     // tell the user data were sent to bluetooth printer device
-                                    handler.post(Runnable { Timber.d(data) })
+                                    handler.post({ Timber.d(data) })
                                 } else {
                                     readBuffer[readBufferPosition++] = b
                                 }

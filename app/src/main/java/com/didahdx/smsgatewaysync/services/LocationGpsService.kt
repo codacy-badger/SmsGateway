@@ -17,6 +17,7 @@ import com.didahdx.smsgatewaysync.utilities.ALTITUDE_EXTRA
 import com.didahdx.smsgatewaysync.utilities.LATITUDE_EXTRA
 import com.didahdx.smsgatewaysync.utilities.LOCATION_UPDATE_INTENT
 import com.didahdx.smsgatewaysync.utilities.LONGITUDE_EXTRA
+import timber.log.Timber
 
 class LocationGpsService : Service() {
     private var locationListener: LocationListener? = null
@@ -35,8 +36,8 @@ class LocationGpsService : Service() {
                 intent.putExtra(LATITUDE_EXTRA, location.latitude.toString())
                 intent.putExtra(ALTITUDE_EXTRA, location.altitude.toString())
 
-                Log.d("locaitiion", "${location.longitude}  ${location.latitude}")
-                println("locaitiion ${location.longitude}  ${location.latitude}")
+                Timber.d("Gps Location ${location.longitude}  ${location.latitude}")
+                println("Gps Location  ${location.longitude}  ${location.latitude}")
                 sendBroadcast(intent)
             }
 
