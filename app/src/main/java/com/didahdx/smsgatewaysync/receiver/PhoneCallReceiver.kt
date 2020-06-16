@@ -7,6 +7,7 @@ import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.didahdx.smsgatewaysync.utilities.*
+import timber.log.Timber
 import java.util.*
 
 
@@ -42,23 +43,16 @@ class PhoneCallReceiver : BroadcastReceiver() {
                 state = TelephonyManager.CALL_STATE_RINGING
             }
 
-            Log.d("cafrghjk", "phone receiver called $number")
+            Timber.d( "phone receiver called $number")
             onCallStateChanged(context, state, number)
 
         }
     }
 
-
-    //Deals with actual events
-
     //Deals with actual events
     //Incoming call-  goes from IDLE to RINGING when it rings, to OFFHOOK when it's answered, to IDLE when its hung up
     //Outgoing call-  goes from IDLE to OFFHOOK when it dials out, to IDLE when hung up
-    private fun onCallStateChanged(
-        context: Context?,
-        state: Int,
-        number: String?
-    ) {
+    private fun onCallStateChanged(context: Context?, state: Int, number: String?) {
 
         Log.d("cafrghjk", "caall called")
         if (lastState == state) {
@@ -74,7 +68,8 @@ class PhoneCallReceiver : BroadcastReceiver() {
                     newIntent.putExtra(CALL_TYPE_EXTRA, "incomingCallReceived")
                     newIntent.putExtra(PHONE_NUMBER_EXTRA, number)
                     newIntent.putExtra(START_TIME_EXTRA, Date().toString())
-                    LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
+//                    LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
+                   context.sendBroadcast(newIntent)
                 }
             }
             TelephonyManager.CALL_STATE_OFFHOOK ->                 //Transition of ringing->offhook are pickups of incoming calls.  Nothing done on them
@@ -85,7 +80,7 @@ class PhoneCallReceiver : BroadcastReceiver() {
                         newIntent.putExtra(CALL_TYPE_EXTRA, "onOutgoingCallStarted")
                         newIntent.putExtra(PHONE_NUMBER_EXTRA, savedNumber)
                         newIntent.putExtra(START_TIME_EXTRA, Date().toString())
-                        LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
+                        context.sendBroadcast(newIntent)
                     }
                 } else {
                     isIncoming = true
@@ -94,7 +89,7 @@ class PhoneCallReceiver : BroadcastReceiver() {
                         newIntent.putExtra(CALL_TYPE_EXTRA, "onIncomingCallAnswered")
                         newIntent.putExtra(PHONE_NUMBER_EXTRA, savedNumber)
                         newIntent.putExtra(START_TIME_EXTRA, Date().toString())
-                        LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
+                        context.sendBroadcast(newIntent)
                     }
                 }
             TelephonyManager.CALL_STATE_IDLE ->                 //Went to idle-  this is the end of a call.  What type depends on previous state(s)
@@ -104,7 +99,7 @@ class PhoneCallReceiver : BroadcastReceiver() {
                         newIntent.putExtra(CALL_TYPE_EXTRA, "onMissedCall")
                         newIntent.putExtra(PHONE_NUMBER_EXTRA, savedNumber)
                         newIntent.putExtra(START_TIME_EXTRA, callStartTime.toString())
-                        LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
+                        context.sendBroadcast(newIntent)
                     }
                 } else if (isIncoming) {
                     if (context != null) {
@@ -112,7 +107,7 @@ class PhoneCallReceiver : BroadcastReceiver() {
                         newIntent.putExtra(PHONE_NUMBER_EXTRA, savedNumber)
                         newIntent.putExtra(START_TIME_EXTRA, callStartTime.toString())
                         newIntent.putExtra(END_TIME_EXTRA, Date().toString())
-                        LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
+                        context.sendBroadcast(newIntent)
                     }
                 } else {
                     if (context != null) {
@@ -120,7 +115,7 @@ class PhoneCallReceiver : BroadcastReceiver() {
                         newIntent.putExtra(PHONE_NUMBER_EXTRA, savedNumber)
                         newIntent.putExtra(START_TIME_EXTRA, callStartTime.toString())
                         newIntent.putExtra(END_TIME_EXTRA, Date().toString())
-                        LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
+                        context.sendBroadcast(newIntent)
                     }
                 }
         }

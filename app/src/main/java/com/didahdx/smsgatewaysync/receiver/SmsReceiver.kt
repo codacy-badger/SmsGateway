@@ -6,11 +6,19 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Build
 import android.telephony.SmsMessage
-import android.util.Log
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
+import androidx.work.*
+import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
+import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
 import com.didahdx.smsgatewaysync.utilities.*
+import com.didahdx.smsgatewaysync.work.SendRabbitMqWorker
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.text.SimpleDateFormat
+import java.util.*
 
 
 class SmsReceiver : BroadcastReceiver() {
@@ -26,9 +34,10 @@ class SmsReceiver : BroadcastReceiver() {
         val printingReference = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
         val autoPrint = sharedPreferences.getBoolean(PREF_AUTO_PRINT, false)
         val maskedPhoneNumber = sharedPreferences.getBoolean(PREF_MASKED_NUMBER, false)
+        context.toast(" sms background $autoPrint ")
 
         if (SMS_RECEIVED_INTENT == intent.action) {
-            Log.d("sms_rece", "action original ${intent.action}")
+            Timber.d("action original ${intent.action}")
             val extras = intent.extras
             if (extras != null) {
                 val sms = extras.get("pdus") as Array<*>
@@ -53,35 +62,55 @@ class SmsReceiver : BroadcastReceiver() {
                 newIntent.putExtra("phoneNumber", phoneNumber)
                 newIntent.putExtra("messageText", messageText)
                 newIntent.putExtra("date", time)
-                var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT)
-//                CoroutineScope(IO).launch {
-//                    val message2: MpesaMessageInfo?
-//
-//                    if (messageText != null && time != null && phoneNumber != null) {
-//                        val smsFilter = SmsFilter(messageText!!)
-//                        message2 = MpesaMessageInfo(
-//                            messageText!!.trim(),
-//                            sdf.format(Date(time!!)).toString(),
-//                            phoneNumber!!,
-//                            smsFilter.mpesaId,
-//                            smsFilter.phoneNumber,
-//                            smsFilter.amount,
-//                            smsFilter.accountNumber,
-//                            smsFilter.name,
-//                            time!!,
-//                            true, "", ""
-//                        )
-//
-//                        context.let { tex ->
-//                            MessagesDatabase(tex).getIncomingMessageDao()
-//                                .addMessage(message2)
-//                        }
-//
-//                    }
-//                }
+                var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT, Locale.US)
+                CoroutineScope(IO).launch {
+                    val message2: MpesaMessageInfo?
+
+                    if (messageText != null && time != null && phoneNumber != null) {
+                        val smsFilter = SmsFilter(messageText!!, false)
+                        message2 = MpesaMessageInfo(
+                            messageText!!.trim(),
+                            sdf.format(Date(time!!)).toString(),
+                            phoneNumber!!,
+                            smsFilter.mpesaId,
+                            smsFilter.phoneNumber,
+                            smsFilter.amount,
+                            smsFilter.accountNumber,
+                            smsFilter.name,
+                            time!!,
+                            false, "", ""
+                        )
+
+                        context.let { tex ->
+                            MessagesDatabase(tex).getIncomingMessageDao()
+                                .addMessage(message2)
+                        }
+
+                    }
+                }
+
+                var message2: MpesaMessageInfo? = null
+
+                if (messageText != null && time != null && phoneNumber != null) {
+                    val smsFilter = SmsFilter(messageText!!, false)
+                    message2 = MpesaMessageInfo(
+                        messageText!!.trim(),
+                        sdf.format(Date(time!!)).toString(),
+                        phoneNumber!!,
+                        smsFilter.mpesaId,
+                        smsFilter.phoneNumber,
+                        smsFilter.amount,
+                        smsFilter.accountNumber,
+                        smsFilter.name,
+                        time!!,
+                        false, "", ""
+                    )
+                }
 
                 LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
                 val printMessage = smsFilter.checkSmsType(messageText!!.trim(), maskedPhoneNumber)
+                val data = Data.Builder().putString(KEY_TASK_MESSAGE, message2?.toString()).build()
+                sendToRabbitMQ(context, data)
 
 
                 if ("MPESA" == phoneNumber) {
@@ -98,5 +127,18 @@ class SmsReceiver : BroadcastReceiver() {
 
 
         }
+    }
+
+
+    private fun sendToRabbitMQ(context: Context, data: Data) {
+        val constraints =
+            Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
+
+        val request: OneTimeWorkRequest = OneTimeWorkRequestBuilder<SendRabbitMqWorker>()
+            .setConstraints(constraints)
+            .setInputData(data)
+            .build()
+
+        WorkManager.getInstance(context).enqueue(request)
     }
 }

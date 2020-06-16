@@ -54,11 +54,11 @@ class SmsInboxFragment : Fragment() {
 
         val application = requireNotNull(this.activity).application
         val database = MessagesDatabase(application).getIncomingMessageDao()
-        val factory = SmsInboxViewModelFactory(database,application)
+        val factory = SmsInboxViewModelFactory(database, application)
         smsInboxViewModel = ViewModelProvider(this, factory).get(SmsInboxViewModel::class.java)
 
         binding.smsInboxViewModel = smsInboxViewModel
-        val cursor:Cursor?=null
+        val cursor: Cursor? = null
         val inboxAdapter =
             SmsInboxCursorAdapter(
                 cursor,
@@ -150,7 +150,6 @@ class SmsInboxFragment : Fragment() {
         }
         return super.onOptionsItemSelected(item)
     }
-
 
 
     override fun onDestroy() {

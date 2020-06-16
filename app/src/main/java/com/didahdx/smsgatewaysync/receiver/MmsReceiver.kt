@@ -60,7 +60,7 @@ class MmsReceiver : BroadcastReceiver() {
 
                 // ---send a broadcast intent to update the MMS received in the
                 // activity---
-                val broadcastIntent =  Intent();
+                val broadcastIntent = Intent();
                 broadcastIntent.action = "MMS_RECEIVED_ACTION";
                 broadcastIntent.putExtra("mms", str);
                 context?.sendBroadcast(broadcastIntent);

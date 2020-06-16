@@ -7,7 +7,7 @@
 
         <variable
             name="messageText"
-            type="com.didahdx.smsgatewaysync.model.SmsInboxInfo" />
+            type="com.didahdx.smsgatewaysync.domain.SmsInboxInfo" />
 
         <variable
             name="clickListener"

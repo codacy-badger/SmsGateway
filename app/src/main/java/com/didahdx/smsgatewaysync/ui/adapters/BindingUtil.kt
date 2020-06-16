@@ -3,7 +3,7 @@ package com.didahdx.smsgatewaysync.ui.adapters
 import android.widget.TextView
 import androidx.databinding.BindingAdapter
 import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
-import com.didahdx.smsgatewaysync.model.SmsInboxInfo
+import com.didahdx.smsgatewaysync.domain.SmsInboxInfo
 
 @BindingAdapter("Sender")
 fun TextView.setSender(item: MpesaMessageInfo?) {

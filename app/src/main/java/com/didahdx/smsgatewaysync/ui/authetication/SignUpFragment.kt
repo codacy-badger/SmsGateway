@@ -6,7 +6,7 @@ import androidx.fragment.app.Fragment
 import android.view.View
 
 import com.didahdx.smsgatewaysync.R
-import com.didahdx.smsgatewaysync.model.UsersInfo
+import com.didahdx.smsgatewaysync.domain.UsersInfo
 import com.didahdx.smsgatewaysync.utilities.Validation
 import com.didahdx.smsgatewaysync.utilities.toast
 import com.google.firebase.auth.FirebaseAuth

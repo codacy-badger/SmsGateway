@@ -61,7 +61,7 @@ class PrinterFragment : Fragment(R.layout.fragment_printer), View.OnClickListene
 
     val mReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-           val action = intent?.action
+            val action = intent?.action
 
             if (BluetoothDevice.ACTION_FOUND == action) {
                 //Device found
@@ -69,7 +69,7 @@ class PrinterFragment : Fragment(R.layout.fragment_printer), View.OnClickListene
                 //Device is now connected
                 printerConnected.text = "Printer Connected: Yes"
             } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED == action) {
-              //Done searching
+                //Done searching
             } else if (BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED == action) {
                 //Device is about to disconnect
             } else if (BluetoothDevice.ACTION_ACL_DISCONNECTED == action) {

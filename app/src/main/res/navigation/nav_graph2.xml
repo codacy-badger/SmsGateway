@@ -58,7 +58,7 @@
         tools:layout="@layout/fragment_sms_details">
         <argument
             android:name="SmsInfo"
-            app:argType="com.didahdx.smsgatewaysync.model.SmsInfo" />
+            app:argType="com.didahdx.smsgatewaysync.domain.SmsInfo" />
     </fragment>
     <fragment
         android:id="@+id/printerFragment"

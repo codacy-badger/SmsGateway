@@ -32,17 +32,19 @@ abstract class CustomCursorAdapter<V : RecyclerView.ViewHolder?>(c: Cursor?) :
 
     override fun getItemId(position: Int): Long {
         check(mDataValid) { "Cannot lookup item id when cursor is in invalid state." }
-        mCursor?.moveToPosition(position)?.let { check(it) { "Could not move cursor to position $position when trying to get an item id" } }
+        mCursor?.moveToPosition(position)
+            ?.let { check(it) { "Could not move cursor to position $position when trying to get an item id" } }
         return mCursor?.getLong(mRowIDColumn)!!
     }
 
     fun getItem(position: Int): Cursor? {
         check(mDataValid) { "Cannot lookup item id when cursor is in invalid state." }
-        mCursor?.moveToPosition(position)?.let { check(it) { "Could not move cursor to position $position when trying to get an item id" } }
+        mCursor?.moveToPosition(position)
+            ?.let { check(it) { "Could not move cursor to position $position when trying to get an item id" } }
         return mCursor
     }
 
-   open fun swapCursor(newCursor: Cursor?) {
+    open fun swapCursor(newCursor: Cursor?) {
         if (newCursor === mCursor) {
             return
         }

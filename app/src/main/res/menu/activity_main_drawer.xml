@@ -26,9 +26,8 @@
 
         <item
             android:id="@+id/printerFragment"
-            android:title="@string/printer"
             android:icon="@drawable/ic_print_black"
-            />
+            android:title="@string/printer" />
 
         <item
             android:id="@+id/settingsFragment"

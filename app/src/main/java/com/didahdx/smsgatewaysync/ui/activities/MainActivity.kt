@@ -52,26 +52,22 @@ class MainActivity : AppCompatActivity() {
         NavigationUI.setupActionBarWithNavController(this, navController, drawer_layout)
 
 
-
         // Obtain the FirebaseAnalytics instance.
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this)
-        registerReceiver(SmsReceiver(), IntentFilter(SMS_RECEIVED_INTENT))
+//        registerReceiver(SmsReceiver(), IntentFilter(SMS_RECEIVED_INTENT))
         registerReceiver(MmsReceiver(), IntentFilter(ACTION_MMS_RECEIVED))
 
         //registering broadcast receiver for battery
         registerReceiver(BatteryReceiver(), IntentFilter(Intent.ACTION_BATTERY_CHANGED))
 
         //registering broadcast receiver for connection
-        registerReceiver(
-            ConnectionReceiver(),
-            IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
-        )
+
 
         val callFilter = IntentFilter("android.intent.action.NEW_OUTGOING_CALL")
         callFilter.addAction("android.intent.action.PHONE_STATE")
 
         //registering broadcast receiver for callReceiver
-        registerReceiver(PhoneCallReceiver(), callFilter)
+//        registerReceiver(PhoneCallReceiver(), callFilter)
 
         //saving apps preference
         PreferenceManager.setDefaultValues(

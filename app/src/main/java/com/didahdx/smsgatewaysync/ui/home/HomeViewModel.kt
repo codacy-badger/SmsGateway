@@ -11,9 +11,11 @@ import androidx.lifecycle.*
 import androidx.preference.PreferenceManager
 import com.didahdx.smsgatewaysync.data.db.IncomingMessagesDao
 import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
-import com.didahdx.smsgatewaysync.model.SmsInfo
+import com.didahdx.smsgatewaysync.domain.SmsInfo
 import com.didahdx.smsgatewaysync.utilities.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.Dispatchers.Main
 import timber.log.Timber
 import java.lang.reflect.Method
 import java.text.SimpleDateFormat
@@ -31,9 +33,14 @@ class HomeViewModel(
     val messageCount: LiveData<Int>
         get() = _messageCount
 
+    //data to be passed to next screen
+    private val _messageList = MutableLiveData<List<MpesaMessageInfo>>()
+    val messageList: LiveData<List<MpesaMessageInfo>>
+        get() = _messageList
+
     // Create a Coroutine scope using a job to be able to cancel when needed
     private var viewModelJob = Job()
-    val sdf = SimpleDateFormat(DATE_FORMAT,Locale.US)
+    val sdf = SimpleDateFormat(DATE_FORMAT, Locale.US)
 
     // the Coroutine runs using the Main (UI) dispatcher
     private val coroutineScope = CoroutineScope(viewModelJob + Dispatchers.Main)
@@ -42,16 +49,18 @@ class HomeViewModel(
     private val app = application
     private var incomingMessages = database.getAllMessages()
 
-   fun getFilteredData(): LiveData<List<MpesaMessageInfo>> {
+    fun getFilteredData(): LiveData<List<MpesaMessageInfo>> {
         return Transformations.map(incomingMessages) {
-            val messagesFilled = ArrayList<MpesaMessageInfo>()
-            viewModelScope.launch {
+            val messagesFilledNew = ArrayList<MpesaMessageInfo>()
+            CoroutineScope(IO).launch {
+                val messagesFilled = ArrayList<MpesaMessageInfo>()
                 it?.let {
                     val mpesaType = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
                     var count = 0
                     val maskedPhoneNumber = sharedPreferences.getBoolean(PREF_MASKED_NUMBER, false)
                     for (i in it.indices) {
                         val smsFilter = SmsFilter(it[i].messageBody, maskedPhoneNumber)
+                        setCount(count)
                         when (mpesaType) {
                             PAY_BILL -> {
                                 if (smsFilter.mpesaType == PAY_BILL) {
@@ -64,7 +73,6 @@ class HomeViewModel(
                                 if (smsFilter.mpesaType == DIRECT_MPESA) {
                                     messagesFilled.add(it[i])
                                     count++
-                                    app.toast(" $count")
                                 }
                             }
 
@@ -79,17 +87,26 @@ class HomeViewModel(
                                 count++
                             }
                         }
-                        setCount(i)
+
                     }
                 }
+
+                withContext(Main) {
+
+                    _messageList.value=messagesFilled.toList()
+                    messagesFilledNew.addAll(messagesFilled)
+//                    app.toast("Meg ${messagesFilled.toString()} ")
+//                    app.toast("Meg ${messagesFilledNew.toString()} ")
+                }
             }
-            return@map messagesFilled.toList()
+            app.toast("New Meg $messagesFilledNew ")
+            return@map messagesFilledNew.toList()
         }
     }
 
 
     private suspend fun setCount(count: Int) {
-        withContext(Dispatchers.Main) {
+        withContext(Main) {
             _messageCount.value = count
         }
     }
@@ -117,66 +134,8 @@ class HomeViewModel(
     }
 
 
-
     fun refreshIncomingDatabase() {
         incomingMessages = database.getAllMessages()
-    }
-
-    //used to hangUpCall
-    fun hangUpCall() {
-        val hangup = sharedPreferences.getBoolean(PREF_HANG_UP, false)
-        if (hangup) {
-            val tm = app.getSystemService(Context.TELECOM_SERVICE) as TelecomManager
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                tm.endCall()
-            } else {
-                disconnectCall()
-            }
-        }
-    }
-
-
-    @SuppressLint("PrivateApi")
-    private fun disconnectCall() {
-        try {
-            val serviceManagerName = "android.os.ServiceManager"
-            val serviceManagerNativeName = "android.os.ServiceManagerNative"
-            val telephonyName = "com.android.internal.telephony.ITelephony"
-            val telephonyClass: Class<*>
-            val telephonyStubClass: Class<*>
-            val serviceManagerClass: Class<*>
-            val serviceManagerNativeClass: Class<*>
-            val telephonyEndCall: Method
-            val telephonyObject: Any
-            val serviceManagerObject: Any
-            telephonyClass = Class.forName(telephonyName)
-            telephonyStubClass = telephonyClass.classes[0]
-            serviceManagerClass = Class.forName(serviceManagerName)
-            serviceManagerNativeClass = Class.forName(serviceManagerNativeName)
-            val getService =  // getDefaults[29];
-                serviceManagerClass.getMethod("getService", String::class.java)
-            val tempInterfaceMethod = serviceManagerNativeClass.getMethod(
-                "asInterface",
-                IBinder::class.java
-            )
-            val tmpBinder = Binder()
-            tmpBinder.attachInterface(null, "fake")
-            serviceManagerObject = tempInterfaceMethod.invoke(null, tmpBinder)
-            val retbinder = getService.invoke(serviceManagerObject, "phone") as IBinder
-            val serviceMethod = telephonyStubClass.getMethod(
-                "asInterface",
-                IBinder::class.java
-            )
-            telephonyObject = serviceMethod.invoke(null, retbinder)
-            telephonyEndCall = telephonyClass.getMethod("endCall")
-            telephonyEndCall.invoke(telephonyObject)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Timber.i(
-                "FATAL ERROR: could not connect to telephony subsystem"
-            )
-            Timber.i("Exception object: $e  ${e.localizedMessage}")
-        }
     }
 
 
@@ -186,6 +145,7 @@ class HomeViewModel(
      */
     override fun onCleared() {
         super.onCleared()
+        CoroutineScope(IO).cancel()
         viewModelJob.cancel()
     }
 

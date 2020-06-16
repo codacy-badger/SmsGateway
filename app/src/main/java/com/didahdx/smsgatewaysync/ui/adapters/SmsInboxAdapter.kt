@@ -6,7 +6,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.didahdx.smsgatewaysync.databinding.SmsInboxContainerBinding
-import com.didahdx.smsgatewaysync.model.SmsInboxInfo
+import com.didahdx.smsgatewaysync.domain.SmsInboxInfo
 import com.didahdx.smsgatewaysync.ui.adapters.SmsInboxAdapter.SmsInboxViewHolder.Companion.from
 
 

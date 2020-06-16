@@ -9,7 +9,11 @@ import android.view.ViewGroup
 
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.utilities.AppLog
+import com.didahdx.smsgatewaysync.utilities.toast
 import kotlinx.android.synthetic.main.fragment_log.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.Dispatchers.Main
 
 
 /**
@@ -20,21 +24,29 @@ import kotlinx.android.synthetic.main.fragment_log.*
  * Use the [LogFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
-class LogFragment : Fragment() {
+class LogFragment : Fragment(R.layout.fragment_log) {
 
     val appLog = AppLog()
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        val view = inflater.inflate(R.layout.fragment_log, container, false)
-        return view;
-    }
-
+    var log: String = " "
     override fun onStart() {
         super.onStart()
-        text_view_log.text = appLog.readLog(activity as Activity)
+
+        text_view_log.text = getLogs()
+
+
+    }
+
+    private fun getLogs(): String {
+        var logs = " "
+        CoroutineScope(IO).launch {
+            val log = appLog.readLog(activity as Activity)
+        }
+
+        return logs
+    }
+
+    override fun onPause() {
+        super.onPause()
+        CoroutineScope(IO).cancel()
     }
 }

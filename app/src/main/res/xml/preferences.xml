@@ -141,8 +141,7 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory
-        app:iconSpaceReserved="false">
+    <PreferenceCategory app:iconSpaceReserved="false">
 
         <Preference
             android:title="Send feedback"

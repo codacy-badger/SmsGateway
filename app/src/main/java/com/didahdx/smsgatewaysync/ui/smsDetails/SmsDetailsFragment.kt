@@ -23,7 +23,7 @@ import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
 import com.didahdx.smsgatewaysync.R
-import com.didahdx.smsgatewaysync.model.SmsInfo
+import com.didahdx.smsgatewaysync.domain.SmsInfo
 import com.didahdx.smsgatewaysync.utilities.*
 import kotlinx.android.synthetic.main.fragment_sms_details.*
 import kotlinx.coroutines.CoroutineScope
@@ -245,7 +245,7 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details) {
             val maskedPhoneNumber = sharedPrferences.getBoolean(PREF_MASKED_NUMBER, false)
             val smsPrint = SmsFilter().checkSmsType(smsBody!!, maskedPhoneNumber)
 
-            CoroutineScope(IO).launch{
+            CoroutineScope(IO).launch {
                 intentPrint(smsPrint)
             }
 
@@ -314,14 +314,14 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details) {
         startActivity(shareIntent)
     }
 
-   private suspend fun intentPrint(messageBody: String) {
+    private suspend fun intentPrint(messageBody: String) {
         val buffer: ByteArray = messageBody.toByteArray()
         val printHeader = byteArrayOf(0xAA.toByte(), 0x55, 2, 0)
         printHeader[3] = buffer.size.toByte()
         initPrinter()
         if (printHeader.size > 128) {
             value = "\nValue is more than 128 size\n"
-            CoroutineScope(Main).launch{
+            CoroutineScope(Main).launch {
                 requireContext().toast(value)
             }
         } else {
@@ -331,14 +331,14 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details) {
                 socket?.close()
             } catch (ex: java.lang.Exception) {
                 value = "$ex\nExcep IntentPrint \n"
-                CoroutineScope(Main).launch{
+                CoroutineScope(Main).launch {
                     requireContext().toast(value)
                 }
             }
         }
     }
 
-   private suspend fun initPrinter() {
+    private suspend fun initPrinter() {
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter() as BluetoothAdapter
         try {
             if (!bluetoothAdapter?.isEnabled!!) {
@@ -358,7 +358,7 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details) {
                         break
                     }
                 }
-                 val m: Method = bluetoothDevice!!.javaClass.getMethod(
+                val m: Method = bluetoothDevice!!.javaClass.getMethod(
                     "createRfcommSocket", *arrayOf<Class<*>?>(
                         Int::class.javaPrimitiveType
                     )
@@ -371,14 +371,14 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details) {
                 beginListenForData()
             } else {
                 value = "No Devices found"
-                CoroutineScope(Main).launch{
+                CoroutineScope(Main).launch {
                     requireContext().toast(value)
                 }
                 return
             }
         } catch (ex: java.lang.Exception) {
             value = "$ex\n InitPrinter \n"
-            CoroutineScope(Main).launch{
+            CoroutineScope(Main).launch {
                 requireContext().toast(value)
             }
         }
@@ -386,7 +386,7 @@ class SmsDetailsFragment : Fragment(R.layout.fragment_sms_details) {
     }
 
 
-   private fun beginListenForData() {
+    private fun beginListenForData() {
         try {
             val handler = Handler()
 

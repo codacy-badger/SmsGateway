@@ -9,6 +9,7 @@ import android.util.Log
 import com.didahdx.smsgatewaysync.App
 import com.didahdx.smsgatewaysync.utilities.AppLog
 import com.didahdx.smsgatewaysync.utilities.toast
+import timber.log.Timber
 import java.util.*
 
 /**
@@ -38,21 +39,21 @@ class ConnectionReceiver : BroadcastReceiver() {
                         ConnectivityManager.TYPE_MOBILE -> {
                             val time = Date()
                             appLog.writeToLog(context, "\n $time \n Connected to Mobile data \n")
-                            context.toast(" Connected to Mobile data")
+//                            context.toast(" Connected to Mobile data")
                             isMobileConn = isMobileConn or isConnected
                         }
                     }
 
                     val activeNetwork = connectionManager.activeNetworkInfo
                     if (!(activeNetwork != null && activeNetwork.isConnectedOrConnecting)) {
-                        context.toast("Connection lost")
+//                        context.toast("Connection lost")
                         val time = Date()
                         appLog.writeToLog(context, "\n $time \n Connection lost\n")
                     }
                 }
             }
-            Log.d(DEBUG_TAG, "Wifi connected: $isWifiConn")
-            Log.d(DEBUG_TAG, "Mobile connected: $isMobileConn")
+            Timber.d( "Wifi connected: $isWifiConn")
+            Timber.d( "Mobile connected: $isMobileConn")
 
         }
     }

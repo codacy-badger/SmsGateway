@@ -216,17 +216,24 @@ class PhoneStatusFragment : Fragment() {
 
             val freePercent: Double = (megAvailable / megTotal) * (100).toDouble()
             stringBuilder.append("\nTotal Storage : ${df2.format(megTotal)} GB\n")
-            stringBuilder.append("\nFree Storage : ${df2.format(megAvailable)} GB  " +
-                    "(${df2.format(freePercent)}%)\n")
+            stringBuilder.append(
+                "\nFree Storage : ${df2.format(megAvailable)} GB  " +
+                        "(${df2.format(freePercent)}%)\n"
+            )
 
             val mi = ActivityManager.MemoryInfo()
-            val activityManager = requireContext().getSystemService(ACTIVITY_SERVICE) as ActivityManager?
+            val activityManager =
+                requireContext().getSystemService(ACTIVITY_SERVICE) as ActivityManager?
             activityManager!!.getMemoryInfo(mi)
             val availableRAM: Double = mi.availMem / (0x100000L).toDouble()
             val TotalRam: Double = mi.totalMem / (0x100000L).toDouble()
             val percentAvail: Double = mi.availMem / mi.totalMem.toDouble() * 100.0
             stringBuilder.append("\nTotal Ram : ${df2.format(TotalRam)} MB \n")
-            stringBuilder.append("\nAvailable Ram : ${df2.format(availableRAM)} MB (${df2.format(percentAvail)})% \n")
+            stringBuilder.append(
+                "\nAvailable Ram : ${df2.format(availableRAM)} MB (${df2.format(
+                    percentAvail
+                )})% \n"
+            )
 
 
             text_view_phone_status?.text = stringBuilder.toString()

@@ -1,11 +1,10 @@
 package com.didahdx.smsgatewaysync.manager
 
-import com.rabbitmq.client.Address
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
 
-object RabbitmqConnector {
+object RabbitMqConnector {
 
     private val connectionFactory = ConnectionFactory()
 
@@ -13,8 +12,8 @@ object RabbitmqConnector {
         connectionFactory.host = "128.199.174.204"
         connectionFactory.username = "didahdx"
         connectionFactory.password = "test"
-//        connectionFactory.networkRecoveryInterval=10000
-//        connectionFactory.connectionTimeout=10000
+//        connectionFactory.networkRecoveryInterval = 10000
+//        connectionFactory.connectionTimeout = 10000
         connectionFactory.isAutomaticRecoveryEnabled = true
 //        connectionFactory.isTopologyRecoveryEnabled = false
     }

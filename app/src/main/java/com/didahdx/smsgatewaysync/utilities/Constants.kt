@@ -23,6 +23,9 @@ const val CHANNEL_CLIENT_NOTIFICATION_NAME = "update messages"
 const val CHANNEL_IMPORTANT_SMS_NOTIFICATION = "important sms "
 const val MESSAGE_DATABASE = "messageDatabase"
 const val ACTION_MMS_RECEIVED = "android.provider.Telephony.WAP_PUSH_RECEIVED"
+const val KEY_TASK_MESSAGE = "KEY_TASK_MESSAGE"
+const val KEY_TASK_PRINT="KEY_TASK_PRINT"
+const val KEY_TASK_MESSAGE_API="KEY_TASK_MESSAGE_API"
 
 
 /**
@@ -35,6 +38,8 @@ const val END_TIME_EXTRA = "END_TIME_EXTRA"
 const val SMS_SENT_INTENT = "SMS_SENT"
 const val SMS_DELIVERED_INTENT = "SMS_DELIVERED_INTENT"
 const val SMS_RECEIVED_INTENT = "android.provider.Telephony.SMS_RECEIVED"
+const val PHONE_STATE="android.intent.action.PHONE_STATE"
+const val NEW_OUTGOING_CALL="android.intent.action.NEW_OUTGOING_CALL"
 const val INPUT_EXTRAS = "INPUT_EXTRAS"
 const val SMS_DATE_EXTRA = "SMS_DATE_EXTRA"
 const val SMS_SENDER_EXTRA = "SMS_SENDER_EXTRA"
@@ -74,7 +79,7 @@ const val ALL = "All"
  * PREFERENCES String
  * */
 const val PREF_HOST_URL = "host_url"
-const val PREF_HOST_URL_ENABLED="push_url"
+const val PREF_HOST_URL_ENABLED = "push_url"
 const val PREF_MPESA_TYPE = "mpesa_types"
 const val PREF_AUTO_UPLOAD_SMS = "auto_sms_upload"
 const val PREF_CONNECT_PRINTER = "connect_printer"
@@ -85,10 +90,10 @@ const val PREF_SERVICES_KEY = "services_key"
 const val PREF_FEEDBACK = "feedback"
 const val PREF_SIM_CARD = "sim_card"
 const val PREF_PRINT_TYPE = "print_types"
-const val PREF_MASKED_NUMBER="masked_phone_number"
-const val PREF_IMPORTANT_SMS_NOTIFICATION="mpesa_types_notification"
-const val PREF_HANG_UP="hang_up"
-const val PREF_PRINTER_NAME="PREF_PRINTER_NAME"
+const val PREF_MASKED_NUMBER = "masked_phone_number"
+const val PREF_IMPORTANT_SMS_NOTIFICATION = "mpesa_types_notification"
+const val PREF_HANG_UP = "hang_up"
+const val PREF_PRINTER_NAME = "PREF_PRINTER_NAME"
 
 /**
  *  user permission codes

@@ -1,6 +1,4 @@
-package com.didahdx.smsgatewaysync.model
-
-import android.bluetooth.BluetoothDevice
+package com.didahdx.smsgatewaysync.domain
 
 data class PrinterInfo(
     val printerName: String,

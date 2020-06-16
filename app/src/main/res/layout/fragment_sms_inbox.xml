@@ -2,6 +2,7 @@
 <layout>
 
     <data>
+
         <variable
             name="smsInboxViewModel"
             type="com.didahdx.smsgatewaysync.ui.smsInbox.SmsInboxViewModel" />

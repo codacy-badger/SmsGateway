@@ -36,7 +36,7 @@ class AppLog {
     }
 
     //reading log messages
-    fun readLog(context: Context): String {
+  suspend fun readLog(context: Context): String {
         var text: String = ""
         val stringBuilder = StringBuilder()
         var fileInputStream: FileInputStream? = null
@@ -53,7 +53,8 @@ class AppLog {
             text = stringBuilder.toString()
 
         } catch (e: OutOfMemoryError) {
-            Toast.makeText(context, e.localizedMessage, Toast.LENGTH_LONG).show()
+            e.printStackTrace()
+//            Toast.makeText(context, e.localizedMessage, Toast.LENGTH_LONG).show()
         } catch (e: FileNotFoundException) {
             e.printStackTrace()
         } catch (e: IOException) {

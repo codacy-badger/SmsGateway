@@ -9,8 +9,8 @@ import androidx.lifecycle.ViewModel
 import androidx.preference.PreferenceManager
 import com.didahdx.smsgatewaysync.data.db.IncomingMessagesDao
 import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
-import com.didahdx.smsgatewaysync.model.SmsInboxInfo
-import com.didahdx.smsgatewaysync.model.SmsInfo
+import com.didahdx.smsgatewaysync.domain.SmsInboxInfo
+import com.didahdx.smsgatewaysync.domain.SmsInfo
 import com.didahdx.smsgatewaysync.utilities.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
@@ -152,12 +152,13 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
 
     fun setUpSmsInfo(info: SmsInboxInfo): SmsInfo {
         var smsStatus = NOT_AVAILABLE
-        try{
-        smsStatus = if (info.status) {
-            "Uploaded"
-        } else {
-            "pending"
-        }}catch (e:Exception){
+        try {
+            smsStatus = if (info.status) {
+                "Uploaded"
+            } else {
+                "pending"
+            }
+        } catch (e: Exception) {
             e.printStackTrace()
         }
 

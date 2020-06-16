@@ -8,7 +8,8 @@ import com.didahdx.smsgatewaysync.data.db.IncomingMessagesDao
 @Suppress("UNCHECKED_CAST")
 class SmsInboxViewModelFactory(
     private val dataSource: IncomingMessagesDao,
-    private val application: Application): ViewModelProvider.Factory {
+    private val application: Application
+) : ViewModelProvider.Factory {
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(SmsInboxViewModel::class.java)) {
             return SmsInboxViewModel(

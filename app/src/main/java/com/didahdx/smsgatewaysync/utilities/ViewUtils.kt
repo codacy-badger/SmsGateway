@@ -27,12 +27,12 @@ fun View.hide(): View {
 
 fun View.backgroundRed() {
     background =
-        resources.getDrawable(R.drawable.item_background_red,null)
+        resources.getDrawable(R.drawable.item_background_red, null)
 }
 
 fun View.backgroundGreen() {
     background =
-        resources.getDrawable(R.drawable.item_background_green,null)
+        resources.getDrawable(R.drawable.item_background_green, null)
 }
 
 fun View.snackBar(message: String) {

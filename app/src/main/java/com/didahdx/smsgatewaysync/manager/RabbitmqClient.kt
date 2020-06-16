@@ -1,11 +1,11 @@
 package com.didahdx.smsgatewaysync.manager
 
 import android.content.Context
-import android.util.Log
 import com.didahdx.smsgatewaysync.ui.UiUpdaterInterface
 import com.didahdx.smsgatewaysync.utilities.*
 import com.rabbitmq.client.*
 import org.json.JSONObject
+import timber.log.Timber
 import java.io.IOException
 import java.net.ConnectException
 import java.nio.charset.StandardCharsets
@@ -29,13 +29,12 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
 
         try {
 
-            connection = RabbitmqConnector.connection
-            channel = RabbitmqConnector.channel
+            connection = RabbitMqConnector.connection
+            channel = RabbitMqConnector.channel
 
-            Log.d(
-                "connectorasd",
-                "connection  ${RabbitmqConnector.connection.hashCode()}   ${connection.hashCode()} " +
-                        " channel ${RabbitmqConnector.channel.hashCode()}    ${channel.hashCode()} "
+            Timber.d(
+                "connection  ${RabbitMqConnector.connection.hashCode()}   ${connection.hashCode()} " +
+                        " channel ${RabbitMqConnector.channel.hashCode()}    ${channel.hashCode()} "
             )
 
             channel?.queueDeclare(
@@ -59,7 +58,9 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
                 { deliveryTag, multiple ->
                     uiUpdater?.toasterMessage(" Delivery ack $deliveryTag   multiple   $multiple")
                 },
-                { deliveryTag, multiple -> uiUpdater?.toasterMessage(" Delivery Not ack $deliveryTag   multiple $multiple") })
+                { deliveryTag, multiple ->
+                    uiUpdater?.toasterMessage(" Delivery Not ack $deliveryTag   multiple $multiple")
+                })
 
             channel?.basicRecover()
             consumeMessages()
@@ -70,19 +71,19 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
         } catch (e: IOException) {
             uiUpdater?.updateStatusViewWith("Error connecting to server", RED_COLOR)
             e.printStackTrace()
-            Log.d("RabbitMQ", "$e  ${e.localizedMessage}")
+            Timber.d("$e  ${e.localizedMessage}")
         } catch (e: ConnectException) {
             uiUpdater?.updateStatusViewWith("Error connecting to server", RED_COLOR)
             e.printStackTrace()
-            Log.d("RabbitMQ", "$e  ${e.localizedMessage}")
+            Timber.d("$e  ${e.localizedMessage}")
         } catch (e: TimeoutException) {
-            Log.d("RabbitMQ", "$e  ${e.localizedMessage}")
+            Timber.d("$e  ${e.localizedMessage}")
             uiUpdater?.updateStatusViewWith("Error connecting to server", RED_COLOR)
             e.printStackTrace()
         } catch (e: Exception) {
             e.printStackTrace()
             uiUpdater?.updateStatusViewWith("Error connecting to server", RED_COLOR)
-            Log.d("RabbitMQ", "$e  ${e.localizedMessage}")
+            Timber.d("$e  ${e.localizedMessage}")
         }
     }
 
@@ -99,7 +100,7 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
             "", PUBLISH_FROM_CLIENT, false,
             props, message.toByteArray()
         )
-        Log.d("RabbitMQ", "message sent!!!")
+        Timber.d("message sent!!!")
     }
 
 
@@ -127,7 +128,7 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
                     }
                 }
 
-                Log.d("teretg", " $message")
+                Timber.d(" $message")
 
             }
         )

@@ -85,7 +85,10 @@ class SettingsFragment : PreferenceFragmentCompat(),
             PREF_IMPORTANT_SMS_NOTIFICATION -> {
                 val importantSmsNotification: Preference? = findPreference<Preference>(key)
                 importantSmsNotification?.summary =
-                    preferenceScreen.sharedPreferences.getString(PREF_IMPORTANT_SMS_NOTIFICATION, "None")
+                    preferenceScreen.sharedPreferences.getString(
+                        PREF_IMPORTANT_SMS_NOTIFICATION,
+                        "None"
+                    )
             }
 
             PREF_FEEDBACK -> {
@@ -125,13 +128,15 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
         val simCard = findPreference<Preference>(PREF_SIM_CARD)
         simCard?.summary = preferenceScreen.sharedPreferences.getString(
-            PREF_SIM_CARD, "Choose your default sim card to use for the application")
+            PREF_SIM_CARD, "Choose your default sim card to use for the application"
+        )
 
         val printTypes = findPreference<Preference>(PREF_PRINT_TYPE)
         printTypes?.summary = preferenceScreen.sharedPreferences.getString(
-            PREF_PRINT_TYPE, "Types of mpesa transaction to be printed")
+            PREF_PRINT_TYPE, "Types of mpesa transaction to be printed"
+        )
 
-        val importantSmsNotification= findPreference<Preference>(PREF_IMPORTANT_SMS_NOTIFICATION)
+        val importantSmsNotification = findPreference<Preference>(PREF_IMPORTANT_SMS_NOTIFICATION)
         importantSmsNotification?.summary =
             preferenceScreen.sharedPreferences.getString(PREF_IMPORTANT_SMS_NOTIFICATION, "None")
     }
@@ -153,7 +158,6 @@ class SettingsFragment : PreferenceFragmentCompat(),
         val serviceIntent = Intent(activity as Activity, AppServices::class.java)
         context?.stopService(serviceIntent)
     }
-
 
 
     /**

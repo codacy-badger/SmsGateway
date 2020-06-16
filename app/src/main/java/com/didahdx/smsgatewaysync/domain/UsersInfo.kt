@@ -1,4 +1,4 @@
-package com.didahdx.smsgatewaysync.model
+package com.didahdx.smsgatewaysync.domain
 
 data class UsersInfo(
     var name: String,

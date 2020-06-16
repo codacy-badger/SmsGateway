@@ -7,7 +7,7 @@ import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.http.Url
 
-private const val BASE_URL =  "http://128.199.174.204/"
+private const val BASE_URL = "http://128.199.174.204/"
 
 private val retrofit = Retrofit.Builder()
     .addConverterFactory(GsonConverterFactory.create())
@@ -16,9 +16,9 @@ private val retrofit = Retrofit.Builder()
 
 interface SmsApiService {
     @POST
-    fun postSms(@Url url:String,@Body post: PostSms): Call<PostSms>
+    fun postSms(@Url url: String, @Body post: PostSms): Call<PostSms>
 }
 
 object SmsApi {
-    val retrofitService: SmsApiService by lazy {retrofit.create(SmsApiService::class.java)}
+    val retrofitService: SmsApiService by lazy { retrofit.create(SmsApiService::class.java) }
 }

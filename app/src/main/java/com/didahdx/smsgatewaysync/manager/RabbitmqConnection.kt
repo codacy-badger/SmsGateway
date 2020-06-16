@@ -10,7 +10,7 @@ abstract class RabbitmqConnection : Connection {
         private val LOCK = Any()
 
         operator fun invoke(context: Context) = instance ?: synchronized(LOCK) {
-            instance ?: RabbitmqConnector.connection.also {
+            instance ?: RabbitMqConnector.connection.also {
                 instance = it
             }
         }

@@ -10,8 +10,6 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
 import android.os.IBinder
-import android.provider.Settings
-import android.util.Log
 import androidx.core.app.ActivityCompat
 import com.didahdx.smsgatewaysync.utilities.ALTITUDE_EXTRA
 import com.didahdx.smsgatewaysync.utilities.LATITUDE_EXTRA
@@ -28,6 +26,23 @@ class LocationGpsService : Service() {
     }
 
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+
+        return START_REDELIVER_INTENT
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        val restartServiceIntent = Intent(applicationContext, this.javaClass)
+        restartServiceIntent.setPackage(packageName)
+        startService(restartServiceIntent)
+        super.onTaskRemoved(rootIntent)
+    }
+
+    override fun onLowMemory() { //Send broadcast to the Activity to kill this service and restart it.
+        super.onLowMemory()
+    }
+
+
     override fun onCreate() {
         locationListener = object : LocationListener {
             override fun onLocationChanged(location: Location) {
@@ -36,8 +51,8 @@ class LocationGpsService : Service() {
                 intent.putExtra(LATITUDE_EXTRA, location.latitude.toString())
                 intent.putExtra(ALTITUDE_EXTRA, location.altitude.toString())
 
-                Timber.d("Gps Location ${location.longitude}  ${location.latitude}")
-                println("Gps Location  ${location.longitude}  ${location.latitude}")
+                Timber.d("Gps Location ${location.latitude} ${location.longitude}   ${location.altitude} ")
+                println("Gps Location  ${location.latitude}  ${location.longitude} ${location.altitude}  ")
                 sendBroadcast(intent)
             }
 
@@ -46,6 +61,7 @@ class LocationGpsService : Service() {
                 status: Int,
                 extras: Bundle
             ) {
+
             }
 
             override fun onProviderEnabled(provider: String) {}
@@ -65,11 +81,30 @@ class LocationGpsService : Service() {
         ) {
             return
         }
-        locationManager!!.requestLocationUpdates(
-            LocationManager.GPS_PROVIDER, 0,
-            0f,
-            locationListener
-        )
+
+
+        locationManager?.let { locationManager ->
+            val isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+            val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+            if (isGPSEnabled) {
+                locationManager.requestLocationUpdates(
+                    LocationManager.GPS_PROVIDER, 0,
+                    0f,
+                    locationListener
+                )
+            }
+
+            if (isNetworkEnabled && !isGPSEnabled) {
+                locationManager.requestLocationUpdates(
+                    LocationManager.NETWORK_PROVIDER, 0,
+                    0f,
+                    locationListener
+                )
+            }
+
+        }
+
+
     }
 
     override fun onDestroy() {

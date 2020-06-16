@@ -20,31 +20,42 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.READ_PHONE_NUMBERS" />
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
-    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS"/>
-    <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS"/>
-    <uses-permission android:name="android.permission.MODIFY_PHONE_STATE"
+    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
+    <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS" />
+    <uses-permission
+        android:name="android.permission.MODIFY_PHONE_STATE"
         tools:ignore="ProtectedPermissions" />
     <uses-permission
         android:name="android.permission.PACKAGE_USAGE_STATS"
-        tools:ignore="ProtectedPermissions"/>
+        tools:ignore="ProtectedPermissions" />
 
     <application
         android:name=".App"
-        android:usesCleartextTraffic="true"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
-        <receiver
-            android:name=".receiver.PhoneCallReceiver"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.PHONE_STATE" />
-            </intent-filter>
-        </receiver>
+        android:theme="@style/AppTheme"
+        android:usesCleartextTraffic="true">
+<!--        <receiver-->
+<!--            android:name=".receiver.PhoneCallReceiver"-->
+<!--            android:enabled="true"-->
+<!--            android:exported="true">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.PHONE_STATE" />-->
+<!--                <action android:name="android.intent.action.NEW_OUTGOING_CALL" />-->
+<!--            </intent-filter>-->
+<!--        </receiver>-->
+
+<!--        <receiver-->
+<!--            android:name=".receiver.SmsReceiver"-->
+<!--            android:enabled="true"-->
+<!--            android:exported="true">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.provider.Telephony.SMS_RECEIVED" />-->
+<!--            </intent-filter>-->
+<!--        </receiver>-->
 
         <service
             android:name=".services.LocationGpsService"

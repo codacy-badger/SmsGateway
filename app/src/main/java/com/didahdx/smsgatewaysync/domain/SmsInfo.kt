@@ -1,4 +1,4 @@
-package com.didahdx.smsgatewaysync.model
+package com.didahdx.smsgatewaysync.domain
 
 import android.os.Parcelable
 import kotlinx.android.parcel.Parcelize

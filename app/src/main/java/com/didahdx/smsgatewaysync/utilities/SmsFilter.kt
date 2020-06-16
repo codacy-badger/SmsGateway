@@ -198,11 +198,15 @@ class SmsFilter() {
             try {
                 phoneNumber = NOT_AVAILABLE
                 mpesaType = DIRECT_MPESA
-                name = message.substring(message.indexOf("from") + 4,
-                    message.indexOf("in") - 1).trim()
-                amount = message.substring(message.indexOf("Ksh") - 1,
-                    message.indexOf("from") - 1)
-                        .trim()
+                name = message.substring(
+                    message.indexOf("from") + 4,
+                    message.indexOf("in") - 1
+                ).trim()
+                amount = message.substring(
+                    message.indexOf("Ksh") - 1,
+                    message.indexOf("from") - 1
+                )
+                    .trim()
                 accountNumber = message.substring(
                     message.indexOf("in") + 2,
                     message.toLowerCase().indexOf("via") - 1
@@ -219,12 +223,18 @@ class SmsFilter() {
         ) {
             mpesaType = DIRECT_MPESA
             phoneNumber = NOT_AVAILABLE
-            amount = message.substring(message.indexOf("Ksh") - 1,
-                message.indexOf("from") - 1).trim()
-            accountNumber = message.substring(message.toLowerCase().indexOf("via") + 3,
-                message.toLowerCase().indexOf("/") - 6).trim()
-            name = message.substring(message.indexOf("from") + 4,
-                message.toLowerCase().indexOf("via") - 1).trim()
+            amount = message.substring(
+                message.indexOf("Ksh") - 1,
+                message.indexOf("from") - 1
+            ).trim()
+            accountNumber = message.substring(
+                message.toLowerCase().indexOf("via") + 3,
+                message.toLowerCase().indexOf("/") - 6
+            ).trim()
+            name = message.substring(
+                message.indexOf("from") + 4,
+                message.toLowerCase().indexOf("via") - 1
+            ).trim()
 
         }
 
