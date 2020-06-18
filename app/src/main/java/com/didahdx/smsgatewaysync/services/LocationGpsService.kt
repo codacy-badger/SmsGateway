@@ -140,11 +140,11 @@ class LocationGpsService : Service() {
                 locationListener
             )
 
-//            locationManager.requestLocationUpdates(
-//                LocationManager.NETWORK_PROVIDER, 0,
-//                0f,
-//                locationListener
-//            )
+            locationManager.requestLocationUpdates(
+                LocationManager.NETWORK_PROVIDER, 0,
+                0f,
+                locationListener
+            )
 
             if (!isGPSEnabled && !isNetworkEnabled){
                 locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
