@@ -11,10 +11,7 @@ import android.location.LocationManager
 import android.os.Bundle
 import android.os.IBinder
 import androidx.core.app.ActivityCompat
-import com.didahdx.smsgatewaysync.utilities.ALTITUDE_EXTRA
-import com.didahdx.smsgatewaysync.utilities.LATITUDE_EXTRA
-import com.didahdx.smsgatewaysync.utilities.LOCATION_UPDATE_INTENT
-import com.didahdx.smsgatewaysync.utilities.LONGITUDE_EXTRA
+import com.didahdx.smsgatewaysync.utilities.*
 import timber.log.Timber
 
 class LocationGpsService : Service() {
@@ -62,14 +59,60 @@ class LocationGpsService : Service() {
                 extras: Bundle
             ) {
 
+                Timber.d("Location status changed $provider $status $extras")
             }
 
-            override fun onProviderEnabled(provider: String) {}
-            override fun onProviderDisabled(provider: String) {}
+            override fun onProviderEnabled(provider: String) {
+                if (provider == LocationManager.GPS_PROVIDER) {
+                    locationManager?.removeUpdates(locationListener)
+                    if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED && checkSelfPermission(
+                            Manifest.permission.ACCESS_COARSE_LOCATION
+                        )
+                        != PackageManager.PERMISSION_GRANTED
+                    ) {
+                        return
+                    }
+                    locationManager?.requestLocationUpdates(
+                        LocationManager.GPS_PROVIDER, 0,
+                        0f,
+                        locationListener
+                    )
+                }
+                Timber.d("Location provider Enabled $provider")
+            }
+
+            override fun onProviderDisabled(provider: String) {
+                if (provider == LocationManager.GPS_PROVIDER) {
+                    locationManager?.removeUpdates(locationListener)
+                    if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED && checkSelfPermission(
+                            Manifest.permission.ACCESS_COARSE_LOCATION
+                        )
+                        != PackageManager.PERMISSION_GRANTED
+                    ) {
+                        return
+                    }
+//                    locationManager?.requestLocationUpdates(
+//                        LocationManager.NETWORK_PROVIDER, 0,
+//                        0f,
+//                        locationListener
+//                    )
+
+                    locationManager?.requestLocationUpdates(
+                        LocationManager.GPS_PROVIDER, 0,
+                        0f,
+                        locationListener
+                    )
+                }
+
+                Timber.d("Location provider Disabled $provider")
+            }
         }
 
         locationManager =
             applicationContext.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
 
         if (ActivityCompat.checkSelfPermission(
                 this,
@@ -85,30 +128,35 @@ class LocationGpsService : Service() {
 
         locationManager?.let { locationManager ->
             val isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
-            val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-            if (isGPSEnabled) {
-                locationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER, 0,
-                    0f,
-                    locationListener
-                )
+            val isNetworkEnabled =
+                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+
+            Timber.d("GPS Enabled $isGPSEnabled Network Enable $isNetworkEnabled")
+
+
+            locationManager.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER, 0,
+                0f,
+                locationListener
+            )
+
+//            locationManager.requestLocationUpdates(
+//                LocationManager.NETWORK_PROVIDER, 0,
+//                0f,
+//                locationListener
+//            )
+
+            if (!isGPSEnabled && !isNetworkEnabled){
+                locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
             }
 
-            if (isNetworkEnabled && !isGPSEnabled) {
-                locationManager.requestLocationUpdates(
-                    LocationManager.NETWORK_PROVIDER, 0,
-                    0f,
-                    locationListener
-                )
-            }
 
-        }
-
-
+    }
     }
 
     override fun onDestroy() {
         super.onDestroy()
         locationManager?.removeUpdates(locationListener)
     }
+
 }

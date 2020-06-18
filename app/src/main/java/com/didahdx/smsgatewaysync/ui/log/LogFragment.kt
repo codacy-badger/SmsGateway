@@ -1,19 +1,20 @@
 package com.didahdx.smsgatewaysync.ui.log
 
-import android.app.Activity
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-
+import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import com.didahdx.smsgatewaysync.R
+import com.didahdx.smsgatewaysync.databinding.FragmentLogBinding
 import com.didahdx.smsgatewaysync.utilities.AppLog
-import com.didahdx.smsgatewaysync.utilities.toast
-import kotlinx.android.synthetic.main.fragment_log.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.Dispatchers.Main
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 
 /**
@@ -24,25 +25,37 @@ import kotlinx.coroutines.Dispatchers.Main
  * Use the [LogFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
-class LogFragment : Fragment(R.layout.fragment_log) {
+class LogFragment : Fragment() {
 
     val appLog = AppLog()
     var log: String = " "
-    override fun onStart() {
-        super.onStart()
+    lateinit var logViewModel: LogViewModel
 
-        text_view_log.text = getLogs()
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        // Inflate the layout for this fragment
+        val binding: FragmentLogBinding =
+            DataBindingUtil.inflate(inflater,R.layout.fragment_log, container, false)
 
+        val application = requireNotNull(this.activity).application
+        val factory = LogViewModelFactory(application, appLog)
+        logViewModel = ViewModelProvider(this, factory).get(LogViewModel::class.java)
+        binding.logViewModel = logViewModel
+        binding.lifecycleOwner = this
 
-    }
-
-    private fun getLogs(): String {
-        var logs = " "
         CoroutineScope(IO).launch {
-            val log = appLog.readLog(activity as Activity)
+            logViewModel.getLogs()
         }
 
-        return logs
+        logViewModel.appLogs.observe(viewLifecycleOwner, Observer { log ->
+            log?.let {
+                binding.textViewLog.text = it
+            }
+        })
+
+        return binding.root;
     }
 
     override fun onPause() {

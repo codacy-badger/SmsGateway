@@ -27,8 +27,7 @@ class ConnectionReceiver : BroadcastReceiver() {
             var isWifiConn: Boolean = false
             var isMobileConn: Boolean = false
             connectionManager.allNetworks.forEach { network ->
-                connectionManager.getNetworkInfo(network).apply {
-                    context.toast(" $type ")
+                connectionManager.getNetworkInfo(network)?.apply {
                     when (type) {
                         ConnectivityManager.TYPE_WIFI -> {
                             isWifiConn = isWifiConn or isConnected

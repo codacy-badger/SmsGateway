@@ -26,6 +26,7 @@ import com.didahdx.smsgatewaysync.utilities.*
 import com.didahdx.smsgatewaysync.work.PrintWorker
 import com.didahdx.smsgatewaysync.work.SendApiWorker
 import com.didahdx.smsgatewaysync.work.SendRabbitMqWorker
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
@@ -37,24 +38,27 @@ import java.lang.reflect.Method
 import java.text.SimpleDateFormat
 import java.util.*
 
-
 class AppServices : Service() {
     lateinit var notificationManager: NotificationManagerCompat
     var importantSmsNotification = 2
     var userLatitude = ""
     var userLongitude = ""
     private lateinit var sharedPreferences: SharedPreferences
+    val user = FirebaseAuth.getInstance().currentUser
 
     //The receiver will be recreated whenever android feels like it.  We need a static variable to remember data between instantiations
     private var lastState = TelephonyManager.CALL_STATE_IDLE
     private var callStartTime: Date? = null
     private var isIncoming = false
     private var savedNumber: String? = null //because the passed incoming is only valid in ringing
-    val newIntent = Intent(CALL_LOCAL_BROADCAST_RECEIVER)
+    private val newIntent = Intent(CALL_LOCAL_BROADCAST_RECEIVER)
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+
+    override fun onStartCommand(intent: Intent?, flagings: Int, startId: Int): Int {
         val input = intent?.getStringExtra(INPUT_EXTRAS)
-        val notificationIntent = Intent(this, MainActivity::class.java)
+        val notificationIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
         val pendingIntent = PendingIntent.getActivity(
             this, 0,
             notificationIntent, 0
@@ -70,7 +74,10 @@ class AppServices : Service() {
 
         startForeground(1, notification)
 
-        registerReceiver(ConnectionReceiver(), IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
+        registerReceiver(
+            ConnectionReceiver(),
+            IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
+        )
         registerReceiver(smsReceiver, IntentFilter(SMS_RECEIVED_INTENT))
         registerReceiver(locationBroadcastReceiver, IntentFilter(LOCATION_UPDATE_INTENT))
 
@@ -205,7 +212,9 @@ class AppServices : Service() {
                             val urlEnabled =
                                 sharedPreferences.getBoolean(PREF_HOST_URL_ENABLED, false)
                             if (!urlEnabled) {
-                                val data = Data.Builder().putString(KEY_TASK_MESSAGE, it)
+                                val data = Data.Builder()
+                                    .putString(KEY_TASK_MESSAGE, it)
+                                    .putString(KEY_EMAIL, user?.email)
                                     .build()
                                 sendToRabbitMQ(context, data)
                                 status = true
@@ -315,14 +324,9 @@ class AppServices : Service() {
 
                 Timber.d("phone receiver called $number")
                 onCallStateChanged(context, state, number)
-
             }
-
-
         }
-
     }
-
 
     //Deals with actual events
     //Incoming call-  goes from IDLE to RINGING when it rings, to OFFHOOK when it's answered, to IDLE when its hung up
@@ -440,14 +444,17 @@ class AppServices : Service() {
         obj?.put("type", "calls")
         obj?.put("longitude", userLongitude)
         obj?.put("latitude", userLatitude)
-//  obj?.put("client_sender", user?.email!!)
+        obj?.put("client_sender", user?.email)
         obj?.put("client_gateway_type", "android_phone")
         obj?.put("call_type", callType)
         obj?.put("phone_number", phoneNumber)
         obj?.put("start_time", startTime)
         obj?.put("end_time", endTime)
 
-        val data = Data.Builder().putString(KEY_TASK_MESSAGE, obj.toString()).build()
+        val data = Data.Builder()
+            .putString(KEY_TASK_MESSAGE, obj.toString())
+            .putString(KEY_EMAIL, user?.email)
+            .build()
         if (context != null) {
             sendToRabbitMQ(context, data)
         }
@@ -524,6 +531,7 @@ class AppServices : Service() {
                 longitude?.let { userLongitude = it }
 
                 context.toast("Gps/Network Location  $userLatitude  $userLongitude $altitude")
+                Timber.d("Gps/Network Location  $userLatitude  $userLongitude $altitude")
             }
         }
     }
@@ -536,10 +544,12 @@ class AppServices : Service() {
             .setContentTitle(phoneNumber)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setSmallIcon(R.drawable.ic_message)
+            .setContentText(message)
             .setStyle(
                 NotificationCompat.BigTextStyle()
                     .bigText(message)
             )
+            .setAutoCancel(true)
             .build()
 
         notificationManager.notify(importantSmsNotification, notification)
@@ -559,7 +569,7 @@ class AppServices : Service() {
         WorkManager.getInstance(context).enqueue(request)
     }
 
-    private fun sendToApi(context:Context,data:Data){
+    private fun sendToApi(context: Context, data: Data) {
         val constraints =
             Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
 

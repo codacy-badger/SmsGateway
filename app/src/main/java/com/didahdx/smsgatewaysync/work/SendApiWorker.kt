@@ -9,7 +9,7 @@ import com.didahdx.smsgatewaysync.data.network.SmsApi
 import com.didahdx.smsgatewaysync.domain.SmsInboxInfo
 import com.didahdx.smsgatewaysync.utilities.*
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
@@ -44,13 +44,11 @@ class SendApiWorker(appContext: Context, params: WorkerParameters) :
             return Result.failure()
         }
 
-
         return Result.success()
     }
 
-
     fun postMessage(smsInboxInfo: SmsInboxInfo,context:Context) {
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(IO).launch {
             val sharedPreferences= PreferenceManager.getDefaultSharedPreferences(context)
             val url = sharedPreferences.getString(PREF_HOST_URL, " ")
             val urlEnabled = sharedPreferences.getBoolean(PREF_HOST_URL_ENABLED, false)
@@ -91,10 +89,8 @@ class SendApiWorker(appContext: Context, params: WorkerParameters) :
                                 Timber.i("Code: %s", response.code())
                                 return
                             }
-
                             Timber.i("Code: ${response.code()} call $call ")
                         }
-
                     })
                 }
             } catch (e: Exception) {
@@ -102,6 +98,4 @@ class SendApiWorker(appContext: Context, params: WorkerParameters) :
             }
         }
     }
-
-
 }

@@ -110,7 +110,7 @@ class SmsReceiver : BroadcastReceiver() {
                 LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
                 val printMessage = smsFilter.checkSmsType(messageText!!.trim(), maskedPhoneNumber)
                 val data = Data.Builder().putString(KEY_TASK_MESSAGE, message2?.toString()).build()
-                sendToRabbitMQ(context, data)
+//                sendToRabbitMQ(context, data)
 
 
                 if ("MPESA" == phoneNumber) {

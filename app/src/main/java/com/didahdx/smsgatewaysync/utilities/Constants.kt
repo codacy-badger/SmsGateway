@@ -24,8 +24,10 @@ const val CHANNEL_IMPORTANT_SMS_NOTIFICATION = "important sms "
 const val MESSAGE_DATABASE = "messageDatabase"
 const val ACTION_MMS_RECEIVED = "android.provider.Telephony.WAP_PUSH_RECEIVED"
 const val KEY_TASK_MESSAGE = "KEY_TASK_MESSAGE"
+const val KEY_EMAIL="KEY_EMAIL"
 const val KEY_TASK_PRINT="KEY_TASK_PRINT"
 const val KEY_TASK_MESSAGE_API="KEY_TASK_MESSAGE_API"
+const val MINIMUM_TIME= 0
 
 
 /**

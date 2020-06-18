@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.didahdx.smsgatewaysync.manager.RabbitMqConnector
+import com.didahdx.smsgatewaysync.utilities.KEY_EMAIL
 import com.didahdx.smsgatewaysync.utilities.KEY_TASK_MESSAGE
 import com.didahdx.smsgatewaysync.utilities.PUBLISH_FROM_CLIENT
 import com.didahdx.smsgatewaysync.utilities.toast
@@ -26,8 +27,9 @@ class SendRabbitMqWorker(appContext: Context, params: WorkerParameters) :
         try {
             val data = inputData
             val message = data.getString(KEY_TASK_MESSAGE)
-            if (message != null) {
-                publishMessage(message, "")
+            val email = data.getString(KEY_EMAIL)
+            if (message != null && email != null) {
+                publishMessage(message, email)
             }
         } catch (e: HttpException) {
             Timber.d(" $e ${e.localizedMessage}")
@@ -35,7 +37,7 @@ class SendRabbitMqWorker(appContext: Context, params: WorkerParameters) :
         } catch (e: TimeoutException) {
             Timber.d(" $e ${e.localizedMessage}")
             return Result.retry()
-        }catch (e: Exception) {
+        } catch (e: Exception) {
             app.toast("Worker $e ${e.localizedMessage}")
             Timber.d(" $e ${e.localizedMessage}")
             return Result.failure()
@@ -53,7 +55,7 @@ class SendRabbitMqWorker(appContext: Context, params: WorkerParameters) :
             .build()
 
 
-        channel?.basicPublish(
+        channel.basicPublish(
             "", PUBLISH_FROM_CLIENT, false,
             props, message.toByteArray()
         )

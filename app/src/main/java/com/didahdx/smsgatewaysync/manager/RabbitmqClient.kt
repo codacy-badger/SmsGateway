@@ -1,5 +1,6 @@
 package com.didahdx.smsgatewaysync.manager
 
+import android.annotation.SuppressLint
 import android.content.Context
 import com.didahdx.smsgatewaysync.ui.UiUpdaterInterface
 import com.didahdx.smsgatewaysync.utilities.*
@@ -14,7 +15,7 @@ import java.util.concurrent.TimeoutException
 
 
 class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val email: String) :
-    ConfirmListener {
+    ConfirmListener,RecoveryListener{
     private val connectionFactory = ConnectionFactory()
 
     private val queue = LinkedBlockingDeque<String>()
@@ -25,17 +26,19 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
     @Volatile
     private var channel: Channel? = null
 
+    @SuppressLint("BinaryOperationInTimber")
     fun connection(context: Context) {
-
         try {
-
             connection = RabbitMqConnector.connection
             channel = RabbitMqConnector.channel
 
-            Timber.d(
-                "connection  ${RabbitMqConnector.connection.hashCode()}   ${connection.hashCode()} " +
-                        " channel ${RabbitMqConnector.channel.hashCode()}    ${channel.hashCode()} "
-            )
+            Timber.d("connection  ${RabbitMqConnector.connection.hashCode()} " +
+                    "  ${connection.hashCode()} " +
+                        " channel ${RabbitMqConnector.channel.hashCode()}  " +
+                    "  ${channel.hashCode()} ")
+
+            (connection as RecoverableConnection).addRecoveryListener(this)
+            (channel as RecoverableChannel).addRecoveryListener(this)
 
             channel?.queueDeclare(
                 email, false, false,
@@ -64,9 +67,7 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
 
             channel?.basicRecover()
             consumeMessages()
-            uiUpdater?.isConnected(true)
             uiUpdater?.updateStatusViewWith("$APP_NAME is running", GREEN_COLOR)
-
 
         } catch (e: IOException) {
             uiUpdater?.updateStatusViewWith("Error connecting to server", RED_COLOR)
@@ -191,17 +192,25 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
     fun disconnect() {
         channel?.close()
         connection.close()
-        uiUpdater?.isConnected(false)
     }
 
 
     override fun handleAck(deliveryTag: Long, multiple: Boolean) {
-
 //        uiUpdater?.toasterMessage("delivery Tag Sender $deliveryTag")
     }
 
     override fun handleNack(deliveryTag: Long, multiple: Boolean) {
 //        uiUpdater?.toasterMessage("delivery Tag Failed Sender $deliveryTag")
+    }
+
+    override fun handleRecovery(recoverable: Recoverable?) {
+        Timber.d(" automatic connection recovery has completed.")
+        uiUpdater?.updateStatusViewWith("$APP_NAME is running", GREEN_COLOR)
+    }
+
+    override fun handleRecoveryStarted(recoverable: Recoverable?) {
+        Timber.d(" automatic connection recovery starts.")
+        uiUpdater?.updateStatusViewWith("Error connecting to server", RED_COLOR)
     }
 
 

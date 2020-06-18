@@ -82,8 +82,6 @@ import kotlin.collections.ArrayList
 class HomeFragment : Fragment(),
     UiUpdaterInterface {
 
-    @Volatile
-    var isConnected = false
     val appLog = AppLog()
     lateinit var mHomeViewModel: HomeViewModel
     private lateinit var sharedPreferences: SharedPreferences
@@ -141,17 +139,13 @@ class HomeFragment : Fragment(),
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
         UiUpdaterInterface = this
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
 
-        Timber.i("isConnected $isConnected")
         CoroutineScope(IO).launch {
             rabbitmqClient = RabbitmqClient(UiUpdaterInterface, user?.email!!)
-            Timber.i(" object ${rabbitmqClient.hashCode()}")
-
-            Timber.i("isConnected $isConnected")
-            sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
             val urlEnabled = sharedPreferences.getBoolean(PREF_HOST_URL_ENABLED, false)
             val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
-            if (!isConnected && isServiceRunning && !urlEnabled) {
+            if (isServiceRunning && !urlEnabled) {
                 rabbitmqClient.connection(requireContext())
             }
         }
@@ -230,22 +224,29 @@ class HomeFragment : Fragment(),
             binding.refreshLayoutHome.isRefreshing = false
         }
 
-        if (checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            val locationIntent = Intent(requireContext(), LocationGpsService::class.java)
-            context?.startService(locationIntent)
-        }
+
 
 //        ContextCompat.startForegroundService(requireContext(),LocationIntent)
 
         // Inflate the layout for this fragment
         return binding.root
+    }
+
+
+    override fun onStart() {
+        super.onStart()
+
+        if (checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED && checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            val locationIntent = Intent(requireContext(), LocationGpsService::class.java)
+            context?.startService(locationIntent)
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -255,13 +256,7 @@ class HomeFragment : Fragment(),
         notificationManager = NotificationManagerCompat.from(requireContext())
         if (isServiceRunning) {
             startServices()
-            text_view_status?.backgroundGreen()
-            text_view_status?.text = "$APP_NAME is running"
-        } else {
-            text_view_status?.text = "$APP_NAME is stopped"
-            text_view_status?.backgroundRed()
         }
-
         checkAndRequestPermissions()
         navController = Navigation.findNavController(view)
     }
@@ -361,8 +356,10 @@ class HomeFragment : Fragment(),
                         obj?.put("date", Date().toString())
                         obj?.put("client_gateway_type", "android_phone")
 
-                        val data =
-                            Data.Builder().putString(KEY_TASK_MESSAGE, obj.toString()).build()
+                        val data = Data.Builder()
+                            .putString(KEY_TASK_MESSAGE, obj.toString())
+                            .putString(KEY_EMAIL,user?.email)
+                            .build()
                         if (context != null) {
                             sendToRabbitMQ(context, data)
                         }
@@ -441,12 +438,6 @@ class HomeFragment : Fragment(),
 //        stopServices()
     }
 
-    //used to check if the app has connected
-    override fun isConnected(value: Boolean) {
-        CoroutineScope(Main).launch {
-            isConnected = value
-        }
-    }
 
     //used to show to notification
     override fun notificationMessage(message: String) {
@@ -728,7 +719,7 @@ class HomeFragment : Fragment(),
             R.id.nav_logout -> {
                 showDialog("Logout", "Do you want to logout?",
                     "Yes"
-                    , DialogInterface.OnClickListener { dialog, which ->
+                    , DialogInterface.OnClickListener { dialog, _ ->
                         dialog.dismiss()
                         FirebaseAuth.getInstance().signOut()
                         startActivity(Intent(requireContext(), LoginActivity::class.java))
