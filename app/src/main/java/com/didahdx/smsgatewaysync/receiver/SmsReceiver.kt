@@ -22,7 +22,6 @@ import java.util.*
 
 
 class SmsReceiver : BroadcastReceiver() {
-    private lateinit var sharedPreferences: SharedPreferences
     private val newIntent = Intent(SMS_LOCAL_BROADCAST_RECEIVER)
     var phoneNumber: String? = " "
     var messageText: String? = ""
@@ -30,10 +29,9 @@ class SmsReceiver : BroadcastReceiver() {
     private val smsFilter = SmsFilter()
 
     override fun onReceive(context: Context, intent: Intent) {
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-        val printingReference = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
-        val autoPrint = sharedPreferences.getBoolean(PREF_AUTO_PRINT, false)
-        val maskedPhoneNumber = sharedPreferences.getBoolean(PREF_MASKED_NUMBER, false)
+        val printingReference = SpUtil.getPreferenceString(context,PREF_MPESA_TYPE, DIRECT_MPESA)
+        val autoPrint = SpUtil.getPreferenceBoolean(context,PREF_AUTO_PRINT)
+        val maskedPhoneNumber = SpUtil.getPreferenceBoolean(context,PREF_MASKED_NUMBER)
         context.toast(" sms background $autoPrint ")
 
         if (SMS_RECEIVED_INTENT == intent.action) {
@@ -108,19 +106,9 @@ class SmsReceiver : BroadcastReceiver() {
                 }
 
                 LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
-                val printMessage = smsFilter.checkSmsType(messageText!!.trim(), maskedPhoneNumber)
-                val data = Data.Builder().putString(KEY_TASK_MESSAGE, message2?.toString()).build()
-//                sendToRabbitMQ(context, data)
-
 
                 if ("MPESA" == phoneNumber) {
-//                    if (printingReference == smsFilter.mpesaType && autoPrint) {
-//                        if (Printooth.hasPairedPrinter()) {
-//                            printer.printText(printMessage, context, APP_NAME)
-//                        } else {
-//                            context?.toast("Printer not connected  ")
-//                        }
-//                    }
+
                 }
 
             }
@@ -129,16 +117,4 @@ class SmsReceiver : BroadcastReceiver() {
         }
     }
 
-
-    private fun sendToRabbitMQ(context: Context, data: Data) {
-        val constraints =
-            Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
-
-        val request: OneTimeWorkRequest = OneTimeWorkRequestBuilder<SendRabbitMqWorker>()
-            .setConstraints(constraints)
-            .setInputData(data)
-            .build()
-
-        WorkManager.getInstance(context).enqueue(request)
-    }
 }

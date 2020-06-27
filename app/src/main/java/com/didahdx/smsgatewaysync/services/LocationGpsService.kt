@@ -93,11 +93,11 @@ class LocationGpsService : Service() {
                     ) {
                         return
                     }
-//                    locationManager?.requestLocationUpdates(
-//                        LocationManager.NETWORK_PROVIDER, 0,
-//                        0f,
-//                        locationListener
-//                    )
+                    locationManager?.requestLocationUpdates(
+                        LocationManager.NETWORK_PROVIDER, 0,
+                        0f,
+                        locationListener
+                    )
 
                     locationManager?.requestLocationUpdates(
                         LocationManager.GPS_PROVIDER, 0,
@@ -106,7 +106,7 @@ class LocationGpsService : Service() {
                     )
                 }
 
-                Timber.d("Location provider Disabled $provider")
+//                Timber.d("Location provider Disabled $provider")
             }
         }
 

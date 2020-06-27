@@ -10,31 +10,31 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
 
-class LogViewModel (application: Application,Logs: AppLog): ViewModel() {
+class LogViewModel(application: Application, Logs: AppLog) : ViewModel() {
 
-    val app=application
-    private val logs=Logs
-    private val _appLogs= MutableLiveData<String>()
+    val app = application
+    private val logs = Logs
+    private val _appLogs = MutableLiveData<String>()
     val appLogs: LiveData<String>
-        get()=_appLogs
+        get() = _appLogs
 
-
-     suspend fun getLogs() {
+    init {
         CoroutineScope(IO).launch {
-            val log = logs.readLog(app)
-
-            withContext(Main){
-                _appLogs.value=log
-            }
+            getLogs()
         }
     }
 
+    private fun getLogs() {
+        CoroutineScope(IO).launch {
+            val log = logs.readLog(app)
+            _appLogs.postValue(log)
+
+        }
+    }
 
     override fun onCleared() {
         super.onCleared()
         CoroutineScope(IO).cancel()
-
     }
-
 
 }

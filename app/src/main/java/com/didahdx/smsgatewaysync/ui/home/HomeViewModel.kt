@@ -91,12 +91,10 @@ class HomeViewModel(
                     }
                 }
 
-                withContext(Main) {
+                _messageList.postValue(messagesFilled.toList())
 
-                    _messageList.value=messagesFilled.toList()
+                withContext(Main) {
                     messagesFilledNew.addAll(messagesFilled)
-//                    app.toast("Meg ${messagesFilled.toString()} ")
-//                    app.toast("Meg ${messagesFilledNew.toString()} ")
                 }
             }
             app.toast("New Meg $messagesFilledNew ")

@@ -25,21 +25,39 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <TextView
-                    android:id="@+id/text_view_status"
+                <LinearLayout
+                    android:id="@+id/linear_status"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="9dp"
                     android:background="@color/green"
-                    android:padding="8dp"
-                    android:textAlignment="center"
-                    android:textColor="@color/white" />
+                    android:orientation="vertical"
+                    android:layout_marginBottom="4dp">
+                    <TextView
+                        android:id="@+id/text_view_status"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="9dp"
+                        android:background="@color/green"
+                        android:padding="3dp"
+                        android:textAlignment="center"
+                        android:textColor="@color/white" />
+                    <TextView
+                        android:id="@+id/text_view_connection_type"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@color/green"
+                        android:padding="3dp"
+                        android:textAlignment="center"
+                        android:textColor="@color/white" />
+                </LinearLayout>
+
+
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/recycler_view_message_list"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_below="@id/text_view_status"
+                    android:layout_below="@id/linear_status"
                     android:layout_marginTop="2dp"
                     tools:listitem="@layout/message_container" />
             </RelativeLayout>

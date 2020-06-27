@@ -13,6 +13,8 @@ object RabbitMqConnector {
         connectionFactory.username = "didahdx"
         connectionFactory.password = "test"
         connectionFactory.networkRecoveryInterval = 10000
+        connectionFactory.requestedHeartbeat = 300
+//        connectionFactory.set
 //        connectionFactory.connectionTimeout = 10000
         connectionFactory.isAutomaticRecoveryEnabled = true
 //        connectionFactory.isTopologyRecoveryEnabled = false
@@ -26,4 +28,6 @@ object RabbitMqConnector {
     val channel: Channel by lazy {
         connection.createChannel()
     }
+
+
 }

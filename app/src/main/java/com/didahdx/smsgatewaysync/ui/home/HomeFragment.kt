@@ -1,12 +1,7 @@
 package com.didahdx.smsgatewaysync.ui.home
 
 import android.Manifest
-import android.app.Activity
 import android.app.ActivityManager
-import android.app.PendingIntent
-import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothSocket
 import android.content.*
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
@@ -16,13 +11,9 @@ import android.os.Bundle
 import android.os.Environment
 import android.os.StatFs
 import android.provider.Settings
-import android.telephony.SmsManager
-import android.telephony.SubscriptionInfo
-import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
 import android.view.*
 import androidx.appcompat.app.AlertDialog
-import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -38,7 +29,6 @@ import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
-import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.work.*
 import com.didahdx.smsgatewaysync.R
@@ -48,29 +38,23 @@ import com.didahdx.smsgatewaysync.data.network.PostSms
 import com.didahdx.smsgatewaysync.data.network.SmsApi
 import com.didahdx.smsgatewaysync.databinding.FragmentHomeBinding
 import com.didahdx.smsgatewaysync.domain.MessageInfo
-import com.didahdx.smsgatewaysync.domain.SmsInboxInfo
-import com.didahdx.smsgatewaysync.manager.RabbitmqClient
+import com.didahdx.smsgatewaysync.domain.PhoneStatus
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.services.LocationGpsService
-import com.didahdx.smsgatewaysync.ui.UiUpdaterInterface
 import com.didahdx.smsgatewaysync.ui.activities.LoginActivity
 import com.didahdx.smsgatewaysync.utilities.*
-import com.didahdx.smsgatewaysync.work.PrintWorker
 import com.didahdx.smsgatewaysync.work.SendRabbitMqWorker
 import com.google.firebase.auth.FirebaseAuth
+import com.google.gson.Gson
 import kotlinx.android.synthetic.main.fragment_home.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import timber.log.Timber
-import java.io.InputStream
-import java.io.OutputStream
 import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.*
@@ -79,24 +63,9 @@ import kotlin.collections.ArrayList
 /**
  * A simple [Fragment] subclass.
  */
-class HomeFragment : Fragment(),
-    UiUpdaterInterface {
+class HomeFragment : Fragment(){
 
-    val appLog = AppLog()
     lateinit var mHomeViewModel: HomeViewModel
-    private lateinit var sharedPreferences: SharedPreferences
-
-    var bluetoothAdapter: BluetoothAdapter? = null
-    var socket: BluetoothSocket? = null
-    var bluetoothDevice: BluetoothDevice? = null
-    var outputStream: OutputStream? = null
-    var inputStream: InputStream? = null
-    var workerThread: Thread? = null
-    lateinit var readBuffer: ByteArray
-    var readBufferPosition = 0
-
-    @Volatile
-    var stopWorker = false
     var value = ""
     private val sdf = SimpleDateFormat(DATE_FORMAT, Locale.US)
 
@@ -121,13 +90,11 @@ class HomeFragment : Fragment(),
     var notificationCounter = 3000
     var importantSmsNotification = 2
 
-    @Volatile
-    lateinit var rabbitmqClient: RabbitmqClient
+
     private var locationBroadcastReceiver: BroadcastReceiver? = null
     var userLongitude: String = " "
     var userLatitude: String = " "
     val user = FirebaseAuth.getInstance().currentUser
-    var UiUpdaterInterface: UiUpdaterInterface? = null
     var outgoingMessages: Queue<MessageInfo> = LinkedList()
     var messageCount = 0
     var lastMessageSentTime = 0
@@ -138,23 +105,13 @@ class HomeFragment : Fragment(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
-        UiUpdaterInterface = this
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-
-        CoroutineScope(IO).launch {
-            rabbitmqClient = RabbitmqClient(UiUpdaterInterface, user?.email!!)
-            val urlEnabled = sharedPreferences.getBoolean(PREF_HOST_URL_ENABLED, false)
-            val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
-            if (isServiceRunning && !urlEnabled) {
-                rabbitmqClient.connection(requireContext())
-            }
-        }
 
         LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
             batteryReceiver,
             IntentFilter(BATTERY_LOCAL_BROADCAST_RECEIVER)
         )
 
+        context?.registerReceiver(statusReceiver, IntentFilter(STATUS_INTENT_BROADCAST_RECEIVER))
         //registering the broadcast receiver for network
         context?.registerReceiver(
             mConnectionReceiver,
@@ -175,6 +132,7 @@ class HomeFragment : Fragment(),
         val database = MessagesDatabase(application).getIncomingMessageDao()
         val factory = HomeViewModelFactory(database, application)
         mHomeViewModel = ViewModelProvider(this, factory).get(HomeViewModel::class.java)
+
 
         binding.homeViewModel = mHomeViewModel
         val adapter =
@@ -225,8 +183,31 @@ class HomeFragment : Fragment(),
         }
 
 
+        val email = FirebaseAuth.getInstance().currentUser?.email ?: "email not available "
+        context?.let { SpUtil.setPreferenceString(it, PREF_USER_EMAIL, email) }
 
-//        ContextCompat.startForegroundService(requireContext(),LocationIntent)
+
+        val color = context?.let { SpUtil.getPreferenceString(it, PREF_STATUS_COLOR,RED_COLOR) }
+
+        val status = context?.let {
+            SpUtil.getPreferenceString(it, PREF_STATUS_MESSAGE,ERROR_CONNECTING_TO_SERVER)
+        } ?: ERROR_CONNECTING_TO_SERVER
+
+        binding.textViewStatus.text = status
+        startServices(status)
+        when (color) {
+            RED_COLOR -> {
+                binding.textViewStatus.backgroundRed()
+                binding.textViewConnectionType.backgroundRed()
+                binding.linearStatus.backgroundRed()
+            }
+
+            GREEN_COLOR -> {
+                binding.textViewStatus.backgroundGreen()
+                binding.textViewConnectionType.backgroundGreen()
+                binding.linearStatus.backgroundGreen()
+            }
+        }
 
         // Inflate the layout for this fragment
         return binding.root
@@ -251,8 +232,9 @@ class HomeFragment : Fragment(),
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-        val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
+
+        val isServiceRunning =
+            context?.let { SpUtil.getPreferenceBoolean(it, PREF_SERVICES_KEY) } ?: true
         notificationManager = NotificationManagerCompat.from(requireContext())
         if (isServiceRunning) {
             startServices()
@@ -280,20 +262,26 @@ class HomeFragment : Fragment(),
             try {
 
 
-                val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
+                val isServiceRunning =
+                    context?.let { SpUtil.getPreferenceBoolean(it, PREF_SERVICES_KEY) } ?: true
                 if (intent != null && isServiceRunning && BATTERY_LOCAL_BROADCAST_RECEIVER == intent.action) {
                     if (intent.extras != null) {
-                        val batteryVoltage = intent.extras!!.getString(BATTERY_VOLTAGE_EXTRA)
+                        val batteryVoltage =
+                            intent.extras!!.getString(BATTERY_VOLTAGE_EXTRA) ?: NOT_AVAILABLE
                         var batteryPercentage =
                             intent.extras!!.getString(BATTERY_PERCENTAGE_EXTRA).toString()
-                        val batteryCondition = intent.extras!!.getString(BATTERY_CONDITION_EXTRA)
+                                ?: NOT_AVAILABLE
+                        val batteryCondition =
+                            intent.extras!!.getString(BATTERY_CONDITION_EXTRA) ?: NOT_AVAILABLE
                         val batteryTemperature =
-                            intent.extras!!.getString(BATTERY_TEMPERATURE_EXTRA)
+                            intent.extras!!.getString(BATTERY_TEMPERATURE_EXTRA) ?: NOT_AVAILABLE
                         val batteryPowerSource =
-                            intent.extras!!.getString(BATTERY_POWER_SOURCE_EXTRA)
+                            intent.extras!!.getString(BATTERY_POWER_SOURCE_EXTRA) ?: NOT_AVAILABLE
                         val batteryChargingStatus =
                             intent.extras!!.getString(BATTERY_CHARGING_STATUS_EXTRA)
-                        val batteryTechnology = intent.extras!!.getString(BATTERY_TECHNOLOGY_EXTRA)
+                                ?: NOT_AVAILABLE
+                        val batteryTechnology =
+                            intent.extras!!.getString(BATTERY_TECHNOLOGY_EXTRA) ?: NOT_AVAILABLE
 
                         var imei = ""
                         var networkName = ""
@@ -301,10 +289,10 @@ class HomeFragment : Fragment(),
                         var imsi = ""
                         val telephonyManager = requireContext()
                             .getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
-                        if (PermissionChecker.checkSelfPermission(
+                        if (checkSelfPermission(
                                 requireContext(),
                                 Manifest.permission.READ_PHONE_STATE
-                            ) == PackageManager.PERMISSION_GRANTED
+                            ) == PermissionChecker.PERMISSION_GRANTED
                         ) {
                             imei = telephonyManager.deviceId
                             networkName = telephonyManager.networkOperatorName
@@ -330,45 +318,44 @@ class HomeFragment : Fragment(),
                         val availableRAM: Double = mi.availMem / (0x100000L).toDouble()
                         val TotalRam: Double = mi.totalMem / (0x100000L).toDouble()
 
-                        val obj: JSONObject? = JSONObject()
-                        obj?.put("type", "phoneStatus")
-                        obj?.put("batteryPercentage", batteryPercentage)
-                        obj?.put("batteryCondition", batteryCondition)
-                        obj?.put("batteryTemperature", batteryTemperature)
-                        obj?.put("batteryPowerSource", batteryPowerSource)
-                        obj?.put("batteryChargingStatus", batteryChargingStatus)
-                        obj?.put("batteryTechnology", batteryTechnology)
-                        obj?.put("batteryVoltage", batteryVoltage)
-                        obj?.put("longitude", userLongitude)
-                        obj?.put("latitude", userLatitude)
-                        obj?.put("imei", imei)
-                        obj?.put("imsi", imsi)
-                        obj?.put("simSerialNumber", simSerialNumber)
-                        obj?.put("networkName", networkName)
-                        obj?.put("PhoneManufacturer", Build.MANUFACTURER)
-                        obj?.put("PhoneModel", Build.MODEL)
-                        obj?.put("PhoneBrand", Build.BRAND)
-                        obj?.put("TotalStorage", "${df2.format(megTotal)} GB")
-                        obj?.put("FreeStorage", "${df2.format(megAvailable)} GB")
-                        obj?.put("TotalRam", "${df2.format(TotalRam)} MB")
-                        obj?.put("FreeRam", "${df2.format(availableRAM)} MB")
-                        obj?.put("client_sender", user?.email!!)
-                        obj?.put("date", Date().toString())
-                        obj?.put("client_gateway_type", "android_phone")
+                        val phoneStatus = PhoneStatus(
+                            type = "phoneStatus",
+                            batteryPercentage = batteryPercentage,
+                            batteryCondition = batteryCondition,
+                            batteryTemperature = batteryTemperature,
+                            batteryPowerSource = batteryPowerSource,
+                            batteryChargingStatus = batteryChargingStatus,
+                            batteryTechnology = batteryTechnology,
+                            batteryVoltage = batteryVoltage,
+                            longitude = userLongitude,
+                            latitude = userLatitude,
+                            imei = imei,
+                            imsi = imsi,
+                            simSerialNumber = simSerialNumber,
+                            networkName = networkName,
+                            PhoneManufacturer = Build.MANUFACTURER,
+                            PhoneModel = Build.MODEL,
+                            PhoneBrand = Build.BRAND,
+                            TotalStorage = "${df2.format(megTotal)} GB",
+                            FreeStorage = "${df2.format(megAvailable)} GB",
+                            TotalRam = "${df2.format(TotalRam)} MB",
+                            FreeRam = "${df2.format(availableRAM)} MB",
+                            client_sender = user?.email!!,
+                            date = Date().toString(),
+                            client_gateway_type = ANDROID_PHONE
+                        )
+
+                        val gson = Gson()
+
 
                         val data = Data.Builder()
-                            .putString(KEY_TASK_MESSAGE, obj.toString())
-                            .putString(KEY_EMAIL,user?.email)
+                            .putString(KEY_TASK_MESSAGE, gson.toJson(phoneStatus))
+                            .putString(KEY_EMAIL, user?.email)
                             .build()
                         if (context != null) {
                             sendToRabbitMQ(context, data)
                         }
 
-//                        CoroutineScope(IO).launch {
-//                            obj?.toString()?.let {
-//                                rabbitmqClient.publishMessage(it)
-//                            }
-//                        }
                     }
                 }
             } catch (e: Exception) {
@@ -385,15 +372,67 @@ class HomeFragment : Fragment(),
             val connectionManager =
                 context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
             val activeNetwork = connectionManager.activeNetworkInfo
-            when ((activeNetwork != null && activeNetwork.isConnectedOrConnecting)) {
-                true -> {
-                    CoroutineScope(IO).launch {
-                        postMessage()
+            var isWifiConn: Boolean = false
+            var isMobileConn: Boolean = false
+            connectionManager.allNetworks.forEach { network ->
+                connectionManager.getNetworkInfo(network)?.apply {
+                    when (type) {
+                        ConnectivityManager.TYPE_WIFI -> {
+                            isWifiConn = isWifiConn or isConnected
+                            text_view_connection_type?.text="Connected to Wifi"
+                        }
+                        ConnectivityManager.TYPE_MOBILE -> {
+                            text_view_connection_type?.text="Connected to Mobile data"
+                            context.toast(" Connected to Mobile data")
+                            isMobileConn = isMobileConn or isConnected
+                        }
+                    }
+                    val activeNetwork = connectionManager.activeNetworkInfo
+                    if ((activeNetwork != null && activeNetwork.isConnectedOrConnecting)) {
+                        CoroutineScope(IO).launch {
+                            postMessage()
+                        }
+                    }else{
+                        text_view_connection_type?.text="Connection lost"
                     }
                 }
-                false -> {
+            }
 
+
+
+        }
+    }
+
+
+    //broadcast connection receiver
+    private val statusReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent?) {
+
+            var color = SpUtil.getPreferenceString(context, PREF_STATUS_COLOR,RED_COLOR)
+            var status = SpUtil.getPreferenceString(context, PREF_STATUS_MESSAGE,
+                ERROR_CONNECTING_TO_SERVER)
+
+            if (STATUS_INTENT_BROADCAST_RECEIVER == intent?.action) {
+                if (null != intent?.extras) {
+                    status = intent.extras?.getString(STATUS_MESSAGE_EXTRA) ?: status
+                    color = intent.extras?.getString(STATUS_COLOR_EXTRA) ?: color
                 }
+
+
+                text_view_status?.text = status
+                when (color) {
+                    RED_COLOR -> {
+                        text_view_status?.backgroundRed()
+                        text_view_connection_type?.backgroundRed()
+                        linear_status?.backgroundRed()
+                    }
+                    GREEN_COLOR -> {
+                        text_view_status?.backgroundGreen()
+                        text_view_connection_type?.backgroundGreen()
+                        linear_status?.backgroundGreen()
+                    }
+                }
+
             }
         }
     }
@@ -406,7 +445,7 @@ class HomeFragment : Fragment(),
 
 
     private fun startServices(input: String) {
-        val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
+        val isServiceRunning = context?.let { SpUtil.getPreferenceBoolean(it,PREF_SERVICES_KEY) }?: true
 
         if (isServiceRunning) {
             try {
@@ -432,171 +471,12 @@ class HomeFragment : Fragment(),
     override fun onDestroy() {
         super.onDestroy()
         context?.unregisterReceiver(mConnectionReceiver)
+        context?.unregisterReceiver(statusReceiver)
 //        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(mSmsReceiver)
 //        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(callReceiver)
         LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(batteryReceiver)
 //        stopServices()
     }
-
-
-    //used to show to notification
-    override fun notificationMessage(message: String) {
-        CoroutineScope(Main).launch {
-            val notification = NotificationCompat.Builder(requireContext(), CHANNEL_ID_2)
-                .setContentTitle("Notification Message")
-                .setContentText(message)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setSmallIcon(R.drawable.ic_home)
-                .build()
-
-            notificationManager.notify(notificationCounter, notification)
-            notificationCounter++
-        }
-    }
-
-
-    //used to show toast messages
-    override fun toasterMessage(message: String) {
-        Timber.d("called $message")
-        Timber.d("thread name ${Thread.currentThread().name}")
-        CoroutineScope(Main).launch {
-            context?.toast(message)
-            Timber.d("thread name ${Thread.currentThread().name}")
-        }
-    }
-
-    //used to update status bar
-    override fun updateStatusViewWith(status: String, color: String) {
-        CoroutineScope(Main).launch {
-            val appLog = AppLog()
-            context?.let { appLog.writeToLog(it, " $status\n") }
-            text_view_status?.text = status
-            startServices(status)
-            when (color) {
-                RED_COLOR -> {
-                    text_view_status?.backgroundRed()
-                }
-
-                GREEN_COLOR -> {
-                    text_view_status?.backgroundGreen()
-                }
-                else -> {
-                }
-            }
-        }
-    }
-
-
-    //sending out sms
-    override fun sendSms(phoneNumber: String, message: String) {
-        CoroutineScope(Main).launch {
-            lateinit var smsManager: SmsManager
-            val defaultSim = sharedPreferences.getString(PREF_SIM_CARD, "")
-            val localSubscriptionManager = SubscriptionManager.from(requireContext())
-            if (context?.let {
-                    checkSelfPermission(
-                        it,
-                        Manifest.permission.SEND_SMS
-                    )
-                }
-                == PackageManager.PERMISSION_GRANTED
-            ) {
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-                    if (checkSelfPermission(
-                            requireContext(),
-                            Manifest.permission.READ_PHONE_STATE
-                        ) == PackageManager.PERMISSION_GRANTED
-                    ) {
-                        if (localSubscriptionManager.activeSubscriptionInfoCount > 1) {
-                            val localList: List<*> =
-                                localSubscriptionManager.activeSubscriptionInfoList
-                            val simInfo1 = localList[0] as SubscriptionInfo
-                            val simInfo2 = localList[1] as SubscriptionInfo
-
-                            smsManager = when (defaultSim) {
-                                getString(R.string.sim_card_one) -> {
-                                    //SendSMS From SIM One
-                                    SmsManager.getSmsManagerForSubscriptionId(simInfo1.subscriptionId)
-                                }
-                                getString(R.string.sim_card_two) -> {
-                                    //SendSMS From SIM Two
-                                    SmsManager.getSmsManagerForSubscriptionId(simInfo2.subscriptionId)
-                                }
-                                else -> {
-                                    SmsManager.getDefault()
-                                }
-                            }
-                        } else {
-                            smsManager = SmsManager.getDefault()
-                        }
-                    } else {
-                        smsManager = SmsManager.getDefault()
-                    }
-                } else {
-                    smsManager = SmsManager.getDefault()
-                }
-
-
-                val sentPI = PendingIntent.getBroadcast(
-                    context, 0, Intent(SMS_SENT_INTENT), 0
-                )
-
-                val deliveredPI = PendingIntent.getBroadcast(
-                    context, 0, Intent(SMS_DELIVERED_INTENT), 0
-                )
-
-
-                //when the SMS has been sent
-                context?.registerReceiver(object : BroadcastReceiver() {
-                    override fun onReceive(arg0: Context?, arg1: Intent?) {
-                        when (resultCode) {
-                            Activity.RESULT_OK -> context?.toast("SMS sent to $phoneNumber")
-                            SmsManager.RESULT_ERROR_GENERIC_FAILURE -> context?.toast("Generic failure")
-                            SmsManager.RESULT_ERROR_NO_SERVICE -> context?.toast("No service")
-                            SmsManager.RESULT_ERROR_NULL_PDU -> context?.toast("Null PDU")
-                            SmsManager.RESULT_ERROR_RADIO_OFF -> context?.toast("Radio off")
-                        }
-                    }
-                }, IntentFilter(SMS_SENT_INTENT))
-
-                //when the SMS has been delivered
-                context?.registerReceiver(object : BroadcastReceiver() {
-                    override fun onReceive(arg0: Context?, arg1: Intent?) {
-                        when (resultCode) {
-                            Activity.RESULT_OK -> context?.toast("SMS delivered")
-                            Activity.RESULT_CANCELED -> context?.toast("SMS not delivered")
-                        }
-                    }
-                }, IntentFilter(SMS_DELIVERED_INTENT))
-
-
-                val arraySendInt = java.util.ArrayList<PendingIntent>()
-                arraySendInt.add(sentPI)
-                val arrayDelivery = java.util.ArrayList<PendingIntent>()
-                arrayDelivery.add(deliveredPI)
-
-                outgoingMessages.add(MessageInfo(phoneNumber, message))
-
-                for (`object` in outgoingMessages) {
-                    val element = `object` as MessageInfo
-                    val parts = smsManager.divideMessage(element.messageBody)
-
-                    smsManager.sendMultipartTextMessage(
-                        element.phoneNumber,
-                        null,
-                        parts,
-                        arraySendInt,
-                        arrayDelivery
-                    )
-                    messageCount++
-                    outgoingMessages.remove()
-
-                }
-            }
-        }
-    }
-
 
     //check and requests the permission which are required
     private fun checkAndRequestPermissions(): Boolean {
@@ -617,9 +497,9 @@ class HomeFragment : Fragment(),
                 listPermissionsNeeded.toArray(arrayOf(listPermissionsNeeded.size.toString()))
                 , PERMISSION_REQUEST_ALL_CODE
             )
-            return false;
+            return false
         }
-        return true;
+        return true
     }
 
 
@@ -748,10 +628,10 @@ class HomeFragment : Fragment(),
 
 
     suspend fun postMessage() {
-        val urlEnabled = sharedPreferences.getBoolean(PREF_HOST_URL_ENABLED, false)
-        val url = sharedPreferences.getString(PREF_HOST_URL, " ")
+        val urlEnabled = context?.let { SpUtil.getPreferenceBoolean(it,PREF_HOST_URL_ENABLED) } ?:false
+        val url = context?.let { SpUtil.getPreferenceString(it,PREF_HOST_URL, NOT_AVAILABLE) }
         val database = MessagesDatabase(requireContext()).getIncomingMessageDao()
-        if (urlEnabled && url != null) {
+        if (urlEnabled && !url.isNullOrEmpty()) {
             val pendingMessages = database.getPeddingMessages(false)
             try {
                 for (me in pendingMessages.indices) {

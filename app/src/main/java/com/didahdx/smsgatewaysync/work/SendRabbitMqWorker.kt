@@ -1,15 +1,17 @@
 package com.didahdx.smsgatewaysync.work
 
-import android.accounts.NetworkErrorException
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.didahdx.smsgatewaysync.manager.RabbitMqConnector
+import com.didahdx.smsgatewaysync.utilities.AppLog.logMessage
 import com.didahdx.smsgatewaysync.utilities.KEY_EMAIL
 import com.didahdx.smsgatewaysync.utilities.KEY_TASK_MESSAGE
 import com.didahdx.smsgatewaysync.utilities.PUBLISH_FROM_CLIENT
-import com.didahdx.smsgatewaysync.utilities.toast
 import com.rabbitmq.client.AMQP
+import com.rabbitmq.client.AlreadyClosedException
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import retrofit2.HttpException
 import timber.log.Timber
 import java.util.concurrent.TimeoutException
@@ -32,13 +34,22 @@ class SendRabbitMqWorker(appContext: Context, params: WorkerParameters) :
                 publishMessage(message, email)
             }
         } catch (e: HttpException) {
+            delay(30000) 
             Timber.d(" $e ${e.localizedMessage}")
+            logMessage(" $e ${e.localizedMessage}",app)
             return Result.retry()
         } catch (e: TimeoutException) {
+            delay(30000)
+            logMessage(" $e ${e.localizedMessage}",app)
+            Timber.d(" $e ${e.localizedMessage}")
+            return Result.retry()
+        } catch (e: AlreadyClosedException) {
+                delay(30000)
+            logMessage(" $e ${e.localizedMessage}",app)
             Timber.d(" $e ${e.localizedMessage}")
             return Result.retry()
         } catch (e: Exception) {
-            app.toast("Worker $e ${e.localizedMessage}")
+            logMessage(" $e ${e.localizedMessage}",app)
             Timber.d(" $e ${e.localizedMessage}")
             return Result.failure()
         }

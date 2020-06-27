@@ -1,5 +1,6 @@
 package com.didahdx.smsgatewaysync.utilities
 
+import java.util.*
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -73,9 +74,9 @@ class SmsFilter() {
 
         return "\n\nPAYMENT DETAILS:\n" +
                 "-------------------------------" +
-                "\n Name: ${name.toUpperCase().trim()} \n\n Phone No: $mNumber " +
+                "\n Name: ${name.toUpperCase(Locale.getDefault()).trim()} \n\n Phone No: $mNumber " +
                 "\n\n Amount: $amount \n\n Transaction Date: $date \n\n Time: $time " +
-                "\n\n Transaction ID: ${mpesaId.toUpperCase()} \n\n " +
+                "\n\n Transaction ID: ${mpesaId.toUpperCase(Locale.getDefault())} \n\n " +
                 "-------------------------------\n" +
                 "******** END OF RECEIPT ******* \n\n."
     }

@@ -4,9 +4,7 @@ package com.didahdx.smsgatewaysync.ui.activities
 import android.Manifest
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
-import android.net.ConnectivityManager
 import android.os.Build
 import android.os.Bundle
 import android.view.View
@@ -23,7 +21,6 @@ import androidx.preference.PreferenceManager
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.receiver.*
 import com.didahdx.smsgatewaysync.services.AppServices
-import com.didahdx.smsgatewaysync.ui.IMainActivity
 import com.didahdx.smsgatewaysync.utilities.*
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.auth.FirebaseAuth
@@ -35,22 +32,15 @@ import kotlinx.android.synthetic.main.navigation_header.view.*
 class MainActivity : AppCompatActivity() {
 
     private var mFirebaseAnalytics: FirebaseAnalytics? = null
-    var isReadyToPublish: Boolean = false
-    var mIMainActivity: IMainActivity? = null
-    private lateinit var sharedPreferences: SharedPreferences
     lateinit var navController: NavController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
         setSupportActionBar(toolbar)
-
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         navController = Navigation.findNavController(this, R.id.nav_host_fragment2)
         NavigationUI.setupWithNavController(navigation_view, navController)
         NavigationUI.setupActionBarWithNavController(this, navController, drawer_layout)
-
 
         // Obtain the FirebaseAnalytics instance.
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this)
@@ -61,8 +51,6 @@ class MainActivity : AppCompatActivity() {
         registerReceiver(BatteryReceiver(), IntentFilter(Intent.ACTION_BATTERY_CHANGED))
 
         //registering broadcast receiver for connection
-
-
         val callFilter = IntentFilter("android.intent.action.NEW_OUTGOING_CALL")
         callFilter.addAction("android.intent.action.PHONE_STATE")
 
@@ -81,8 +69,6 @@ class MainActivity : AppCompatActivity() {
         if (firebaseUser != null) {
             navUser.text = firebaseUser.email
         }
-
-
         checkForegroundPermission()
     }
 
@@ -143,19 +129,6 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun startServices(input: String) {
-        val isServiceRunning = sharedPreferences.getBoolean(PREF_SERVICES_KEY, true)
-        if (isServiceRunning) {
-            val serviceIntent = Intent(this, AppServices::class.java)
-            serviceIntent.putExtra(INPUT_EXTRAS, input)
-            ContextCompat.startForegroundService(this, serviceIntent)
-        }
-    }
-
-    private fun stopServices() {
-        val serviceIntent = Intent(this, AppServices::class.java)
-        stopService(serviceIntent)
-    }
 
     override fun onDestroy() {
         super.onDestroy()

@@ -1,6 +1,7 @@
 package com.didahdx.smsgatewaysync.services
 
 import android.annotation.SuppressLint
+import android.app.Notification
 import android.app.PendingIntent
 import android.app.Service
 import android.content.*
@@ -13,19 +14,31 @@ import android.telephony.SmsMessage
 import android.telephony.TelephonyManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
+import androidx.core.os.bundleOf
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.navigation.NavDeepLinkBuilder
 import androidx.preference.PreferenceManager
 import androidx.work.*
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
 import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
 import com.didahdx.smsgatewaysync.domain.SmsInboxInfo
+import com.didahdx.smsgatewaysync.domain.SmsInfo
+import com.didahdx.smsgatewaysync.manager.RabbitmqClient
+import com.didahdx.smsgatewaysync.printerlib.IPrintToPrinter
+import com.didahdx.smsgatewaysync.printerlib.WoosimPrnMng
+import com.didahdx.smsgatewaysync.printerlib.utils.PrefMng
+import com.didahdx.smsgatewaysync.printerlib.utils.Tools
+import com.didahdx.smsgatewaysync.printerlib.utils.printerFactory
 import com.didahdx.smsgatewaysync.receiver.ConnectionReceiver
+import com.didahdx.smsgatewaysync.ui.UiUpdaterInterface
 import com.didahdx.smsgatewaysync.ui.activities.MainActivity
 import com.didahdx.smsgatewaysync.utilities.*
 import com.didahdx.smsgatewaysync.work.PrintWorker
 import com.didahdx.smsgatewaysync.work.SendApiWorker
 import com.didahdx.smsgatewaysync.work.SendRabbitMqWorker
+import com.didahdx.smsgatewaysync.work.SendSmsWorker
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
@@ -38,13 +51,12 @@ import java.lang.reflect.Method
 import java.text.SimpleDateFormat
 import java.util.*
 
-class AppServices : Service() {
-    lateinit var notificationManager: NotificationManagerCompat
-    var importantSmsNotification = 2
-    var userLatitude = ""
-    var userLongitude = ""
-    private lateinit var sharedPreferences: SharedPreferences
-    val user = FirebaseAuth.getInstance().currentUser
+class AppServices : Service(), UiUpdaterInterface {
+    private lateinit var notificationManager: NotificationManagerCompat
+    private var importantSmsNotification = 2
+    private var userLatitude = ""
+    private var userLongitude = ""
+    private val user = FirebaseAuth.getInstance().currentUser
 
     //The receiver will be recreated whenever android feels like it.  We need a static variable to remember data between instantiations
     private var lastState = TelephonyManager.CALL_STATE_IDLE
@@ -52,28 +64,15 @@ class AppServices : Service() {
     private var isIncoming = false
     private var savedNumber: String? = null //because the passed incoming is only valid in ringing
     private val newIntent = Intent(CALL_LOCAL_BROADCAST_RECEIVER)
+    private val statusIntent = Intent(STATUS_INTENT_BROADCAST_RECEIVER)
+    private var uiUpdaterInterface: UiUpdaterInterface? = null
+    private var mPrnMng: WoosimPrnMng? = null
 
+    @Volatile
+    lateinit var rabbitmqClient: RabbitmqClient
 
-    override fun onStartCommand(intent: Intent?, flagings: Int, startId: Int): Int {
-        val input = intent?.getStringExtra(INPUT_EXTRAS)
-        val notificationIntent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
-        val pendingIntent = PendingIntent.getActivity(
-            this, 0,
-            notificationIntent, 0
-        )
-
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle(getString(R.string.app_name))
-            .setContentText(input)
-            .setSmallIcon(R.drawable.ic_home)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setContentIntent(pendingIntent)
-            .build()
-
-        startForeground(1, notification)
-
+    override fun onCreate() {
+        super.onCreate()
         registerReceiver(
             ConnectionReceiver(),
             IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
@@ -84,7 +83,44 @@ class AppServices : Service() {
         val phoneCallFilter = IntentFilter(PHONE_STATE)
         phoneCallFilter.addAction(NEW_OUTGOING_CALL)
         registerReceiver(phoneCallReceiver, phoneCallFilter)
+        uiUpdaterInterface = this
 
+        val context = this
+        CoroutineScope(IO).launch {
+            rabbitmqClient = RabbitmqClient(uiUpdaterInterface, user?.email!!)
+            val urlEnabled = SpUtil.getPreferenceBoolean(context, PREF_HOST_URL_ENABLED)
+            val isServiceRunning = SpUtil.getPreferenceBoolean(context, PREF_SERVICES_KEY)
+            if (isServiceRunning && !urlEnabled) {
+                rabbitmqClient.connection(context)
+            }
+        }
+
+
+    }
+
+    override fun onStartCommand(intent: Intent?, flagings: Int, startId: Int): Int {
+        val input = intent?.getStringExtra(INPUT_EXTRAS) ?: " "
+        val notificationIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+
+        val pendingIntent = PendingIntent.getActivity(this, 0,
+            notificationIntent, 0)
+
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle(getString(R.string.app_name))
+            .setContentText(input)
+            .setSmallIcon(R.drawable.ic_home)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setContentIntent(pendingIntent)
+            .setOnlyAlertOnce(true)
+            .build()
+
+        notification.flags = notification.flags or Notification.DEFAULT_LIGHTS
+        notification.flags = notification.flags or Notification.DEFAULT_VIBRATE
+        notification.flags = Notification.FLAG_ONLY_ALERT_ONCE
+
+        startForeground(1, notification)
         return START_REDELIVER_INTENT
     }
 
@@ -92,11 +128,11 @@ class AppServices : Service() {
         return null
     }
 
-
     override fun onTaskRemoved(rootIntent: Intent?) {
-        val restartServiceIntent = Intent(applicationContext, this.javaClass)
-        restartServiceIntent.setPackage(packageName)
-        startService(restartServiceIntent)
+        Intent(applicationContext, this.javaClass).also {
+            it.setPackage(packageName)
+            ContextCompat.startForegroundService(this, it)
+        }
         super.onTaskRemoved(rootIntent)
     }
 
@@ -169,7 +205,7 @@ class AppServices : Service() {
                     obj?.put("sender_id", phoneNumber)
                     obj?.put("longitude", userLongitude)
                     obj?.put("latitude", userLatitude)
-//                    obj?.put("client_sender", user?.email!!)
+                    obj?.put("client_sender", user?.email!!)
                     obj?.put("client_gateway_type", "android_phone")
 
 
@@ -197,7 +233,7 @@ class AppServices : Service() {
                         obj?.put("message_type", "recieved_sms")
                     }
 
-                    if (printMessage != null && smsFilter?.mpesaType == printType) {
+                    if (printMessage != null && smsFilter?.mpesaType == printType && autoPrint) {
                         CoroutineScope(IO).launch {
                             val printData =
                                 Data.Builder().putString(KEY_TASK_PRINT, printMessage).build()
@@ -278,19 +314,24 @@ class AppServices : Service() {
 
 
                     LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
-                    val printData = Data.Builder().putString(KEY_TASK_PRINT, printMessage).build()
-                    printMessage(context, printData)
 
 
-                    if ("MPESA" == phoneNumber) {
-//                    if (printingReference == smsFilter.mpesaType && autoPrint) {
-//                        if (Printooth.hasPairedPrinter()) {
-//                            printer.printText(printMessage, context, APP_NAME)
-//                        } else {
-//                            context?.toast("Printer not connected  ")
-//                        }
-//                    }
+//                    if ("MPESA" == phoneNumber) {
+                    if (printingReference == smsFilter.mpesaType && autoPrint) {
+
+                        //Check if the Bluetooth is available and on.
+                        Tools.isBlueToothOn(context)
+                        val address: String = PrefMng.getDeviceAddr(context)
+                        if (address.isNotEmpty() && Tools.isBlueToothOn(context)) {
+                            val testPrinter: IPrintToPrinter =
+                                BluetoothPrinter(context, printMessage)
+                            //Connect to the printer and after successful connection issue the print command.
+                            mPrnMng = printerFactory.createPrnMng(context, address, testPrinter)
+                        } else {
+                            context.toast("Printer not connected ")
+                        }
                     }
+//                    }
 
                 }
 
@@ -464,8 +505,7 @@ class AppServices : Service() {
 
     //used to hang Up Phone Call
     private fun hangUpCall(context: Context) {
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-        val hangup = sharedPreferences.getBoolean(PREF_HANG_UP, false)
+        val hangup = SpUtil.getPreferenceBoolean(this, PREF_HANG_UP) ?: false
         if (hangup) {
             val tm = context.getSystemService(Context.TELECOM_SERVICE) as TelecomManager
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -517,6 +557,7 @@ class AppServices : Service() {
                 "FATAL ERROR: could not connect to telephony subsystem"
             )
             Timber.i("Exception object: $e  ${e.localizedMessage}")
+            AppLog.logMessage(" $e  ${e.localizedMessage}", this)
         }
     }
 
@@ -526,11 +567,10 @@ class AppServices : Service() {
                 val longitude = intent.getStringExtra(LONGITUDE_EXTRA)
                 val latitude = intent.getStringExtra(LATITUDE_EXTRA)
                 val altitude = intent.getStringExtra(ALTITUDE_EXTRA)
-
                 latitude?.let { userLatitude = it }
                 longitude?.let { userLongitude = it }
 
-                context.toast("Gps/Network Location  $userLatitude  $userLongitude $altitude")
+//                context.toast("Gps/Network Location  $userLatitude  $userLongitude $altitude")
                 Timber.d("Gps/Network Location  $userLatitude  $userLongitude $altitude")
             }
         }
@@ -539,6 +579,21 @@ class AppServices : Service() {
 
     //used to show to notification
     fun notificationMessage(message: String, phoneNumber: String, context: Context) {
+        val smsInfo = SmsInfo(
+            message,
+            Date().toString(),
+            phoneNumber,
+            NOT_AVAILABLE,
+            userLongitude,
+            userLatitude
+        )
+        val bundle = bundleOf("SmsInfo" to smsInfo)
+        val pendingIntent = NavDeepLinkBuilder(context)
+            .setComponentName(MainActivity::class.java)
+            .setGraph(R.navigation.nav_graph2)
+            .setDestination(R.id.smsDetailsFragment)
+            .setArguments(bundle)
+            .createPendingIntent()
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID_3)
             .setContentTitle(phoneNumber)
@@ -549,13 +604,20 @@ class AppServices : Service() {
                 NotificationCompat.BigTextStyle()
                     .bigText(message)
             )
+            .setContentIntent(pendingIntent)
             .setAutoCancel(true)
+            .setOnlyAlertOnce(true)
             .build()
+
+
+        notification.flags = notification.flags or Notification.DEFAULT_LIGHTS
+        notification.flags = notification.flags or Notification.DEFAULT_VIBRATE
+        notification.flags = Notification.FLAG_ONLY_ALERT_ONCE
 
         notificationManager.notify(importantSmsNotification, notification)
         importantSmsNotification++
-
     }
+
 
     private fun sendToRabbitMQ(context: Context, data: Data) {
         val constraints =
@@ -563,6 +625,15 @@ class AppServices : Service() {
 
         val request: OneTimeWorkRequest = OneTimeWorkRequestBuilder<SendRabbitMqWorker>()
             .setConstraints(constraints)
+            .setInputData(data)
+            .build()
+
+        WorkManager.getInstance(context).enqueue(request)
+    }
+
+
+    private fun sendSms(context: Context, data: Data) {
+        val request: OneTimeWorkRequest = OneTimeWorkRequestBuilder<SendSmsWorker>()
             .setInputData(data)
             .build()
 
@@ -590,4 +661,101 @@ class AppServices : Service() {
         WorkManager.getInstance(context).enqueue(request)
     }
 
+    override fun notificationMessage(message: String) {
+        notificationManager = NotificationManagerCompat.from(this)
+        val notification = notificationStatus(message)
+
+        notificationManager.notify(1, notification)
+        statusIntent.putExtra(STATUS_MESSAGE_EXTRA, message)
+        statusIntent.putExtra(STATUS_COLOR_EXTRA, GREEN_COLOR)
+        sendBroadcast(statusIntent)
+    }
+
+    override fun toasterMessage(message: String) {
+        Timber.d("called $message")
+        Timber.d("thread name ${Thread.currentThread().name}")
+        CoroutineScope(Main).launch {
+            toast(message)
+            Timber.d("thread name ${Thread.currentThread().name}")
+        }
+    }
+
+    override fun updateStatusViewWith(status: String, color: String) {
+        val context = this
+        CoroutineScope(Main).launch {
+
+            SpUtil.setPreferenceString(context, PREF_STATUS_MESSAGE, status)
+            SpUtil.setPreferenceString(context, PREF_STATUS_COLOR, color)
+            statusIntent.putExtra(STATUS_MESSAGE_EXTRA, status)
+            statusIntent.putExtra(STATUS_COLOR_EXTRA, color)
+            sendBroadcast(statusIntent)
+            AppLog.logMessage(status, context)
+            notificationManager = NotificationManagerCompat.from(context)
+            val notification = notificationStatus(status)
+
+            notificationManager.notify(1, notification)
+        }
+    }
+
+    override fun sendSms(phoneNumber: String, message: String) {
+        val data = Data.Builder()
+            .putString(KEY_TASK_MESSAGE, message)
+            .putString(KEY_PHONE_NUMBER, phoneNumber)
+            .build()
+
+        sendSms(this, data)
+    }
+
+    override fun updateSettings(preferenceType: String, key: String, value: String) {
+        SpUtil.UpdateSettingsRemotely(this, preferenceType, key, value)
+    }
+
+    override fun logMessage(message: String) {
+        AppLog.logMessage(message, this)
+    }
+
+
+    //used to show to notification
+    private fun notificationStatus(message: String): Notification {
+        val notificationIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            this, 0, notificationIntent, 0
+        )
+
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle(getString(R.string.app_name))
+            .setContentText(message)
+            .setSmallIcon(R.drawable.ic_home)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setStyle(
+                NotificationCompat.BigTextStyle()
+                    .bigText(message)
+            )
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .setOnlyAlertOnce(true)
+            .build()
+        notification.flags = notification.flags or Notification.DEFAULT_LIGHTS
+        notification.flags = notification.flags or Notification.DEFAULT_VIBRATE
+        notification.flags = Notification.FLAG_ONLY_ALERT_ONCE
+        notification.flags = Notification.FLAG_ONGOING_EVENT;
+        return notification
+    }
+
+
+    override fun onDestroy() {
+        mPrnMng?.releaseAllocatoins()
+        super.onDestroy()
+        CoroutineScope(IO).launch {
+            rabbitmqClient.disconnect()
+        }
+
+
+
+//        val editor = sharedPreferences.edit()
+//        editor.putBoolean(PREF_RABBITMQ_CONNECTION, false)
+//        editor.apply()
+    }
 }

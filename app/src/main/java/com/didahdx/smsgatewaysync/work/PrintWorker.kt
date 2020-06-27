@@ -14,6 +14,7 @@ import com.didahdx.smsgatewaysync.utilities.PREF_PRINTER_NAME
 import com.didahdx.smsgatewaysync.utilities.toast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import timber.log.Timber
@@ -54,7 +55,6 @@ class PrintWorker(appContext: Context, params: WorkerParameters) :
             e.printStackTrace()
             return Result.retry()
         }catch (e: Exception) {
-            context.toast("Worker $e ${e.localizedMessage}")
             e.printStackTrace()
             return Result.failure()
         }
@@ -62,7 +62,7 @@ class PrintWorker(appContext: Context, params: WorkerParameters) :
         return Result.success()
     }
 
-    suspend fun intentPrint(messageBody: String) {
+     fun intentPrint(messageBody: String) {
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
         val buffer: ByteArray = messageBody.toByteArray()
         val printHeader = byteArrayOf(0xAA.toByte(), 0x55, 2, 0)
@@ -76,18 +76,27 @@ class PrintWorker(appContext: Context, params: WorkerParameters) :
         } else {
             try {
                 outputStream?.write(messageBody.toByteArray())
-                outputStream?.close()
-                socket?.close()
+
             } catch (ex: java.lang.Exception) {
                 value = "$ex\nExcep IntentPrint \n"
                 CoroutineScope(Dispatchers.Main).launch {
                     context.toast(value)
                 }
+            }finally {
+                try {
+                    outputStream?.close()
+                    socket?.close()
+                }catch (e: Exception){
+                    CoroutineScope(Main).launch {
+                        context.toast(value)
+                    }
+                }
             }
+
         }
     }
 
-    private suspend fun InitPrinter() {
+    private  fun InitPrinter() {
        val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter() as BluetoothAdapter
         try {
 //            if (!bluetoothAdapter?.isEnabled!!) {
@@ -95,6 +104,9 @@ class PrintWorker(appContext: Context, params: WorkerParameters) :
 //                startActivityForResult(enableBluetooth, 0)
 //            }
             val printerName = sharedPreferences.getString(PREF_PRINTER_NAME, "")
+            CoroutineScope(Main).launch{
+                context.toast("Printer name $printerName")
+            }
             if (!(printerName != null && printerName.isNotEmpty())) {
                 return
             }
@@ -103,20 +115,39 @@ class PrintWorker(appContext: Context, params: WorkerParameters) :
                 for (device in pairedDevices) {
                     if (device.name == printerName) //Note, you will need to change this to match the name of your device
                     {
+                        CoroutineScope(Main).launch {
+                            context?.toast("Device type ${device.type}  ${device.name}")
+                        }
                         bluetoothDevice = device
                         break
                     }
                 }
-                val uuid =
-                    UUID.fromString("00001101-0000-1000-8000-00805F9B34FB") //Standard SerialPortService ID
+
                 val m: Method = bluetoothDevice!!.javaClass.getMethod(
                     "createRfcommSocket", *arrayOf<Class<*>?>(
                         Int::class.javaPrimitiveType
                     )
                 )
-                socket = m?.invoke(bluetoothDevice, 1) as BluetoothSocket?
-                bluetoothAdapter?.cancelDiscovery()
-                socket?.connect()
+
+                val uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb")
+                val uuid2 = UUID.fromString("0000112f-0000-1000-8000-00805f9b34fb")
+                val MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+//                socket = bluetoothDevice!!.createInsecureRfcommSocketToServiceRecord(uuid)
+//                socket = bluetoothDevice!!.createRfcommSocketToServiceRecord(uuid2)
+                socket = m.invoke(bluetoothDevice, 1) as BluetoothSocket?
+//                socket= bluetoothDevice!!.createInsecureRfcommSocketToServiceRecord(ParcelUuid.fromString(pBAP_UUID).uuid)
+//                socket= bluetoothDevice!!.createInsecureRfcommSocketToServiceRecord(bluetoothDevice!!.uuids[0].uuid)
+
+//                bluetoothAdapter?.cancelDiscovery()
+
+                try {
+                    socket?.connect()
+                }catch(e:Exception){
+                    CoroutineScope(Main).launch{
+                        Timber.d("$e \n ${e.localizedMessage}")
+                        context?.toast("$e \n ${e.localizedMessage}")
+                    }
+                }
                 outputStream = socket?.outputStream
                 inputStream = socket?.inputStream
                 beginListenForData()
@@ -129,7 +160,7 @@ class PrintWorker(appContext: Context, params: WorkerParameters) :
             }
         } catch (ex: java.lang.Exception) {
             value = "$ex\n InitPrinter \n"
-            CoroutineScope(Dispatchers.Main).launch {
+            CoroutineScope(Main).launch {
                context.toast(value)
             }
         }
@@ -137,7 +168,7 @@ class PrintWorker(appContext: Context, params: WorkerParameters) :
     }
 
 
-    private suspend fun beginListenForData() {
+    private  fun beginListenForData() {
         try {
             val handler = Handler()
 

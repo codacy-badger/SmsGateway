@@ -10,6 +10,7 @@ import com.didahdx.smsgatewaysync.domain.SmsInboxInfo
 import com.didahdx.smsgatewaysync.utilities.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
@@ -34,9 +35,11 @@ class SendApiWorker(appContext: Context, params: WorkerParameters) :
 //                postMessage(message, context)
             }
         } catch (e: HttpException) {
+            delay(30000)
             Timber.d(" $e ${e.localizedMessage}")
             return Result.retry()
         } catch (e: TimeoutException) {
+            delay(30000)
             Timber.d(" $e ${e.localizedMessage}")
             return Result.retry()
         }catch (e: Exception) {

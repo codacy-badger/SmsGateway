@@ -156,6 +156,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
     private fun stopServices() {
         val serviceIntent = Intent(activity as Activity, AppServices::class.java)
+        serviceIntent.putExtra(INPUT_EXTRAS, "$APP_NAME is stopped")
         context?.stopService(serviceIntent)
     }
 

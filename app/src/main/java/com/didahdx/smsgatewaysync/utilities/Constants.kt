@@ -12,7 +12,8 @@ const val NOT_AVAILABLE = "NA"
 
 const val APP_SERVICE_KEY = "APP_SERVICE_KEY"
 const val APP_SERVICE_STATE = "APP_SERVICE_STATE"
-
+const val SIM_CARD_1="Sim Card 1"
+const val SIM_CARD_2="Sim Card 2"
 const val LOG_FILE_NAME = "smsLog.txt"
 const val APP_NAME = "Sms Router"
 const val CHANNEL_ID = "sms_services_notification"
@@ -25,9 +26,12 @@ const val MESSAGE_DATABASE = "messageDatabase"
 const val ACTION_MMS_RECEIVED = "android.provider.Telephony.WAP_PUSH_RECEIVED"
 const val KEY_TASK_MESSAGE = "KEY_TASK_MESSAGE"
 const val KEY_EMAIL="KEY_EMAIL"
+const val KEY_PHONE_NUMBER="KEY_PHONE_NUMBER"
 const val KEY_TASK_PRINT="KEY_TASK_PRINT"
 const val KEY_TASK_MESSAGE_API="KEY_TASK_MESSAGE_API"
 const val MINIMUM_TIME= 0
+const val ERROR_CONNECTING_TO_SERVER="Error connecting to server"
+const val ANDROID_PHONE="android phone"
 
 
 /**
@@ -62,6 +66,9 @@ const val BATTERY_POWER_SOURCE_EXTRA = "BATTERY_POWER_SOURCE_EXTRA"
 const val BATTERY_CHARGING_STATUS_EXTRA = "BATTERY_CHARGING_STATUS_EXTRA"
 const val BATTERY_TECHNOLOGY_EXTRA = "BATTERY_TECHNOLOGY_EXTRA"
 const val BATTERY_VOLTAGE_EXTRA = "BATTERY_VOLTAGE_EXTRA"
+const val STATUS_INTENT_BROADCAST_RECEIVER="STATUS_INTENT_BROADCAST_RECEIVER"
+const val STATUS_MESSAGE_EXTRA="STATUS_MESSAGE_EXTRA"
+const val STATUS_COLOR_EXTRA="STATUS_COLOR_EXTRA"
 
 /**
  *  Queues
@@ -96,6 +103,17 @@ const val PREF_MASKED_NUMBER = "masked_phone_number"
 const val PREF_IMPORTANT_SMS_NOTIFICATION = "mpesa_types_notification"
 const val PREF_HANG_UP = "hang_up"
 const val PREF_PRINTER_NAME = "PREF_PRINTER_NAME"
+const val PREF_STATUS_MESSAGE="PREF_STATUS_MESSAGE"
+const val PREF_STATUS_COLOR="PREF_STATUS_COLOR"
+const val PREF_USER_EMAIL="PREF_USER_EMAIL"
+const val PREF_RABBITMQ_CONNECTION="PREF_RABBITMQ_CONNECTION"
+
+/**
+ * preference type
+ * */
+const val PREF_TYPE_STRING="PREF_TYPE_STRING"
+const val PREF_TYPE_BOOLEAN="PREF_TYPE_BOOLEAN"
+const val PREF_TYPE_INT="PREF_TYPE_INT"
 
 /**
  *  user permission codes

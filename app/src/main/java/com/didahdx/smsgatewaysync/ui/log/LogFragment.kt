@@ -27,7 +27,6 @@ import kotlinx.coroutines.launch
  */
 class LogFragment : Fragment() {
 
-    val appLog = AppLog()
     var log: String = " "
     lateinit var logViewModel: LogViewModel
 
@@ -40,14 +39,11 @@ class LogFragment : Fragment() {
             DataBindingUtil.inflate(inflater,R.layout.fragment_log, container, false)
 
         val application = requireNotNull(this.activity).application
-        val factory = LogViewModelFactory(application, appLog)
+        val factory = LogViewModelFactory(application, AppLog)
         logViewModel = ViewModelProvider(this, factory).get(LogViewModel::class.java)
         binding.logViewModel = logViewModel
         binding.lifecycleOwner = this
 
-        CoroutineScope(IO).launch {
-            logViewModel.getLogs()
-        }
 
         logViewModel.appLogs.observe(viewLifecycleOwner, Observer { log ->
             log?.let {

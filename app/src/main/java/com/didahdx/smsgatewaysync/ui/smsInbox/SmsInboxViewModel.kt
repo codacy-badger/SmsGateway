@@ -54,10 +54,8 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
         get() = _messageArrayList
 
 
-    private suspend fun setInputMessage(message: Cursor) {
-        withContext(Main) {
-            _messageArrayList.value = message
-        }
+    private fun setInputMessage(message: Cursor) {
+            _messageArrayList.postValue(message)
     }
 
 
@@ -126,7 +124,7 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
     }
 
 
-    private suspend fun sortCursor(rowNumbers: ArrayList<String>) {
+    private fun sortCursor(rowNumbers: ArrayList<String>) {
         val projections = arrayOf("address", "body", "date")
         var inClause: String = rowNumbers.toString()
         inClause = inClause.replace('[', '(').replace(']', ')')
@@ -144,10 +142,9 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
     }
 
 
-    private suspend fun setCount(count: Int) {
-        withContext(Main) {
-            _messageCount.value = count
-        }
+    private fun setCount(count: Int) {
+            _messageCount.postValue(count)
+
     }
 
     fun setUpSmsInfo(info: SmsInboxInfo): SmsInfo {
@@ -171,80 +168,6 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
             info.longitude,
             info.latitude
         )
-    }
-
-    fun getCursor(): Cursor? {
-        var mCursor: Cursor? = null
-        CoroutineScope(IO).launch {
-            val cursor = app.contentResolver?.query(
-                Uri.parse("content://sms/inbox"),
-                null,
-                null,
-                null,
-                null
-            )
-
-            val smsItem = ArrayList<String>()
-
-            if (cursor != null && cursor.moveToNext()) {
-//                val nameId = cursor.getColumnIndex("address")
-                val messageId = cursor.getColumnIndex("body")
-                val dateId = cursor.getColumnIndex("date")
-                val mpesaType = sharedPreferences.getString(PREF_MPESA_TYPE, DIRECT_MPESA)
-                Timber.i("mpesa sms $mpesaType ")
-
-                do {
-                    val dateString = cursor.getString(dateId)
-
-//                if (cursor.getString(nameId) == "MPESA") {
-
-                    val maskedPhoneNumber = sharedPreferences.getBoolean(PREF_MASKED_NUMBER, false)
-                    val smsFilter = SmsFilter(cursor.getString(messageId), maskedPhoneNumber)
-
-                    when (mpesaType) {
-                        PAY_BILL -> {
-                            if (smsFilter.mpesaType == PAY_BILL) {
-                                cursor.position.let { smsItem.add(dateString) }
-                            }
-                        }
-                        DIRECT_MPESA -> {
-                            if (smsFilter.mpesaType == DIRECT_MPESA) {
-                                cursor.position.let { smsItem.add(dateString) }
-                            }
-                        }
-
-                        BUY_GOODS_AND_SERVICES -> {
-                            if (smsFilter.mpesaType == BUY_GOODS_AND_SERVICES) {
-                                cursor.position.let { smsItem.add(dateString) }
-                            }
-                        }
-                        else -> {
-                            cursor.position.let { smsItem.add(dateString) }
-                        }
-                    }
-//                }
-                } while (cursor.moveToNext())
-                cursor.close()
-            }
-
-            val projections = arrayOf("_id", "address", "body", "date")
-            var inClause: String = smsItem.toString()
-            inClause = inClause.replace('[', '(').replace(']', ')')
-            val selection = "date IN  $inClause"
-            val valueCursor = app.contentResolver?.query(
-                Uri.parse("content://sms/inbox"),
-                projections,
-                selection,
-                null,
-                null
-            )
-
-            withContext(Main) {
-                mCursor = valueCursor
-            }
-
-        }
-        return mCursor
     }
 
     override fun onCleared() {

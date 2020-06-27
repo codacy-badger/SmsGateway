@@ -7,6 +7,7 @@ import android.os.Build
 import androidx.multidex.MultiDex
 import androidx.multidex.MultiDexApplication
 import com.didahdx.smsgatewaysync.utilities.*
+import com.google.firebase.FirebaseApp
 import timber.log.Timber
 
 class App : MultiDexApplication() {
@@ -20,6 +21,7 @@ class App : MultiDexApplication() {
 
     override fun onCreate() {
         super.onCreate()
+//        FirebaseApp.initializeApp(this)
         instance = this
         createNotificationChannel()
         Timber.plant(Timber.DebugTree())
