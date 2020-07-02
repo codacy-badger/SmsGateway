@@ -65,12 +65,11 @@ class SendRabbitMqWorker(appContext: Context, params: WorkerParameters) :
             .deliveryMode(1)
             .build()
 
-
         channel.basicPublish(
             "", PUBLISH_FROM_CLIENT, false,
             props, message.toByteArray()
         )
-        Timber.d("message sent!!!")
+
     }
 
 }

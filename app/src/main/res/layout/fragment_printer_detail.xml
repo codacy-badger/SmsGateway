@@ -4,7 +4,7 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical"
-    tools:context=".ui.printer.PrinterDetailFragment">
+    tools:context=".presentation.printer.PrinterDetailFragment">
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/printer_detail_refresh"
@@ -15,7 +15,7 @@
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:orientation="vertical"
-            tools:context=".ui.printer.PrinterDetailFragment">
+            tools:context=".presentation.printer.PrinterDetailFragment">
 
             <TextView
                 android:id="@+id/title_paired_devices"

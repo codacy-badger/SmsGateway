@@ -25,9 +25,9 @@ class ConnectionReceiver : BroadcastReceiver() {
 
             val connectionManager =
                 context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-            var isConnect: Boolean = false
-            var isWifiConn: Boolean = false
-            var isMobileConn: Boolean = false
+
+            var isWifiConn = false
+            var isMobileConn = false
             connectionManager.allNetworks.forEach { network ->
                 connectionManager.getNetworkInfo(network)?.apply {
                     when (type) {

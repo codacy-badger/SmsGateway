@@ -12,14 +12,13 @@ object RabbitMqConnector {
         connectionFactory.host = "128.199.174.204"
         connectionFactory.username = "didahdx"
         connectionFactory.password = "test"
-        connectionFactory.networkRecoveryInterval = 10000
-        connectionFactory.requestedHeartbeat = 300
+//        connectionFactory.networkRecoveryInterval = 10000
+        connectionFactory.requestedHeartbeat = 20
 //        connectionFactory.set
-//        connectionFactory.connectionTimeout = 10000
+//        connectionFactory.connectionTimeout = 240000
         connectionFactory.isAutomaticRecoveryEnabled = true
-//        connectionFactory.isTopologyRecoveryEnabled = false
     }
-
+    
     val connection: Connection by lazy {
         connectionFactory.newConnection()
     }

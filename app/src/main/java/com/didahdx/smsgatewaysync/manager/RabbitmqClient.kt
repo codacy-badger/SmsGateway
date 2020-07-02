@@ -1,35 +1,30 @@
 package com.didahdx.smsgatewaysync.manager
 
-import android.annotation.SuppressLint
 import android.content.Context
-import androidx.preference.PreferenceManager
-import com.didahdx.smsgatewaysync.ui.UiUpdaterInterface
+import com.didahdx.smsgatewaysync.presentation.UiUpdaterInterface
 import com.didahdx.smsgatewaysync.utilities.*
 import com.rabbitmq.client.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import timber.log.Timber
 import java.io.IOException
-import java.net.ConnectException
 import java.nio.charset.StandardCharsets
-import java.util.concurrent.LinkedBlockingDeque
-import java.util.concurrent.TimeoutException
 
 
 class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val email: String) :
-    ConfirmListener, RecoveryListener,ShutdownListener {
+    ConfirmListener, RecoveryListener, ShutdownListener {
 
     @Volatile
-    private lateinit var connection: Connection
+    private  var connection: Connection?=null
     @Volatile
     private var channel: Channel? = null
-    var count=0
+    var count = 0
 
-     fun connection(context: Context) {
+    fun connection(context: Context) {
         try {
             connection = RabbitMqConnector.connection
             channel = RabbitMqConnector.channel
@@ -52,10 +47,8 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
                 false, null
             )
 
-            connection.addShutdownListener(this)
+            connection?.addShutdownListener(this)
             channel?.addShutdownListener(this)
-
-            val connected = SpUtil.getPreferenceBoolean(context, PREF_RABBITMQ_CONNECTION)
 
             channel?.confirmSelect()
             channel?.addConfirmListener(
@@ -68,24 +61,36 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
 
             channel?.basicRecover()
             consumeMessages()
-            SpUtil.setPreferenceBoolean(context,PREF_RABBITMQ_CONNECTION, true)
+            setServiceState(context, ServiceState.RUNNING)
             uiUpdater?.updateStatusViewWith("$APP_NAME is running", GREEN_COLOR)
         } catch (e: Exception) {
             e.printStackTrace()
-            uiUpdater?.updateStatusViewWith("Error connecting to server ${e.localizedMessage}", RED_COLOR)
+            uiUpdater?.updateStatusViewWith(
+                "Error connecting to server ${e.localizedMessage}",
+                RED_COLOR
+            )
             Timber.d("$e  ${e.localizedMessage}")
             uiUpdater?.logMessage("$e \n ${e.localizedMessage}")
             disconnect()
-            uiUpdater?.updateStatusViewWith("Retrying to connect to server \nNumber of retries $count", RED_COLOR)
-           if(count<=20){
-            CoroutineScope(IO).launch {
-                delay(30000)
-                connection(context)
+            uiUpdater?.updateStatusViewWith(
+                "Retrying to connect to server \nNumber of retries $count",
+                RED_COLOR
+            )
+            channel=null
+            connection=null
+            val isServiceOn = SpUtil.getPreferenceBoolean(context, PREF_SERVICES_KEY)
+            if (count <= 20 && isServiceOn && ServiceState.STOPPED!= getServiceState(context)) {
+                CoroutineScope(IO).launch {
+                    delay(30000)
+                    connection(context)
+                }
+            } else {
+                uiUpdater?.updateStatusViewWith(
+                    "Number of retries have reached" +
+                            " $count \n check the your network ", RED_COLOR
+                )
+                setServiceState(context, ServiceState.STOPPED)
             }
-           }else{
-               uiUpdater?.updateStatusViewWith("Number of retries have reached" +
-                       " $count \n check the your network ", RED_COLOR)
-           }
             count++
         }
     }
@@ -114,9 +119,11 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
                             uiUpdater?.updateStatusViewWith(message, GREEN_COLOR)
                         }
                     }
-                }catch (e:Exception){
-                    uiUpdater?.toasterMessage("$e \n" +
-                            " ${e.localizedMessage}")
+                } catch (e: Exception) {
+                    uiUpdater?.toasterMessage(
+                        "$e \n" +
+                                " ${e.localizedMessage}"
+                    )
                     Timber.d("$e \n ${e.localizedMessage}")
                     uiUpdater?.logMessage("$e \n ${e.localizedMessage}")
                 }
@@ -159,7 +166,12 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
     fun disconnect() {
         try {
             channel?.close()
-            connection.close()
+        } catch (e: Exception) {
+            Timber.d("$e ${e.localizedMessage}")
+        }
+        try {
+            connection?.close()
+            CoroutineScope(IO).cancel()
         } catch (e: Exception) {
             Timber.d("$e ${e.localizedMessage}")
         }
@@ -188,7 +200,10 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
 
     override fun shutdownCompleted(cause: ShutdownSignalException?) {
         Timber.d(" $cause \n ${cause?.localizedMessage}")
-        uiUpdater?.updateStatusViewWith("Error connection lost \nCheck your internet connection ", RED_COLOR)
+        uiUpdater?.updateStatusViewWith(
+            "Error connection lost \nCheck your internet connection ",
+            RED_COLOR
+        )
         uiUpdater?.logMessage(" $cause ${cause?.localizedMessage}")
 
     }

@@ -6,7 +6,7 @@
     app:startDestination="@id/loginFragment">
     <fragment
         android:id="@+id/loginFragment"
-        android:name="com.didahdx.smsgatewaysync.ui.authetication.LoginFragment"
+        android:name="com.didahdx.smsgatewaysync.presentation.authetication.LoginFragment"
         android:label="@string/app_name"
         tools:layout="@layout/fragment_login">
         <action
@@ -29,16 +29,16 @@
     </fragment>
     <fragment
         android:id="@+id/signUpFragment"
-        android:name="com.didahdx.smsgatewaysync.ui.authetication.SignUpFragment"
+        android:name="com.didahdx.smsgatewaysync.presentation.authetication.SignUpFragment"
         android:label="Sign up"
         tools:layout="@layout/fragment_sign_up" />
     <fragment
         android:id="@+id/forgotPasswordFragment"
-        android:name="com.didahdx.smsgatewaysync.ui.authetication.ForgotPasswordFragment"
+        android:name="com.didahdx.smsgatewaysync.presentation.authetication.ForgotPasswordFragment"
         android:label="Forgot Password"
         tools:layout="@layout/fragment_forgot_password" />
     <activity
         android:id="@+id/mainActivity"
-        android:name="com.didahdx.smsgatewaysync.ui.activities.MainActivity"
+        android:name="com.didahdx.smsgatewaysync.presentation.activities.MainActivity"
         android:label="MainActivity" />
 </navigation>

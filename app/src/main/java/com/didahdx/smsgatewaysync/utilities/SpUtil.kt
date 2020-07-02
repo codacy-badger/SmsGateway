@@ -27,7 +27,7 @@ object SpUtil {
     }
 
     fun getPreferenceInt(context: Context, key: String,defaultValue:Int ): Int {
-        return getPrefs(context).getInt(key, 0)
+        return getPrefs(context).getInt(key, defaultValue)
     }
 
     fun getPreferenceBoolean(context: Context, key: String): Boolean {
@@ -57,7 +57,7 @@ object SpUtil {
         for (i in 1..5) {
             var query =
                 getPrefs(context).getString(QUERY + i.toString(), "")
-            if (!query!!.isEmpty()) {
+            if (query!!.isNotEmpty()) {
                 query = query.replace(",", " ")
                 queryList.add(query.trim { it <= ' ' })
             }
@@ -65,7 +65,7 @@ object SpUtil {
         return queryList
     }
 
-    fun UpdateSettingsRemotely(context: Context, type: String, key: String, value: String) {
+    fun updateSettingsRemotely(context: Context, type: String, key: String, value: String) {
         when (type) {
             PREF_TYPE_BOOLEAN -> {
                 if (value == "0") {

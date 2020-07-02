@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:layout_margin="10dp"
     android:orientation="vertical"
-    tools:context=".ui.about.AboutFragment">
+    tools:context=".presentation.about.AboutFragment">
 
     <TextView
         android:id="@+id/text_network"

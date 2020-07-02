@@ -41,7 +41,7 @@
         <receiver
             android:name=".receiver.OutgoingSmsReceiver"
             android:enabled="true"
-            android:exported="true"></receiver>
+            android:exported="false"></receiver>
 
         <uses-library
             android:name="org.apache.http.legacy"
@@ -65,7 +65,7 @@
         <service
             android:name=".services.LocationGpsService"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="false" />
 
         <receiver
             android:name=".receiver.BootReceiver"
@@ -80,7 +80,7 @@
         </receiver>
 
         <activity
-            android:name=".ui.activities.LoginActivity"
+            android:name=".presentation.activities.LoginActivity"
             android:launchMode="singleTask"
             android:windowSoftInputMode="adjustNothing">
             <intent-filter>
@@ -90,14 +90,14 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.activities.MainActivity"
+            android:name=".presentation.activities.MainActivity"
             android:label="@string/app_name"
             android:launchMode="singleTask"
             android:theme="@style/AppTheme.NoActionBar" />
 
         <service
             android:name=".services.AppServices"
-            android:exported="false" />
+            android:exported="true" />
     </application>
 
 </manifest>

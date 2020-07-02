@@ -6,14 +6,14 @@
 
         <variable
             name="homeViewModel"
-            type="com.didahdx.smsgatewaysync.ui.home.HomeViewModel" />
+            type="com.didahdx.smsgatewaysync.presentation.home.HomeViewModel" />
     </data>
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/white"
-        tools:context=".ui.home.HomeFragment">
+        tools:context=".presentation.home.HomeFragment">
 
 
         <androidx.swiperefreshlayout.widget.SwipeRefreshLayout

@@ -10,8 +10,6 @@ const val RED_COLOR = "RED_COLOR"
 const val GREEN_COLOR = "GREEN_COLOR"
 const val NOT_AVAILABLE = "NA"
 
-const val APP_SERVICE_KEY = "APP_SERVICE_KEY"
-const val APP_SERVICE_STATE = "APP_SERVICE_STATE"
 const val SIM_CARD_1="Sim Card 1"
 const val SIM_CARD_2="Sim Card 2"
 const val LOG_FILE_NAME = "smsLog.txt"
@@ -32,6 +30,12 @@ const val KEY_TASK_MESSAGE_API="KEY_TASK_MESSAGE_API"
 const val MINIMUM_TIME= 0
 const val ERROR_CONNECTING_TO_SERVER="Error connecting to server"
 const val ANDROID_PHONE="android phone"
+
+/**
+ * Service constants
+ * */
+const val APP_SERVICE_STATE = "APP_SERVICE_STATE"
+const val RESTART_SERVICE_STATE="RESTART_SERVICE_STATE"
 
 
 /**

@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.phonestatus.PhoneStatusFragment">
+    tools:context=".presentation.phonestatus.PhoneStatusFragment">
 
     <ScrollView
         android:layout_width="match_parent"
