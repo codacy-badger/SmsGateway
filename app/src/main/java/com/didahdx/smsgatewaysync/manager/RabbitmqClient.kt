@@ -79,7 +79,7 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
             channel=null
             connection=null
             val isServiceOn = SpUtil.getPreferenceBoolean(context, PREF_SERVICES_KEY)
-            if (count <= 20 && isServiceOn && ServiceState.STOPPED!= getServiceState(context)) {
+            if (count <= 10 && isServiceOn && ServiceState.STOPPED!= getServiceState(context)) {
                 CoroutineScope(IO).launch {
                     delay(30000)
                     connection(context)

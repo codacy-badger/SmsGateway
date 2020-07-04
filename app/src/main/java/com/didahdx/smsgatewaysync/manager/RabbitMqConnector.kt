@@ -17,6 +17,8 @@ object RabbitMqConnector {
 //        connectionFactory.set
 //        connectionFactory.connectionTimeout = 240000
         connectionFactory.isAutomaticRecoveryEnabled = true
+        connectionFactory.requestedChannelMax=4
+        connectionFactory.workPoolTimeout
     }
     
     val connection: Connection by lazy {
@@ -28,5 +30,8 @@ object RabbitMqConnector {
         connection.createChannel()
     }
 
+    val publishChannel: Channel by lazy {
+        connection.createChannel()
+    }
 
 }
