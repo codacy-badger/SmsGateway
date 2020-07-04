@@ -112,7 +112,7 @@ class AppServices : Service(), UiUpdaterInterface {
             if (isServiceOn && !urlEnabled) {
                 setServiceState(this@AppServices, ServiceState.STARTING)
                 val notification = notificationStatus("Service starting", false)
-                Timber.d("The service has been created".toUpperCase())
+                Timber.d("The service has been created".toUpperCase(Locale.ROOT))
                 startForeground(1, notification)
                 rabbitmqClient.connection(this@AppServices)
                 setupRecurringWork()

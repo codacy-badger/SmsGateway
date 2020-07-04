@@ -19,7 +19,7 @@ import java.util.*
 object AppLog {
 
     //writing to log messages
-    fun writeToLog(context: Context, log: String, send: Boolean) {
+    private fun writeToLog(context: Context, log: String, send: Boolean) {
         val email = PreferenceManager
             .getDefaultSharedPreferences(context)
             .getString(PREF_USER_EMAIL, "NA")
@@ -62,7 +62,7 @@ object AppLog {
 
     //reading log messages
     fun readLog(context: Context): String {
-        var text: String = ""
+        var text = ""
         val stringBuilder = StringBuilder()
         var fileInputStream: FileInputStream? = null
         var fileOutputStream: FileOutputStream? = null
@@ -120,9 +120,9 @@ object AppLog {
                 arrayLogs.add(it)
             }
 
-            if (arrayLogs.size > 42) {
+            if (arrayLogs.size > 62) {
                 val stringBuilder = StringBuilder()
-                val count = arrayLogs.size - 20
+                val count = arrayLogs.size - 10
                 for (i in arrayLogs.indices) {
                     if (i >= count) {
                         stringBuilder.append(arrayLogs[i]).append("\n\n")

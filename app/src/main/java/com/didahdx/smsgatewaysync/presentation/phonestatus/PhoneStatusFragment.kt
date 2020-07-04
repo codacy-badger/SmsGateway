@@ -16,9 +16,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.PermissionChecker
 import androidx.core.content.PermissionChecker.checkSelfPermission
 import androidx.fragment.app.Fragment
 import com.didahdx.smsgatewaysync.R
+import com.didahdx.smsgatewaysync.utilities.AppLog
 import com.didahdx.smsgatewaysync.utilities.GIGABYTE
 import com.didahdx.smsgatewaysync.utilities.PERMISSION_REQUEST_ALL_CODE
 import com.didahdx.smsgatewaysync.utilities.toast
@@ -94,6 +96,7 @@ class PhoneStatusFragment : Fragment() {
                         context?.toast("ussd response: $response")
                             Timber.e("Success with response : $response  ")
                         } catch (e: Exception) {
+                            context?.let { AppLog.logMessage("$e  ${e.localizedMessage}", it) }
                             e.printStackTrace()
                             Timber.d("$e  ${e.localizedMessage}")
                         }
@@ -112,7 +115,7 @@ class PhoneStatusFragment : Fragment() {
         }
 
         if (checkSelfPermission(requireContext(), Manifest.permission.CALL_PHONE)
-            == PackageManager.PERMISSION_GRANTED
+            == PermissionChecker.PERMISSION_GRANTED
         ) {
             try {
                 Timber.e("trying to send ussd request")
@@ -285,7 +288,7 @@ class PhoneStatusFragment : Fragment() {
 
         for (perm in appPermissions) {
             if (checkSelfPermission(requireContext(), perm)
-                != PackageManager.PERMISSION_GRANTED
+                != PermissionChecker.PERMISSION_GRANTED
             ) {
                 listPermissionsNeeded.add(perm)
             }

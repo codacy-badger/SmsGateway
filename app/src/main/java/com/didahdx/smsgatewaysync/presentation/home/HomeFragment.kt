@@ -193,7 +193,7 @@ class HomeFragment : Fragment() {
         val status = context?.let {
             SpUtil.getPreferenceString(it, PREF_STATUS_MESSAGE, ERROR_CONNECTING_TO_SERVER)
         } ?: ERROR_CONNECTING_TO_SERVER
-        binding.textViewConnectionType.text =getConnectionType()
+        binding.textViewConnectionType.text = getConnectionType()
 
         binding.textViewStatus.text = status
 //        startServices(status)
@@ -239,12 +239,11 @@ class HomeFragment : Fragment() {
             context?.let { SpUtil.getPreferenceBoolean(it, PREF_SERVICES_KEY) } ?: true
         notificationManager = NotificationManagerCompat.from(requireContext())
 
-        if (isServiceOn && ServiceState.STOPPED == context?.let { getServiceState(it) }) {
+        if (isServiceOn && ServiceState.STOPPED == context?.let { getServiceState(it) } &&
+            ServiceState.STARTING != context?.let { getServiceState(it) }
+            && ServiceState.RUNNING != context?.let { getServiceState(it) }) {
             startServices()
-//            context?.toast(" Service started ${context?.let { getServiceState(it) }}")
-        } else {
-
-//            context?.toast(" Service not started ${context?.let { getServiceState(it) }}")
+            context?.toast(" Service started home ${context?.let { getServiceState(it) }}")
         }
 
         checkAndRequestPermissions()
@@ -256,9 +255,8 @@ class HomeFragment : Fragment() {
     private fun startServices() {
         val serviceIntent = Intent(requireContext(), AppServices::class.java)
         serviceIntent.action = AppServiceActions.START.name
-        serviceIntent.putExtra(INPUT_EXTRAS, "$APP_NAME is connecting to server")
+        serviceIntent.putExtra(INPUT_EXTRAS, "$APP_NAME is running")
         ContextCompat.startForegroundService(requireContext(), serviceIntent)
-        context?.toast("Services started home")
     }
 
     private fun stopServices() {
@@ -730,10 +728,10 @@ class HomeFragment : Fragment() {
         WorkManager.getInstance(context).enqueue(request)
     }
 
-    fun getConnectionType():String {
+    fun getConnectionType(): String {
         val connectionManager =
             context?.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        var connectionType=""
+        var connectionType = ""
         var isConnected = false
         var isWifiConn = false
         var isMobileConn = false
@@ -742,18 +740,18 @@ class HomeFragment : Fragment() {
                 when (type) {
                     ConnectivityManager.TYPE_WIFI -> {
                         isWifiConn = isWifiConn or isConnected
-                        connectionType="Connected to Wifi"
+                        connectionType = "Connected to Wifi"
                     }
 
                     ConnectivityManager.TYPE_MOBILE -> {
                         isMobileConn = isMobileConn or isConnected
-                        connectionType="Connected to Mobile Data"
+                        connectionType = "Connected to Mobile Data"
                     }
                 }
                 val activeNetwork = connectionManager.activeNetworkInfo
                 if (!(activeNetwork != null && activeNetwork.isConnectedOrConnecting)) {
 
-                    connectionType="Connection lost"
+                    connectionType = "Connection lost"
                 }
             }
         }
