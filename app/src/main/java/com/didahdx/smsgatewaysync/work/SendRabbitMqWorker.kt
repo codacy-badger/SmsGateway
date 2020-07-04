@@ -8,12 +8,17 @@ import com.didahdx.smsgatewaysync.utilities.AppLog.logMessage
 import com.didahdx.smsgatewaysync.utilities.KEY_EMAIL
 import com.didahdx.smsgatewaysync.utilities.KEY_TASK_MESSAGE
 import com.didahdx.smsgatewaysync.utilities.PUBLISH_FROM_CLIENT
+import com.didahdx.smsgatewaysync.utilities.toast
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.AlreadyClosedException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import retrofit2.HttpException
 import timber.log.Timber
+import java.io.IOException
 import java.util.concurrent.TimeoutException
 
 
@@ -34,7 +39,7 @@ class SendRabbitMqWorker(appContext: Context, params: WorkerParameters) :
                 publishMessage(message, email)
             }
         } catch (e: HttpException) {
-            delay(30000) 
+            delay(30000)
             Timber.d(" $e ${e.localizedMessage}")
             logMessage(" $e ${e.localizedMessage}",app)
             return Result.retry()
@@ -44,6 +49,11 @@ class SendRabbitMqWorker(appContext: Context, params: WorkerParameters) :
             Timber.d(" $e ${e.localizedMessage}")
             return Result.retry()
         } catch (e: AlreadyClosedException) {
+                delay(30000)
+            logMessage(" $e ${e.localizedMessage}",app)
+            Timber.d(" $e ${e.localizedMessage}")
+            return Result.retry()
+        } catch (e: IOException) {
                 delay(30000)
             logMessage(" $e ${e.localizedMessage}",app)
             Timber.d(" $e ${e.localizedMessage}")
@@ -58,17 +68,32 @@ class SendRabbitMqWorker(appContext: Context, params: WorkerParameters) :
     }
 
     private fun publishMessage(message: String, email: String) {
-        val channel = RabbitMqConnector.channel
-        val props = AMQP.BasicProperties.Builder()
-            .correlationId(email)
-            .replyTo(email)
-            .deliveryMode(1)
-            .build()
+        val channel = RabbitMqConnector.connection.createChannel()
+            val props = AMQP.BasicProperties.Builder()
+                .correlationId(email)
+                .replyTo(email)
+                .deliveryMode(1)
+                .build()
+        channel?.confirmSelect()
+        channel?.waitForConfirms()
+        channel?.addConfirmListener(
+            { deliveryTag, multiple ->
+                CoroutineScope(Main).launch {
+                    app.toast(" Delivery ack $deliveryTag   multiple   $multiple")
+                }
+                channel.close()
+            },
+            { deliveryTag, multiple ->
+                CoroutineScope(Main).launch {
+                    app.toast(" Delivery Not ack $deliveryTag   multiple $multiple")
+                }
+                channel.close()
+            })
 
-        channel.basicPublish(
-            "", PUBLISH_FROM_CLIENT, false,
-            props, message.toByteArray()
-        )
+            channel?.basicPublish(
+                "", PUBLISH_FROM_CLIENT, false,
+                props, message.toByteArray()
+            )
 
     }
 
