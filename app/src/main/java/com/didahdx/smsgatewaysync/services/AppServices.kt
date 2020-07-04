@@ -55,10 +55,11 @@ import timber.log.Timber
 import java.lang.reflect.Method
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 class AppServices : Service(), UiUpdaterInterface {
     private lateinit var notificationManager: NotificationManagerCompat
-    private var importantSmsNotification = 2
+
     private var userLatitude = ""
     private var userLongitude = ""
     private val user = FirebaseAuth.getInstance().currentUser
@@ -100,7 +101,7 @@ class AppServices : Service(), UiUpdaterInterface {
                     PowerManager.PARTIAL_WAKE_LOCK,
                     AppServices::class.java.simpleName
                 ).apply {
-                    acquire(10 * 60 * 1000L /*10 minutes*/)
+                    acquire(10 * 60 * 400L /*4 minutes*/)
                 }
             }
 
@@ -114,6 +115,7 @@ class AppServices : Service(), UiUpdaterInterface {
                 Timber.d("The service has been created".toUpperCase())
                 startForeground(1, notification)
                 rabbitmqClient.connection(this@AppServices)
+                setupRecurringWork()
             }
         }
 
@@ -122,7 +124,6 @@ class AppServices : Service(), UiUpdaterInterface {
 
     override fun onStartCommand(intent: Intent?, flagings: Int, startId: Int): Int {
         if (intent != null) {
-            toast("Serive called ${intent.action}")
             when (intent.action) {
                 AppServiceActions.START.name -> startAppService(intent)
                 AppServiceActions.STOP.name -> stopAppService(intent)
@@ -248,8 +249,14 @@ class AppServices : Service(), UiUpdaterInterface {
                         (smsFilter.mpesaType == importantSmsType || importantSmsType == "All")
                     ) {
                         Timber.i(" $messageText \n $phoneNumber ")
-                        notificationManager = NotificationManagerCompat.from(context)
-                        notificationMessage(messageText, phoneNumber, context)
+
+                        NotificationUtil.notificationMessage(
+                            messageText,
+                            phoneNumber,
+                            context,
+                            userLatitude,
+                            userLongitude
+                        )
                     }
 
 
@@ -624,45 +631,6 @@ class AppServices : Service(), UiUpdaterInterface {
 
 
     //used to show to notification
-    fun notificationMessage(message: String, phoneNumber: String, context: Context) {
-        val smsInfo = SmsInfo(
-            message,
-            Date().toString(),
-            phoneNumber,
-            NOT_AVAILABLE,
-            userLongitude,
-            userLatitude
-        )
-        val bundle = bundleOf("SmsInfo" to smsInfo)
-        val pendingIntent = NavDeepLinkBuilder(context)
-            .setComponentName(MainActivity::class.java)
-            .setGraph(R.navigation.nav_graph2)
-            .setDestination(R.id.smsDetailsFragment)
-            .setArguments(bundle)
-            .createPendingIntent()
-
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID_3)
-            .setContentTitle(phoneNumber)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setSmallIcon(R.drawable.ic_message)
-            .setContentText(message)
-            .setStyle(
-                NotificationCompat.BigTextStyle()
-                    .bigText(message)
-            )
-            .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
-            .setOnlyAlertOnce(true)
-            .build()
-
-
-        notification.flags = Notification.FLAG_ONLY_ALERT_ONCE
-        notification.flags =
-            Notification.FLAG_INSISTENT or Notification.FLAG_AUTO_CANCEL
-
-        notificationManager.notify(importantSmsNotification, notification)
-        importantSmsNotification++
-    }
 
 
     private fun sendToRabbitMQ(context: Context, data: Data) {
@@ -678,12 +646,12 @@ class AppServices : Service(), UiUpdaterInterface {
     }
 
 
-    private fun sendSms(context: Context, data: Data) {
+    private fun sendSms( data: Data) {
         val request: OneTimeWorkRequest = OneTimeWorkRequestBuilder<SendSmsWorker>()
             .setInputData(data)
             .build()
 
-        WorkManager.getInstance(context).enqueue(request)
+        WorkManager.getInstance(this).enqueue(request)
     }
 
     private fun sendToApi(context: Context, data: Data) {
@@ -695,7 +663,7 @@ class AppServices : Service(), UiUpdaterInterface {
             .setInputData(data)
             .build()
 
-        WorkManager.getInstance(context).enqueue(request)
+        WorkManager.getInstance(this).enqueue(request)
     }
 
 
@@ -729,8 +697,8 @@ class AppServices : Service(), UiUpdaterInterface {
             sendBroadcast(statusIntent)
             AppLog.logMessage(status, context)
             notificationManager = NotificationManagerCompat.from(context)
-            if (ServiceState.STARTING == getServiceState(this@AppServices) ||
-                ServiceState.RUNNING == getServiceState(this@AppServices) ||
+            if ((ServiceState.STARTING == getServiceState(this@AppServices) ||
+                        ServiceState.RUNNING == getServiceState(this@AppServices)) &&
                 ServiceState.STOPPED != getServiceState(this@AppServices)
             ) {
                 val notification = notificationStatus(status, false)
@@ -746,7 +714,7 @@ class AppServices : Service(), UiUpdaterInterface {
             .putString(KEY_PHONE_NUMBER, phoneNumber)
             .build()
 
-        sendSms(this, data)
+        sendSms(data)
     }
 
     override fun updateSettings(preferenceType: String, key: String, value: String) {
@@ -785,8 +753,7 @@ class AppServices : Service(), UiUpdaterInterface {
 
         notification.flags = Notification.FLAG_ONLY_ALERT_ONCE
         notification.flags = Notification.FLAG_ONGOING_EVENT
-        notification.flags =
-            Notification.FLAG_INSISTENT or Notification.FLAG_AUTO_CANCEL
+        notification.flags = Notification.FLAG_AUTO_CANCEL
         return notification
 
     }
@@ -808,4 +775,27 @@ class AppServices : Service(), UiUpdaterInterface {
 
         toast("Service destroyed")
     }
+
+    private fun setupRecurringWork() {
+
+        val data = Data.Builder()
+            .putString(KEY_TASK_MESSAGE, "ping")
+            .putString(KEY_EMAIL, user?.email)
+            .build()
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val repeatingRequest = PeriodicWorkRequestBuilder<SendRabbitMqWorker>(20, TimeUnit.MINUTES)
+            .setConstraints(constraints)
+            .setInputData(data)
+            .build()
+
+        Timber.d("WorkManager: Periodic Work request for sync is scheduled")
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            SendRabbitMqWorker.WORK_NAME,
+            ExistingPeriodicWorkPolicy.KEEP,
+            repeatingRequest)
+    }
+
 }
