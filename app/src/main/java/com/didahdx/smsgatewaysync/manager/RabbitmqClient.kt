@@ -19,76 +19,72 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
     ConfirmListener, RecoveryListener, ShutdownListener {
 
     @Volatile
-    private  var connection: Connection?=null
-    @Volatile
-    private var channel: Channel? = null
+    private var connection: Connection? = null
+    private lateinit var channel: Channel
     var count = 0
 
     fun connection(context: Context) {
         try {
             connection = RabbitMqConnector.connection
-            channel = RabbitMqConnector.channel
 
-            (connection as RecoverableConnection).addRecoveryListener(this)
-            (channel as RecoverableChannel).addRecoveryListener(this)
+            if (null != connection && connection?.isOpen!!) {
+                channel = RabbitMqConnector.channel
+                (connection as RecoverableConnection).addRecoveryListener(this)
+                (channel as RecoverableChannel).addRecoveryListener(this)
 
-            channel?.queueDeclare(
-                email, false, false,
-                false, null
-            )
+                channel.queueDeclare(
+                    email, false, false,
+                    false, null
+                )
 
-            channel?.queueDeclare(
-                NOTIFICATION, false, false,
-                false, null
-            )
+                channel.queueDeclare(
+                    NOTIFICATION, false, false,
+                    false, null
+                )
 
-            channel?.queueDeclare(
-                PUBLISH_FROM_CLIENT, false, false,
-                false, null
-            )
+                channel.queueDeclare(
+                    PUBLISH_FROM_CLIENT, false, false,
+                    false, null
+                )
 
-            connection?.addShutdownListener(this)
-            channel?.addShutdownListener(this)
+                connection?.addShutdownListener(this)
+                channel.addShutdownListener(this)
 
-            channel?.confirmSelect()
-            channel?.addConfirmListener(
-                { deliveryTag, multiple ->
-                    uiUpdater?.toasterMessage(" Delivery ack $deliveryTag   multiple   $multiple")
-                },
-                { deliveryTag, multiple ->
-                    uiUpdater?.toasterMessage(" Delivery Not ack $deliveryTag   multiple $multiple")
-                })
-
-            channel?.basicRecover()
-            consumeMessages()
-            setServiceState(context, ServiceState.RUNNING)
-            uiUpdater?.updateStatusViewWith("$APP_NAME is running", GREEN_COLOR)
+//                channel?.confirmSelect()
+//                channel?.addConfirmListener(
+//                    { deliveryTag, multiple ->
+//                        uiUpdater?.toasterMessage(" Delivery ack $deliveryTag   multiple   $multiple")
+//                    },
+//                    { deliveryTag, multiple ->
+//                        uiUpdater?.toasterMessage(" Delivery Not ack $deliveryTag   multiple $multiple")
+//                    })
+//
+//                channel?.basicRecover()
+                if (channel.isOpen && channel.consumerCount(email).toInt() == 0) {
+                    consumeMessages()
+                }
+                setServiceState(context, ServiceState.RUNNING)
+                uiUpdater?.updateStatusViewWith("$APP_NAME is running", GREEN_COLOR)
+            } else {
+                setServiceState(context, ServiceState.STOPPED)
+            }
         } catch (e: Exception) {
             e.printStackTrace()
             uiUpdater?.updateStatusViewWith(
-                "Error connecting to server ${e.localizedMessage}",
+                "Error connecting to server \n Check your network connection",
                 RED_COLOR
             )
             Timber.d("$e  ${e.localizedMessage}")
             uiUpdater?.logMessage("$e \n ${e.localizedMessage}")
-            disconnect()
-            uiUpdater?.updateStatusViewWith(
-                "Retrying to connect to server \nNumber of retries $count",
-                RED_COLOR
-            )
-            channel=null
-            connection=null
             val isServiceOn = SpUtil.getPreferenceBoolean(context, PREF_SERVICES_KEY)
-            if (count <= 10 && isServiceOn && ServiceState.STOPPED!= getServiceState(context)) {
+            if (count <= 10 && isServiceOn && ServiceState.STOPPED != getServiceState(context)) {
+                uiUpdater?.logMessage("Retrying to connect in ${(1000 * count).toLong() / 60000L} Minutes")
                 CoroutineScope(IO).launch {
-                    delay(30000)
+                    delay((1000 * count).toLong())
                     connection(context)
                 }
             } else {
-                uiUpdater?.updateStatusViewWith(
-                    "Number of retries have reached" +
-                            " $count \n check the your network ", RED_COLOR
-                )
+                count = 0
                 setServiceState(context, ServiceState.STOPPED)
             }
             count++
@@ -97,7 +93,8 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
 
 
     private fun consumeMessages() {
-        channel?.basicConsume(
+
+        channel.basicConsume(
             email,
             true,
             { consumerTag: String?, delivery: Delivery ->
@@ -106,7 +103,7 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
                 var message = ""
 
                 try {
-                    val baseJsonResponse: JSONObject = JSONObject(m)
+                    val baseJsonResponse = JSONObject(m)
                     when (baseJsonResponse.getString("message_type")) {
                         "send_sms" -> {
                             phoneNumber = baseJsonResponse.getString("phone_number")
@@ -115,7 +112,7 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
                         }
                         "notification_update" -> {
                             message = baseJsonResponse.getString("message_body")
-//                        uiUpdater?.notificationMessage(message)
+    //                        uiUpdater?.notificationMessage(message)
                             uiUpdater?.updateStatusViewWith(message, GREEN_COLOR)
                         }
                     }
@@ -165,12 +162,14 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
 
     fun disconnect() {
         try {
-            channel?.close()
+            channel.close()
+            RabbitMqConnector.channel.close()
         } catch (e: Exception) {
             Timber.d("$e ${e.localizedMessage}")
         }
         try {
             connection?.close()
+            RabbitMqConnector.connection.close()
             CoroutineScope(IO).cancel()
         } catch (e: Exception) {
             Timber.d("$e ${e.localizedMessage}")
@@ -201,10 +200,10 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
     override fun shutdownCompleted(cause: ShutdownSignalException?) {
         Timber.d(" $cause \n ${cause?.localizedMessage}")
         uiUpdater?.updateStatusViewWith(
-            "Error connection lost \nCheck your internet connection ",
-            RED_COLOR
+            "Error connection lost \nCheck your internet connection \n cause is" +
+                    " ${cause?.localizedMessage}", RED_COLOR
         )
-        uiUpdater?.logMessage(" $cause ${cause?.localizedMessage}")
+        uiUpdater?.logMessage("Cause of shutdown $cause ${cause?.localizedMessage}")
 
     }
 

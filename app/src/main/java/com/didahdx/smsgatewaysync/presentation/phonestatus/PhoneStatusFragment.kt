@@ -86,14 +86,15 @@ class PhoneStatusFragment : Fragment() {
                     ) {
                         super.onReceiveUssdResponse(telephonyManager, request, response)
                         try {
-                            val bal = response.substring(
-                                response.indexOf("Bal:") + 4,
-                                response.indexOf("KSH")
-                            )
+                            if (response.indexOf("Bal:") > -1 && response.indexOf(".") > -1) {
+                                val bal = response.substring(
+                                    response.indexOf("Bal:") + 4,
+                                    response.indexOf(".")+3
+                                )
+                                text_view_phone_status?.append("\nAirtime Balance KSh: $bal")
+                            }
 
-                            text_view_phone_status?.append("\nAirtime Balance KSh: $bal")
-
-                        context?.toast("ussd response: $response")
+                            context?.toast("ussd response: $response")
                             Timber.e("Success with response : $response  ")
                         } catch (e: Exception) {
                             context?.let { AppLog.logMessage("$e  ${e.localizedMessage}", it) }

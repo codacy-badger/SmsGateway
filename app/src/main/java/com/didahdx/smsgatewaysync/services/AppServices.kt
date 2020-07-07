@@ -16,21 +16,17 @@ import android.os.PowerManager
 import android.telecom.TelecomManager
 import android.telephony.SmsMessage
 import android.telephony.TelephonyManager
-import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.DEFAULT_LIGHTS
 import androidx.core.app.NotificationCompat.DEFAULT_VIBRATE
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import androidx.core.os.bundleOf
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import androidx.navigation.NavDeepLinkBuilder
 import androidx.work.*
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
 import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
 import com.didahdx.smsgatewaysync.domain.SmsInboxInfo
-import com.didahdx.smsgatewaysync.domain.SmsInfo
 import com.didahdx.smsgatewaysync.manager.RabbitmqClient
 import com.didahdx.smsgatewaysync.presentation.UiUpdaterInterface
 import com.didahdx.smsgatewaysync.presentation.activities.MainActivity
@@ -49,7 +45,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import timber.log.Timber
 import java.lang.reflect.Method
@@ -101,7 +96,7 @@ class AppServices : Service(), UiUpdaterInterface {
                     PowerManager.PARTIAL_WAKE_LOCK,
                     AppServices::class.java.simpleName
                 ).apply {
-                    acquire(10 * 60 * 400L /*4 minutes*/)
+                    acquire(10 * 60 * 1000L /*4 minutes*/)
                 }
             }
 
@@ -166,7 +161,7 @@ class AppServices : Service(), UiUpdaterInterface {
             .setSmallIcon(R.drawable.ic_home)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)
-            .setOnlyAlertOnce(true)
+//            .setOnlyAlertOnce(true)
             .build()
 
         notification.flags = notification.flags or Notification.DEFAULT_LIGHTS
@@ -294,50 +289,48 @@ class AppServices : Service(), UiUpdaterInterface {
                         obj?.put("message_type", "recieved_sms")
                     }
 
+                    obj?.toString()?.let {
+                        var status = false
+                        val urlEnabled =
+                            SpUtil.getPreferenceBoolean(context, PREF_HOST_URL_ENABLED)
+                        if (!urlEnabled) {
+                            val data = Data.Builder()
+                                .putString(KEY_TASK_MESSAGE, it)
+                                .putString(KEY_EMAIL, user?.email)
+                                .build()
+                            sendToRabbitMQ(context, data)
+                            status = true
+                        }
 
-                    CoroutineScope(IO).launch {
-                        obj?.toString()?.let {
-                            var status = false
-                            val urlEnabled =
-                                SpUtil.getPreferenceBoolean(context, PREF_HOST_URL_ENABLED)
-                            if (!urlEnabled) {
-                                val data = Data.Builder()
-                                    .putString(KEY_TASK_MESSAGE, it)
-                                    .putString(KEY_EMAIL, user?.email)
-                                    .build()
-                                sendToRabbitMQ(context, data)
-                                status = true
-                            }
+                        val sdf = SimpleDateFormat(DATE_FORMAT, Locale.US)
+                        val message2: MpesaMessageInfo?
 
-                            val sdf = SimpleDateFormat(DATE_FORMAT, Locale.US)
-                            val message2: MpesaMessageInfo?
+                        if (messageText != null && time != null && phoneNumber != null) {
+                            val maskedPhoneNumber =
+                                SpUtil.getPreferenceBoolean(context, PREF_MASKED_NUMBER)
+                            val smsFilter = SmsFilter(messageText, maskedPhoneNumber)
 
-                            if (messageText != null && time != null && phoneNumber != null) {
-                                val maskedPhoneNumber =
-                                    SpUtil.getPreferenceBoolean(context, PREF_MASKED_NUMBER)
-                                val smsFilter = SmsFilter(messageText, maskedPhoneNumber)
 
-                                withContext(Main) {
-                                    Timber.i("Otp code ${smsFilter.otpCode} website ${smsFilter.otpWebsite}")
+                            Timber.i("Otp code ${smsFilter.otpCode} website ${smsFilter.otpWebsite}")
 
-                                    val smspost = SmsInboxInfo(
-                                        0, messageText.trim(),
-                                        sdf.format(Date(time!!)).toString(),
-                                        phoneNumber,
-                                        smsFilter.mpesaId,
-                                        smsFilter.phoneNumber,
-                                        smsFilter.amount,
-                                        smsFilter.accountNumber,
-                                        smsFilter.name,
-                                        time!!,
-                                        true, userLongitude, userLatitude
-                                    )
+                            val smspost = SmsInboxInfo(
+                                0, messageText.trim(),
+                                sdf.format(Date(time!!)).toString(),
+                                phoneNumber,
+                                smsFilter.mpesaId,
+                                smsFilter.phoneNumber,
+                                smsFilter.amount,
+                                smsFilter.accountNumber,
+                                smsFilter.name,
+                                time!!,
+                                true, userLongitude, userLatitude
+                            )
 //                                    postMessage(smspost)
-                                }
 
-                            }
+
                         }
                     }
+
 
                     CoroutineScope(IO).launch {
                         val message2: MpesaMessageInfo?
@@ -549,9 +542,7 @@ class AppServices : Service(), UiUpdaterInterface {
             .putString(KEY_TASK_MESSAGE, obj.toString())
             .putString(KEY_EMAIL, user?.email)
             .build()
-        if (context != null) {
-            sendToRabbitMQ(context, data)
-        }
+        sendToRabbitMQ(context, data)
 
     }
 
@@ -597,18 +588,13 @@ class AppServices : Service(), UiUpdaterInterface {
             tmpBinder.attachInterface(null, "fake")
             serviceManagerObject = tempInterfaceMethod.invoke(null, tmpBinder)
             val retbinder = getService.invoke(serviceManagerObject, "phone") as IBinder
-            val serviceMethod = telephonyStubClass.getMethod(
-                "asInterface",
-                IBinder::class.java
-            )
+            val serviceMethod = telephonyStubClass.getMethod("asInterface", IBinder::class.java)
             telephonyObject = serviceMethod.invoke(null, retbinder)
             telephonyEndCall = telephonyClass.getMethod("endCall")
             telephonyEndCall.invoke(telephonyObject)
         } catch (e: Exception) {
             e.printStackTrace()
-            Timber.i(
-                "FATAL ERROR: could not connect to telephony subsystem"
-            )
+            Timber.i("FATAL ERROR: could not connect to telephony subsystem")
             Timber.i("Exception object: $e  ${e.localizedMessage}")
             AppLog.logMessage(" $e  ${e.localizedMessage}", this)
         }
@@ -646,7 +632,7 @@ class AppServices : Service(), UiUpdaterInterface {
     }
 
 
-    private fun sendSms( data: Data) {
+    private fun sendSms(data: Data) {
         val request: OneTimeWorkRequest = OneTimeWorkRequestBuilder<SendSmsWorker>()
             .setInputData(data)
             .build()
@@ -654,7 +640,7 @@ class AppServices : Service(), UiUpdaterInterface {
         WorkManager.getInstance(this).enqueue(request)
     }
 
-    private fun sendToApi(context: Context, data: Data) {
+    private fun sendToApi(data: Data) {
         val constraints =
             Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
 
@@ -689,22 +675,20 @@ class AppServices : Service(), UiUpdaterInterface {
     override fun updateStatusViewWith(status: String, color: String) {
         val context = this
         CoroutineScope(Main).launch {
-
-            SpUtil.setPreferenceString(context, PREF_STATUS_MESSAGE, status)
-            SpUtil.setPreferenceString(context, PREF_STATUS_COLOR, color)
-            statusIntent.putExtra(STATUS_MESSAGE_EXTRA, status)
-            statusIntent.putExtra(STATUS_COLOR_EXTRA, color)
-            sendBroadcast(statusIntent)
-            AppLog.logMessage(status, context)
             notificationManager = NotificationManagerCompat.from(context)
-            if ((ServiceState.STARTING == getServiceState(this@AppServices) ||
-                        ServiceState.RUNNING == getServiceState(this@AppServices)) &&
-                ServiceState.STOPPED != getServiceState(this@AppServices)
-            ) {
-                val notification = notificationStatus(status, false)
-                notificationManager.notify(1, notification)
+            val isServiceOn = SpUtil.getPreferenceBoolean(this@AppServices, PREF_SERVICES_KEY)
+            if (isServiceOn) {
+                SpUtil.setPreferenceString(context, PREF_STATUS_MESSAGE, status)
+                SpUtil.setPreferenceString(context, PREF_STATUS_COLOR, color)
+                statusIntent.putExtra(STATUS_MESSAGE_EXTRA, status)
+                statusIntent.putExtra(STATUS_COLOR_EXTRA, color)
+                sendBroadcast(statusIntent)
+                AppLog.logMessage(status, context)
+                if (ServiceState.STOPPED != getServiceState(this@AppServices)) {
+                    val notification = notificationStatus(status, false)
+                    notificationManager.notify(1, notification)
+                }
             }
-
         }
     }
 
@@ -769,9 +753,9 @@ class AppServices : Service(), UiUpdaterInterface {
             }
         }
 
-        CoroutineScope(IO).launch {
-            rabbitmqClient.disconnect()
-        }
+//        CoroutineScope(IO).launch {
+//            rabbitmqClient.disconnect()
+//        }
 
         toast("Service destroyed")
     }
@@ -795,7 +779,8 @@ class AppServices : Service(), UiUpdaterInterface {
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             SendRabbitMqWorker.WORK_NAME,
             ExistingPeriodicWorkPolicy.KEEP,
-            repeatingRequest)
+            repeatingRequest
+        )
     }
 
 }

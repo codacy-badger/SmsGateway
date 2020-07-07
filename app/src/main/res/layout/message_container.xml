@@ -37,7 +37,7 @@
                 android:id="@+id/text_view_sender1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Sender :" />
+                android:text="@string/sender" />
 
             <TextView
                 android:id="@+id/text_view_sender"

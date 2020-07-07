@@ -239,9 +239,7 @@ class HomeFragment : Fragment() {
             context?.let { SpUtil.getPreferenceBoolean(it, PREF_SERVICES_KEY) } ?: true
         notificationManager = NotificationManagerCompat.from(requireContext())
 
-        if (isServiceOn && ServiceState.STOPPED == context?.let { getServiceState(it) } &&
-            ServiceState.STARTING != context?.let { getServiceState(it) }
-            && ServiceState.RUNNING != context?.let { getServiceState(it) }) {
+        if (isServiceOn && ServiceState.STOPPED == context?.let { getServiceState(it) } ) {
             startServices()
             context?.toast(" Service started home ${context?.let { getServiceState(it) }}")
         }
@@ -253,9 +251,12 @@ class HomeFragment : Fragment() {
 
     //appServices for showing notification bar
     private fun startServices() {
+        val status = context?.let {
+            SpUtil.getPreferenceString(it, PREF_STATUS_MESSAGE, ERROR_CONNECTING_TO_SERVER)
+        } ?: ERROR_CONNECTING_TO_SERVER
         val serviceIntent = Intent(requireContext(), AppServices::class.java)
         serviceIntent.action = AppServiceActions.START.name
-        serviceIntent.putExtra(INPUT_EXTRAS, "$APP_NAME is running")
+        serviceIntent.putExtra(INPUT_EXTRAS, status)
         ContextCompat.startForegroundService(requireContext(), serviceIntent)
     }
 

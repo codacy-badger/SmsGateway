@@ -153,15 +153,17 @@ class SettingsFragment : PreferenceFragmentCompat(),
     }
 
     private fun stopServices() {
-        if (ServiceState.RUNNING == context?.let{ getServiceState(it)} ||
-            ServiceState.STARTING == context?.let{getServiceState(it)}) {
-            val serviceIntent = Intent(activity as Activity, AppServices::class.java)
-            setRestartServiceState(activity as Activity, false)
-            serviceIntent.action = AppServiceActions.STOP.name
-            serviceIntent.putExtra(INPUT_EXTRAS, "$APP_NAME is stopped")
+        context?.let { SpUtil.setPreferenceString(it, PREF_STATUS_MESSAGE, "$APP_NAME is disabled") }
+        context?.let { SpUtil.setPreferenceString(it, PREF_STATUS_COLOR, RED_COLOR) }
+
+//        if (ServiceState.STOPPED != context?.let{ getServiceState(it)} ) {
+        val serviceIntent = Intent(activity as Activity, AppServices::class.java)
+        setRestartServiceState(activity as Activity, false)
+        serviceIntent.action = AppServiceActions.STOP.name
+        serviceIntent.putExtra(INPUT_EXTRAS, "$APP_NAME is stopped")
 //            context?.stopService(serviceIntent)
-            ContextCompat.startForegroundService(activity as Activity, serviceIntent)
-        }
+        ContextCompat.startForegroundService(activity as Activity, serviceIntent)
+//        }
     }
 
 

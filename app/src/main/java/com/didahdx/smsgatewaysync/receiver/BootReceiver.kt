@@ -19,7 +19,7 @@ class BootReceiver : BroadcastReceiver() {
                 && getServiceState(context) == STOPPED && isServiceOn) {
                 Intent(context, AppServices::class.java).also {
                     it.action = AppServiceActions.START.name
-                    it.putExtra(INPUT_EXTRAS, "$APP_NAME is Running")
+                    it.putExtra(INPUT_EXTRAS, "Service is starting")
                     ContextCompat.startForegroundService(context, it)
                 }
             }

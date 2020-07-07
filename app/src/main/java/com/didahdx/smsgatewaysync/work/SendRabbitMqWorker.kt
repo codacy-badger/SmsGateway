@@ -4,11 +4,8 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.didahdx.smsgatewaysync.manager.RabbitMqConnector
+import com.didahdx.smsgatewaysync.utilities.*
 import com.didahdx.smsgatewaysync.utilities.AppLog.logMessage
-import com.didahdx.smsgatewaysync.utilities.KEY_EMAIL
-import com.didahdx.smsgatewaysync.utilities.KEY_TASK_MESSAGE
-import com.didahdx.smsgatewaysync.utilities.PUBLISH_FROM_CLIENT
-import com.didahdx.smsgatewaysync.utilities.toast
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.AlreadyClosedException
 import kotlinx.coroutines.CoroutineScope
@@ -35,32 +32,45 @@ class SendRabbitMqWorker(appContext: Context, params: WorkerParameters) :
             val data = inputData
             val message = data.getString(KEY_TASK_MESSAGE)
             val email = data.getString(KEY_EMAIL)
+            val isServiceOn = SpUtil.getPreferenceBoolean(app, PREF_SERVICES_KEY)
             if (message != null && email != null) {
-                publishMessage(message, email)
+                if (RabbitMqConnector.connection.isOpen && isServiceOn) {
+                    publishMessage(message, email)
+                } else {
+//                    CoroutineScope(Main).launch {
+//                        app.toast("$WORK_NAME \n ${RabbitMqConnector.connection.isOpen} CONNECTION IS NOT OPEN ")
+//                    }
+                    delay(30000)
+                    return Result.retry()
+                }
             }
         } catch (e: HttpException) {
             delay(30000)
             Timber.d(" $e ${e.localizedMessage}")
-            logMessage(" $e ${e.localizedMessage}",app)
+            logMessage(" $e ${e.localizedMessage}", app)
             return Result.retry()
         } catch (e: TimeoutException) {
             delay(30000)
-            logMessage(" $e ${e.localizedMessage}",app)
+            logMessage(" $e ${e.localizedMessage}", app)
             Timber.d(" $e ${e.localizedMessage}")
             return Result.retry()
         } catch (e: AlreadyClosedException) {
-                delay(30000)
-            logMessage(" $e ${e.localizedMessage}",app)
+            delay(30000)
+            logMessage(" $e ${e.localizedMessage}", app)
             Timber.d(" $e ${e.localizedMessage}")
             return Result.retry()
         } catch (e: IOException) {
-                delay(30000)
-            logMessage(" $e ${e.localizedMessage}",app)
+            delay(30000)
+            logMessage(" $e ${e.localizedMessage}", app)
             Timber.d(" $e ${e.localizedMessage}")
             return Result.retry()
         } catch (e: Exception) {
-            logMessage(" $e ${e.localizedMessage}",app)
+            logMessage(" $e ${e.localizedMessage}", app)
             Timber.d(" $e ${e.localizedMessage}")
+
+            CoroutineScope(Main).launch {
+                app.toast("$WORK_NAME $e ${e.localizedMessage}")
+            }
             return Result.failure()
         }
 
@@ -68,32 +78,32 @@ class SendRabbitMqWorker(appContext: Context, params: WorkerParameters) :
     }
 
     private fun publishMessage(message: String, email: String) {
-        val channel = RabbitMqConnector.connection.createChannel()
-            val props = AMQP.BasicProperties.Builder()
-                .correlationId(email)
-                .replyTo(email)
-                .deliveryMode(1)
-                .build()
-        channel?.confirmSelect()
-        channel?.waitForConfirms()
-        channel?.addConfirmListener(
+        val channel = RabbitMqConnector.channel
+        val props = AMQP.BasicProperties.Builder()
+            .correlationId(email)
+            .replyTo(email)
+            .deliveryMode(1)
+            .build()
+        channel.confirmSelect()
+        channel.waitForConfirms()
+        channel.addConfirmListener(
             { deliveryTag, multiple ->
                 CoroutineScope(Main).launch {
                     app.toast(" Delivery ack $deliveryTag   multiple   $multiple")
                 }
-                channel.close()
+    //                channel.close()
             },
             { deliveryTag, multiple ->
                 CoroutineScope(Main).launch {
                     app.toast(" Delivery Not ack $deliveryTag   multiple $multiple")
                 }
-                channel.close()
+    //                channel.close()
             })
 
-            channel?.basicPublish(
-                "", PUBLISH_FROM_CLIENT, false,
-                props, message.toByteArray()
-            )
+        channel.basicPublish(
+            "", PUBLISH_FROM_CLIENT, false,
+            props, message.toByteArray()
+        )
 
     }
 

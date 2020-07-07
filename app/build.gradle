@@ -20,7 +20,7 @@ android {
         minSdkVersion 24
         targetSdkVersion 29
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.2-alpha"
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -43,26 +43,29 @@ android {
         dataBinding = true
     }
 
-//    // Customize your APK name here
-//    applicationVariants.all { variant ->
-//        variant.outputs.all { output ->
-////            def appId = variant.applicationId// com.exampleFree.app OR com.examplePaid.app
-//            def formattedDate = new Date().format('yyyy-MM-dd-HH-mm')
-//            def versionName = variant.versionName
-////            def versionCode = variant.versionCode //e.g 1.0
-////            def flavorName = variant.flavorName //e.g. Free
-//            def buildType = variant.buildType.name //e.g. debug
-////            def variantName = variant.name //e.g. FreeDebug
-//
-//            ext.revision = getGitRevParseInfo("--short")
-//            ext.branch = getGitRevParseInfo("--abbrev-ref")
-//
-//            //customize your app name by using variables
-//            outputFileName = "app-${buildType}-${versionName}-${ext.revision}-${formattedDate}.apk"
-//
-//        }
-//    }
+    // Customize your APK name here
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+//            def appId = variant.applicationId// com.exampleFree.app OR com.examplePaid.app
+            def formattedDate = new Date().format('yyyy-MM-dd-HH-mm')
+            def versionName = variant.versionName
+//            def versionCode = variant.versionCode //e.g 1.0
+//            def flavorName = variant.flavorName //e.g. Free
+            def buildType = variant.buildType.name //e.g. debug
+//            def variantName = variant.name //e.g. FreeDebug
 
+            ext.revision = getGitRevParseInfo("--short")
+            ext.branch = getGitRevParseInfo("--abbrev-ref")
+
+            //customize your app name by using variables
+            outputFileName = "app-${buildType}-${versionName}-${ext.revision}-${formattedDate}.apk"
+
+        }
+    }
+
+    lintOptions {
+        abortOnError false
+    }
 
 }
 

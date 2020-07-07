@@ -111,7 +111,6 @@ class SmsInboxFragment : Fragment() {
             CoroutineScope(IO).launch {
                 smsInboxViewModel.getDbSmsMessages()
             }
-            binding.refreshLayoutHome2.isRefreshing = false
         }
 
         CoroutineScope(IO).launch {
