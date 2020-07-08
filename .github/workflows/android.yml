@@ -28,7 +28,7 @@ jobs:
       - name: Decode google-services.json
         env:
           FIREBASE_SECRET: ${{ secrets.FIREBASE_SECRET }}
-        run: echo $FIREBASE_SECRET > SmsGateway/app/google-services.json
+        run: echo $FIREBASE_SECRET > smsgatewaysync/app/google-services.json
 
       - name: Run kLint check
         run: |
