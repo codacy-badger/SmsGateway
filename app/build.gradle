@@ -47,7 +47,8 @@ android {
     applicationVariants.all { variant ->
         variant.outputs.all { output ->
 //            def appId = variant.applicationId// com.exampleFree.app OR com.examplePaid.app
-            def formattedDate = new Date().format('yyyy-MM-dd-HH-mm')
+//            def formattedDate = new Date().format('yyyy-MM-dd-HH-mm')
+            def formattedDate = new Date().format('yyyy-MM-dd')
             def versionName = variant.versionName
 //            def versionCode = variant.versionCode //e.g 1.0
 //            def flavorName = variant.flavorName //e.g. Free
@@ -59,7 +60,6 @@ android {
 
             //customize your app name by using variables
             outputFileName = "app-${buildType}-${versionName}-${ext.revision}-${formattedDate}.apk"
-
         }
     }
 
