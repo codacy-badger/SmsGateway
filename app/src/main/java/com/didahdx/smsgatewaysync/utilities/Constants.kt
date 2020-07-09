@@ -8,6 +8,7 @@ const val DATE_FORMAT = "dd/MMM/yy hh:mm:ss aaa"
 const val MPESA_ID_PATTERN = "^[A-Z0-9]*$"
 const val RED_COLOR = "RED_COLOR"
 const val GREEN_COLOR = "GREEN_COLOR"
+const val GREY_COLOR = "GREY_COLOR"
 const val NOT_AVAILABLE = "NA"
 
 const val SIM_CARD_1="Sim Card 1"
@@ -27,7 +28,7 @@ const val KEY_EMAIL="KEY_EMAIL"
 const val KEY_PHONE_NUMBER="KEY_PHONE_NUMBER"
 const val KEY_TASK_PRINT="KEY_TASK_PRINT"
 const val KEY_TASK_MESSAGE_API="KEY_TASK_MESSAGE_API"
-const val MINIMUM_TIME= 0
+const val MINIMUM_TIME:Long= 60000
 const val ERROR_CONNECTING_TO_SERVER="Error connecting to server"
 const val ANDROID_PHONE="android phone"
 

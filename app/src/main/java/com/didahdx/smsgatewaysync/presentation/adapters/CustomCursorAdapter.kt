@@ -44,7 +44,7 @@ abstract class CustomCursorAdapter<V : RecyclerView.ViewHolder?>(c: Cursor?) :
         return mCursor
     }
 
-    open fun swapCursor(newCursor: Cursor?) {
+    fun swapCursor(newCursor: Cursor?) {
         if (newCursor === mCursor) {
             return
         }

@@ -186,30 +186,39 @@ class HomeFragment : Fragment() {
 
         val email = FirebaseAuth.getInstance().currentUser?.email ?: "email not available "
         context?.let { SpUtil.setPreferenceString(it, PREF_USER_EMAIL, email) }
+        val isServiceOn =
+            context?.let { SpUtil.getPreferenceBoolean(it, PREF_SERVICES_KEY) } ?: true
 
-
-        val color = context?.let { SpUtil.getPreferenceString(it, PREF_STATUS_COLOR, RED_COLOR) }
-
-        val status = context?.let {
-            SpUtil.getPreferenceString(it, PREF_STATUS_MESSAGE, ERROR_CONNECTING_TO_SERVER)
-        } ?: ERROR_CONNECTING_TO_SERVER
         binding.textViewConnectionType.text = getConnectionType()
-
-        binding.textViewStatus.text = status
+        if(isServiceOn){
+            val color = context?.let { SpUtil.getPreferenceString(it, PREF_STATUS_COLOR, RED_COLOR) }
+            val status = context?.let {
+                SpUtil.getPreferenceString(it, PREF_STATUS_MESSAGE, ERROR_CONNECTING_TO_SERVER)
+            } ?: ERROR_CONNECTING_TO_SERVER
+            binding.textViewStatus.text = status
 //        startServices(status)
-        when (color) {
-            RED_COLOR -> {
-                binding.textViewStatus.backgroundRed()
-                binding.textViewConnectionType.backgroundRed()
-                binding.linearStatus.backgroundRed()
-            }
+            when (color) {
+                RED_COLOR -> {
+                    binding.textViewStatus.backgroundRed()
+                    binding.textViewConnectionType.backgroundRed()
+                    binding.linearStatus.backgroundRed()
+                }
 
-            GREEN_COLOR -> {
-                binding.textViewStatus.backgroundGreen()
-                binding.textViewConnectionType.backgroundGreen()
-                binding.linearStatus.backgroundGreen()
+                GREEN_COLOR -> {
+                    binding.textViewStatus.backgroundGreen()
+                    binding.textViewConnectionType.backgroundGreen()
+                    binding.linearStatus.backgroundGreen()
+                }
+
             }
+        }else{
+            binding.textViewStatus.backgroundGrey()
+            binding.textViewConnectionType.backgroundGrey()
+            binding.linearStatus.backgroundGrey()
+            binding.textViewStatus.text = "$APP_NAME is disabled"
         }
+
+
 
         // Inflate the layout for this fragment
         return binding.root

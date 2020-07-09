@@ -23,6 +23,7 @@ import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
 import com.didahdx.smsgatewaysync.databinding.FragmentSmsInboxBinding
 import com.didahdx.smsgatewaysync.utilities.SMS_LOCAL_BROADCAST_RECEIVER
 import com.didahdx.smsgatewaysync.utilities.hide
+import kotlinx.android.synthetic.main.fragment_sms_inbox.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.cancel
@@ -114,6 +115,7 @@ class SmsInboxFragment : Fragment() {
         }
 
         CoroutineScope(IO).launch {
+            binding.refreshLayoutHome2.isRefreshing = true
             smsInboxViewModel.getDbSmsMessages()
         }
 
@@ -129,7 +131,8 @@ class SmsInboxFragment : Fragment() {
     private val mSmsReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent?) {
             CoroutineScope(IO).launch {
-                smsInboxViewModel?.getDbSmsMessages()
+                refresh_layout_home2?.isRefreshing = true
+                smsInboxViewModel.getDbSmsMessages()
             }
         }
     }

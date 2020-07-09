@@ -26,6 +26,7 @@ import androidx.work.*
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
 import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
+import com.didahdx.smsgatewaysync.domain.LogFormat
 import com.didahdx.smsgatewaysync.domain.SmsInboxInfo
 import com.didahdx.smsgatewaysync.manager.RabbitmqClient
 import com.didahdx.smsgatewaysync.presentation.UiUpdaterInterface
@@ -41,6 +42,7 @@ import com.didahdx.smsgatewaysync.work.SendApiWorker
 import com.didahdx.smsgatewaysync.work.SendRabbitMqWorker
 import com.didahdx.smsgatewaysync.work.SendSmsWorker
 import com.google.firebase.auth.FirebaseAuth
+import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
@@ -66,7 +68,6 @@ class AppServices : Service(), UiUpdaterInterface {
     private var savedNumber: String? = null //because the passed incoming is only valid in ringing
     private val newIntent = Intent(CALL_LOCAL_BROADCAST_RECEIVER)
     private val statusIntent = Intent(STATUS_INTENT_BROADCAST_RECEIVER)
-    private var uiUpdaterInterface: UiUpdaterInterface? = null
     private var mPrnMng: WoosimPrnMng? = null
     private var wakeLock: PowerManager.WakeLock? = null
     lateinit var notification: Notification
@@ -78,6 +79,23 @@ class AppServices : Service(), UiUpdaterInterface {
     override fun onCreate() {
         super.onCreate()
         toast("Service started")
+        AppLog.logMessage("Sms Service started", this)
+        val notification = NotificationUtil.notificationStatus(this,"Service starting", false)
+        startForeground(1, notification)
+
+        CoroutineScope(IO).launch {
+            rabbitmqClient = RabbitmqClient(this@AppServices, user?.email!!)
+            val urlEnabled = SpUtil.getPreferenceBoolean(this@AppServices, PREF_HOST_URL_ENABLED)
+            val isServiceOn = SpUtil.getPreferenceBoolean(this@AppServices, PREF_SERVICES_KEY)
+            if (isServiceOn && !urlEnabled) {
+                setServiceState(this@AppServices, ServiceState.STARTING)
+
+                Timber.d("The service has been created".toUpperCase(Locale.ROOT))
+                rabbitmqClient.connection(this@AppServices)
+                setupRabbitmqPingingWork()
+            }
+        }
+
         registerReceiver(
             ConnectionReceiver(),
             IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
@@ -88,7 +106,7 @@ class AppServices : Service(), UiUpdaterInterface {
         val phoneCallFilter = IntentFilter(PHONE_STATE)
         phoneCallFilter.addAction(NEW_OUTGOING_CALL)
         registerReceiver(phoneCallReceiver, phoneCallFilter)
-        uiUpdaterInterface = this
+
 
         wakeLock =
             (getSystemService(Context.POWER_SERVICE) as PowerManager).run {
@@ -99,21 +117,6 @@ class AppServices : Service(), UiUpdaterInterface {
                     acquire(10 * 60 * 1000L /*4 minutes*/)
                 }
             }
-
-        CoroutineScope(IO).launch {
-            rabbitmqClient = RabbitmqClient(uiUpdaterInterface, user?.email!!)
-            val urlEnabled = SpUtil.getPreferenceBoolean(this@AppServices, PREF_HOST_URL_ENABLED)
-            val isServiceOn = SpUtil.getPreferenceBoolean(this@AppServices, PREF_SERVICES_KEY)
-            if (isServiceOn && !urlEnabled) {
-                setServiceState(this@AppServices, ServiceState.STARTING)
-                val notification = notificationStatus("Service starting", false)
-                Timber.d("The service has been created".toUpperCase(Locale.ROOT))
-                startForeground(1, notification)
-                rabbitmqClient.connection(this@AppServices)
-                setupRecurringWork()
-            }
-        }
-
 
     }
 
@@ -145,6 +148,7 @@ class AppServices : Service(), UiUpdaterInterface {
     private fun startAppService(intent: Intent?) {
         val input = intent?.getStringExtra(INPUT_EXTRAS) ?: " "
         setRestartServiceState(this, true)
+        setServiceState(this, ServiceState.STARTING)
 //        notificationStatus(input, false)
         val notificationIntent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -169,6 +173,7 @@ class AppServices : Service(), UiUpdaterInterface {
         notification.flags = Notification.FLAG_ONLY_ALERT_ONCE
 
         startForeground(1, notification)
+        toast("startForeground called")
     }
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -179,6 +184,7 @@ class AppServices : Service(), UiUpdaterInterface {
         val isServiceOn = SpUtil.getPreferenceBoolean(this, PREF_SERVICES_KEY)
         if (getRestartServiceState(this) && isServiceOn) {
             toast("Restart service state ${getRestartServiceState(this)}")
+            setServiceState(this, ServiceState.STARTING)
             Intent(applicationContext, this.javaClass).also {
                 it.action = AppServiceActions.START.name
                 it.setPackage(packageName)
@@ -237,7 +243,7 @@ class AppServices : Service(), UiUpdaterInterface {
                     val obj: JSONObject? = JSONObject()
                     val smsFilter = SmsFilter(messageText, maskedPhoneNumber)
                     val printMessage =
-                        smsFilter?.checkSmsType(messageText!!.trim(), maskedPhoneNumber)
+                        smsFilter.checkSmsType(messageText.trim(), maskedPhoneNumber)
                     val importantSmsType =
                         SpUtil.getPreferenceString(context, PREF_IMPORTANT_SMS_NOTIFICATION, " ")
                     if (messageText != null && phoneNumber != null &&
@@ -265,16 +271,16 @@ class AppServices : Service(), UiUpdaterInterface {
                     obj?.put("client_gateway_type", "android_phone")
 
 
-                    if (phoneNumber != null && smsFilter?.mpesaType != NOT_AVAILABLE) {
+                    if (phoneNumber != null && smsFilter.mpesaType != NOT_AVAILABLE) {
                         obj?.put("message_type", "mpesa")
-                        obj?.put("voucher_number", smsFilter?.mpesaId)
+                        obj?.put("voucher_number", smsFilter.mpesaId)
                         obj?.put("transaction_type", smsFilter?.mpesaType)
                         obj?.put("phone_number", smsFilter?.phoneNumber)
                         obj?.put("name", smsFilter?.name)
                         if (smsFilter?.time != NOT_AVAILABLE && smsFilter?.date != NOT_AVAILABLE) {
                             obj?.put(
                                 "transaction_date",
-                                "${smsFilter?.date} ${smsFilter?.time}"
+                                "${smsFilter?.date} ${smsFilter.time}"
                             )
                         } else if (smsFilter.date != NOT_AVAILABLE) {
                             obj?.put("transaction_date", smsFilter.date)
@@ -357,10 +363,7 @@ class AppServices : Service(), UiUpdaterInterface {
 
                         }
                     }
-
-
                     LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
-
 
 //                    if ("MPESA" == phoneNumber) {
                     if (printingReference == smsFilter.mpesaType && autoPrint) {
@@ -386,14 +389,12 @@ class AppServices : Service(), UiUpdaterInterface {
     }
 
     private val phoneCallReceiver = object : BroadcastReceiver() {
-//The receiver will be recreated whenever android feels like it.  We need a static variable to remember data between instantiations
-
+//The receiver will be recreated whenever android feels like it.
+// We need a static variable to remember data between instantiations
 
         override fun onReceive(context: Context, intent: Intent) {
-
             if (intent.action.equals("android.intent.action.NEW_OUTGOING_CALL")) {
                 savedNumber = intent.extras!!.getString("android.intent.extra.PHONE_NUMBER")
-
             } else {
 
                 val stateStr =
@@ -654,10 +655,7 @@ class AppServices : Service(), UiUpdaterInterface {
 
 
     override fun notificationMessage(message: String) {
-        notificationManager = NotificationManagerCompat.from(this)
-        val notification = notificationStatus(message, true)
-
-        notificationManager.notify(1, notification)
+       NotificationUtil.updateNotificationStatus(this,message, true)
         statusIntent.putExtra(STATUS_MESSAGE_EXTRA, message)
         statusIntent.putExtra(STATUS_COLOR_EXTRA, GREEN_COLOR)
         sendBroadcast(statusIntent)
@@ -674,22 +672,20 @@ class AppServices : Service(), UiUpdaterInterface {
 
     override fun updateStatusViewWith(status: String, color: String) {
         val context = this
-        CoroutineScope(Main).launch {
-            notificationManager = NotificationManagerCompat.from(context)
-            val isServiceOn = SpUtil.getPreferenceBoolean(this@AppServices, PREF_SERVICES_KEY)
-            if (isServiceOn) {
-                SpUtil.setPreferenceString(context, PREF_STATUS_MESSAGE, status)
-                SpUtil.setPreferenceString(context, PREF_STATUS_COLOR, color)
-                statusIntent.putExtra(STATUS_MESSAGE_EXTRA, status)
-                statusIntent.putExtra(STATUS_COLOR_EXTRA, color)
-                sendBroadcast(statusIntent)
-                AppLog.logMessage(status, context)
-                if (ServiceState.STOPPED != getServiceState(this@AppServices)) {
-                    val notification = notificationStatus(status, false)
-                    notificationManager.notify(1, notification)
-                }
-            }
+        SpUtil.setPreferenceString(context, PREF_STATUS_MESSAGE, status)
+        SpUtil.setPreferenceString(context, PREF_STATUS_COLOR, color)
+        Timber.d("thread name ${Thread.currentThread().name}")
+
+        notificationManager = NotificationManagerCompat.from(context)
+        val isServiceOn = SpUtil.getPreferenceBoolean(this@AppServices, PREF_SERVICES_KEY)
+        if (isServiceOn) {
+            statusIntent.putExtra(STATUS_MESSAGE_EXTRA, status)
+            statusIntent.putExtra(STATUS_COLOR_EXTRA, color)
+            sendBroadcast(statusIntent)
+            AppLog.logMessage(status, context)
+            NotificationUtil.updateNotificationStatus(this,status, false)
         }
+
     }
 
     override fun sendSms(phoneNumber: String, message: String) {
@@ -710,39 +706,6 @@ class AppServices : Service(), UiUpdaterInterface {
     }
 
 
-    //used to show to notification
-    private fun notificationStatus(message: String, value: Boolean): Notification {
-
-        val notificationIntent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
-        val pendingIntent = PendingIntent.getActivity(
-            this, 0, notificationIntent, 0
-        )
-
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle(getString(R.string.app_name))
-            .setContentText(message)
-            .setSmallIcon(R.drawable.ic_home)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setStyle(
-                NotificationCompat.BigTextStyle()
-                    .bigText(message)
-            )
-            .setContentIntent(pendingIntent)
-            .setAutoCancel(value)
-            .setOnlyAlertOnce(true)
-            .setDefaults(DEFAULT_LIGHTS or DEFAULT_VIBRATE)
-            .build()
-
-        notification.flags = Notification.FLAG_ONLY_ALERT_ONCE
-        notification.flags = Notification.FLAG_ONGOING_EVENT
-        notification.flags = Notification.FLAG_AUTO_CANCEL
-        return notification
-
-    }
-
-
     override fun onDestroy() {
         mPrnMng?.releaseAllocatoins()
         super.onDestroy()
@@ -752,7 +715,7 @@ class AppServices : Service(), UiUpdaterInterface {
                 it.release()
             }
         }
-
+        AppLog.logMessage("Sms Service stopped", this)
 //        CoroutineScope(IO).launch {
 //            rabbitmqClient.disconnect()
 //        }
@@ -760,10 +723,18 @@ class AppServices : Service(), UiUpdaterInterface {
         toast("Service destroyed")
     }
 
-    private fun setupRecurringWork() {
+    private fun setupRabbitmqPingingWork() {
+        val email = FirebaseAuth.getInstance().currentUser?.email ?: NOT_AVAILABLE
+        val logFormat = LogFormat(
+            date = Date().toString(),
+            type = "logs",
+            client_gateway_type = ANDROID_PHONE,
+            log = "ping",
+            client_sender = email
+        )
 
         val data = Data.Builder()
-            .putString(KEY_TASK_MESSAGE, "ping")
+            .putString(KEY_TASK_MESSAGE, Gson().toJson(logFormat))
             .putString(KEY_EMAIL, user?.email)
             .build()
         val constraints = Constraints.Builder()
