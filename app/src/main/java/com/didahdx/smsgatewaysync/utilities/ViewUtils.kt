@@ -40,6 +40,11 @@ fun View.backgroundGreen() {
         resources.getDrawable(R.drawable.item_background_green, null)
 }
 
+fun View.backgroundGrey() {
+    background =
+        resources.getDrawable(R.color.grey, null)
+}
+
 fun View.snackBar(message: String) {
     Snackbar.make(this, message, Snackbar.LENGTH_LONG).also { snackBar ->
         snackBar.setAction("Ok") {

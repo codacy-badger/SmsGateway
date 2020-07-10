@@ -16,7 +16,7 @@ class SmsInboxCursorAdapter(
     private val clickListener: SmsAdapterListener
 ) :
     RecyclerView.Adapter<SmsInboxCursorAdapter.SmsViewHolder>() {
-    var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT)
+    var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT, Locale.getDefault())
 
     var mCursor = cursor
 
@@ -37,13 +37,11 @@ class SmsInboxCursorAdapter(
                 )
             }
         }
-
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SmsViewHolder {
         return from(parent)
     }
-
 
     override fun onBindViewHolder(holder: SmsViewHolder, position: Int) {
         if (mCursor != null) {
@@ -55,7 +53,7 @@ class SmsInboxCursorAdapter(
             val dateId = mCursor?.getColumnIndex("date")
             val dateString = dateId?.let { mCursor?.getString(it) }
             val smsFilter = messageId?.let { mCursor?.getString(it)?.let { SmsFilter(it, false) } }
-            var smsinbox = ArrayList<SmsInboxInfo>()
+            val smsInbox = ArrayList<SmsInboxInfo>()
             nameId?.let { mCursor?.getString(it) }?.let {
                 dateString?.toLong()?.let { it1 ->
                     if (messageId != null) {
@@ -64,7 +62,7 @@ class SmsInboxCursorAdapter(
                                 SmsInboxInfo(
                                     messageId,
                                     it2,
-                                    sdf.format(dateString?.toLong()?.let { it1 -> Date(it1) })
+                                    sdf.format(Date(dateString.toLong()))
                                         .toString(),
                                     it,
                                     smsFilter.mpesaId,
@@ -74,13 +72,12 @@ class SmsInboxCursorAdapter(
                                     smsFilter.name,
                                     it1, false, "", ""
                                 )
-                            }?.let { it3 -> smsinbox.add(it3) }
+                            }?.let { it3 -> smsInbox.add(it3) }
                         }
                     }
                 }
             }
-
-            smsinbox?.let { holder.bind(it[0], clickListener) }
+            smsInbox?.let { holder.bind(it[0], clickListener) }
         }
     }
 
@@ -101,11 +98,8 @@ class SmsInboxCursorAdapter(
             notifyDataSetChanged()
         }
     }
-
 }
-
 
 class SmsAdapterListener(val clickListener: (messageId: SmsInboxInfo) -> Unit) {
     fun onClick(mMessage: SmsInboxInfo) = clickListener(mMessage)
 }
-

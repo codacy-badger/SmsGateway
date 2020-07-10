@@ -148,9 +148,12 @@ class SettingsFragment : PreferenceFragmentCompat(),
     private fun startServices(input: String) {
 //        Debug.startMethodTracing("Settings-start-service.trace")
         if (ServiceState.STOPPED == context?.let { getServiceState(it) }) {
+            context?.let { SpUtil.setPreferenceString(it, PREF_STATUS_MESSAGE, "$APP_NAME is running") }
+            context?.let { SpUtil.setPreferenceString(it, PREF_STATUS_COLOR, GREEN_COLOR) }
             val serviceIntent = Intent(activity as Activity, AppServices::class.java)
             serviceIntent.action = AppServiceActions.START.name
             serviceIntent.putExtra(INPUT_EXTRAS, input)
+            context?.let {  setServiceState(it,ServiceState.STARTING)}
             ContextCompat.startForegroundService(activity as Activity, serviceIntent)
         }
 //        Debug.stopMethodTracing()

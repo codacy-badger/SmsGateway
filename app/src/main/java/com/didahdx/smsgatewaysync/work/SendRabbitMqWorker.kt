@@ -12,7 +12,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import retrofit2.HttpException
 import timber.log.Timber
 import java.io.IOException
@@ -46,27 +45,27 @@ class SendRabbitMqWorker(appContext: Context, params: WorkerParameters) :
             }
         } catch (e: HttpException) {
             delay(30000)
-            Timber.d(" $e ${e.localizedMessage}")
-            logMessage(" $e ${e.localizedMessage}", app)
+            Timber.d("Worker $e ${e.localizedMessage}")
+            logMessage("Worker $e ${e.localizedMessage}", app)
             return Result.retry()
         } catch (e: TimeoutException) {
             delay(30000)
-            logMessage(" $e ${e.localizedMessage}", app)
-            Timber.d(" $e ${e.localizedMessage}")
+            logMessage("Worker $e ${e.localizedMessage}", app)
+            Timber.d("Worker $e ${e.localizedMessage}")
             return Result.retry()
         } catch (e: AlreadyClosedException) {
             delay(30000)
-            logMessage(" $e ${e.localizedMessage}", app)
-            Timber.d(" $e ${e.localizedMessage}")
+            logMessage("Worker $e ${e.localizedMessage}", app)
+            Timber.d("Worker $e ${e.localizedMessage}")
             return Result.retry()
         } catch (e: IOException) {
             delay(30000)
-            logMessage(" $e ${e.localizedMessage}", app)
-            Timber.d(" $e ${e.localizedMessage}")
+            logMessage("Worker $e ${e.localizedMessage}", app)
+            Timber.d("Worker $e ${e.localizedMessage}")
             return Result.retry()
         } catch (e: Exception) {
-            logMessage(" $e ${e.localizedMessage}", app)
-            Timber.d(" $e ${e.localizedMessage}")
+            logMessage("Worker $e ${e.localizedMessage}", app)
+            Timber.d("Worker $e ${e.localizedMessage}")
 
             CoroutineScope(Main).launch {
                 app.toast("$WORK_NAME $e ${e.localizedMessage}")

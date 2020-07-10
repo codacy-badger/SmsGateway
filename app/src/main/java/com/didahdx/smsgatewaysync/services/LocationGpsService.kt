@@ -74,7 +74,7 @@ class LocationGpsService : Service() {
                         return
                     }
                     locationManager?.requestLocationUpdates(
-                        LocationManager.GPS_PROVIDER, 0,
+                        LocationManager.GPS_PROVIDER, MINIMUM_TIME,
                         0f,
                         locationListener
                     )
@@ -92,13 +92,13 @@ class LocationGpsService : Service() {
                         return
                     }
                     locationManager?.requestLocationUpdates(
-                        LocationManager.NETWORK_PROVIDER, 0,
+                        LocationManager.NETWORK_PROVIDER, MINIMUM_TIME,
                         0f,
                         locationListener
                     )
 
                     locationManager?.requestLocationUpdates(
-                        LocationManager.GPS_PROVIDER, 0,
+                        LocationManager.GPS_PROVIDER, MINIMUM_TIME,
                         0f,
                         locationListener
                     )
@@ -133,13 +133,13 @@ class LocationGpsService : Service() {
 
 
             locationManager.requestLocationUpdates(
-                LocationManager.GPS_PROVIDER, 0,
+                LocationManager.GPS_PROVIDER, MINIMUM_TIME,
                 0f,
                 locationListener
             )
 
             locationManager.requestLocationUpdates(
-                LocationManager.NETWORK_PROVIDER, 0,
+                LocationManager.NETWORK_PROVIDER, MINIMUM_TIME,
                 0f,
                 locationListener
             )

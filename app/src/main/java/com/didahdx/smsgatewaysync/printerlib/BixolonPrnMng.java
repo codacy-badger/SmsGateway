@@ -11,6 +11,8 @@ import org.apache.http.util.ByteArrayBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import timber.log.Timber;
+
 
 /**
  * Created by Saeed on 01/06/2018.
@@ -78,7 +80,6 @@ public class BixolonPrnMng extends WoosimPrnMng {
     //------------------------------------------------------
     public static class Utils {
 
-        private static String hexStr = "0123456789ABCDEF";
         private static String[] binaryArray = { "0000", "0001", "0010", "0011",
                 "0100", "0101", "0110", "0111", "1000", "1001", "1010", "1011",
                 "1100", "1101", "1110", "1111" };
@@ -87,7 +88,7 @@ public class BixolonPrnMng extends WoosimPrnMng {
             int bmpWidth = bmp.getWidth();
             int bmpHeight = bmp.getHeight();
 
-            List<String> list = new ArrayList<String>(); //binaryString list
+            List<String> list = new ArrayList<>(); //binaryString list
             StringBuffer sb;
 
 
@@ -129,7 +130,7 @@ public class BixolonPrnMng extends WoosimPrnMng {
                     .toHexString(bmpWidth % 8 == 0 ? bmpWidth / 8
                             : (bmpWidth / 8 + 1));
             if (widthHexString.length() > 2) {
-                Log.e("decodeBitmap error", " width is too large");
+                Timber.e(" width is too large");
                 return null;
             } else if (widthHexString.length() == 1) {
                 widthHexString = "0" + widthHexString;
@@ -138,14 +139,14 @@ public class BixolonPrnMng extends WoosimPrnMng {
 
             String heightHexString = Integer.toHexString(bmpHeight);
             if (heightHexString.length() > 2) {
-                Log.e("decodeBitmap error", " height is too large");
+                Timber.e(" height is too large");
                 return null;
             } else if (heightHexString.length() == 1) {
                 heightHexString = "0" + heightHexString;
             }
             heightHexString = heightHexString + "00";
 
-            List<String> commandList = new ArrayList<String>();
+            List<String> commandList = new ArrayList<>();
             commandList.add(commandHexString+widthHexString+heightHexString);
             commandList.addAll(bmpHexList);
 
@@ -169,19 +170,20 @@ public class BixolonPrnMng extends WoosimPrnMng {
         }
 
         public static String myBinaryStrToHexString(String binaryStr) {
-            String hex = "";
+            StringBuilder hex = new StringBuilder();
             String f4 = binaryStr.substring(0, 4);
             String b4 = binaryStr.substring(4, 8);
+            String hexStr = "0123456789ABCDEF";
             for (int i = 0; i < binaryArray.length; i++) {
                 if (f4.equals(binaryArray[i]))
-                    hex += hexStr.substring(i, i + 1);
+                    hex.append(hexStr.substring(i, i + 1));
             }
             for (int i = 0; i < binaryArray.length; i++) {
                 if (b4.equals(binaryArray[i]))
-                    hex += hexStr.substring(i, i + 1);
+                    hex.append(hexStr.substring(i, i + 1));
             }
 
-            return hex;
+            return hex.toString();
         }
 
         public static byte[] hexList2Byte(List<String> list) {
@@ -190,8 +192,7 @@ public class BixolonPrnMng extends WoosimPrnMng {
             for (String hexStr : list) {
                 commandList.add(hexStringToBytes(hexStr));
             }
-            byte[] bytes = sysCopy(commandList);
-            return bytes;
+            return sysCopy(commandList);
         }
 
         public static byte[] hexStringToBytes(String hexString) {

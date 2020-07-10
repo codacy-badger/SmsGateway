@@ -28,6 +28,7 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
             connection = RabbitMqConnector.connection
 
             if (null != connection && connection?.isOpen!!) {
+
                 channel = RabbitMqConnector.channel
                 (connection as RecoverableConnection).addRecoveryListener(this)
                 (channel as RecoverableChannel).addRecoveryListener(this)
@@ -49,23 +50,19 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
 
                 connection?.addShutdownListener(this)
                 channel.addShutdownListener(this)
+                uiUpdater?.updateStatusViewWith("$APP_NAME is running", GREEN_COLOR)
 
-//                channel?.confirmSelect()
-//                channel?.addConfirmListener(
-//                    { deliveryTag, multiple ->
-//                        uiUpdater?.toasterMessage(" Delivery ack $deliveryTag   multiple   $multiple")
-//                    },
-//                    { deliveryTag, multiple ->
-//                        uiUpdater?.toasterMessage(" Delivery Not ack $deliveryTag   multiple $multiple")
-//                    })
-//
-//                channel?.basicRecover()
                 if (channel.isOpen && channel.consumerCount(email).toInt() == 0) {
                     consumeMessages()
+                    uiUpdater?.logMessage("Channel is connected")
+
+                }else{
+                    uiUpdater?.logMessage("Channel is closed because ${RabbitMqConnector.channel.closeReason}")
                 }
                 setServiceState(context, ServiceState.RUNNING)
-                uiUpdater?.updateStatusViewWith("$APP_NAME is running", GREEN_COLOR)
+                uiUpdater?.logMessage("Connected to server")
             } else {
+                uiUpdater?.logMessage("Connection is closed because ${RabbitMqConnector.connection.closeReason}")
                 setServiceState(context, ServiceState.STOPPED)
             }
         } catch (e: Exception) {

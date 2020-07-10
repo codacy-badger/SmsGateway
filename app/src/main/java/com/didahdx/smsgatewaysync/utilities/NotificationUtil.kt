@@ -2,7 +2,9 @@ package com.didahdx.smsgatewaysync.utilities
 
 import android.app.Notification
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.DEFAULT_LIGHTS
 import androidx.core.app.NotificationCompat.DEFAULT_VIBRATE
@@ -68,6 +70,41 @@ object NotificationUtil {
         importantSmsNotification++
     }
 
+
+    fun updateNotificationStatus(context: Context,message: String, value: Boolean){
+        val notification = notificationStatus(context,message, value)
+        getNotificationManager(context).notify(1, notification)
+    }
+
+    //used to show to notification
+     fun notificationStatus(context: Context,message: String, value: Boolean): Notification {
+        val notificationIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context, 0, notificationIntent, 0
+        )
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setContentTitle(context.getString(R.string.app_name))
+            .setContentText(message)
+            .setSmallIcon(R.drawable.ic_home)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setStyle(
+                NotificationCompat.BigTextStyle()
+                    .bigText(message)
+            )
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(value)
+            .setOnlyAlertOnce(true)
+            .setDefaults(DEFAULT_LIGHTS or DEFAULT_VIBRATE)
+            .build()
+
+        notification.flags = Notification.FLAG_ONLY_ALERT_ONCE
+        notification.flags = Notification.FLAG_ONGOING_EVENT
+        notification.flags = Notification.FLAG_AUTO_CANCEL
+        return notification
+    }
 
     fun cancel(context: Context) {
         val nm = context
