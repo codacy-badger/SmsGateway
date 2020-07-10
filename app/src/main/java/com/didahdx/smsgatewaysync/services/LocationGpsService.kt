@@ -86,11 +86,9 @@ class LocationGpsService : Service() {
                 if (provider == LocationManager.GPS_PROVIDER) {
                     locationManager?.removeUpdates(locationListener)
                     if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-                        != PackageManager.PERMISSION_GRANTED && checkSelfPermission(
-                            Manifest.permission.ACCESS_COARSE_LOCATION
-                        )
-                        != PackageManager.PERMISSION_GRANTED
-                    ) {
+                        != PackageManager.PERMISSION_GRANTED &&
+                        checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED) {
                         return
                     }
                     locationManager?.requestLocationUpdates(

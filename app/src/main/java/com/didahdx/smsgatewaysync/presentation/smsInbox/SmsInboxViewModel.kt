@@ -1,8 +1,10 @@
 package com.didahdx.smsgatewaysync.presentation.smsInbox
 
+import android.annotation.SuppressLint
 import android.app.Application
 import android.database.Cursor
 import android.net.Uri
+import android.os.Debug
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -12,8 +14,10 @@ import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
 import com.didahdx.smsgatewaysync.domain.SmsInboxInfo
 import com.didahdx.smsgatewaysync.domain.SmsInfo
 import com.didahdx.smsgatewaysync.utilities.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.*
@@ -54,11 +58,11 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
 
 
     private fun setInputMessage(message: Cursor) {
-            _messageArrayList.postValue(message)
+        _messageArrayList.postValue(message)
     }
 
 
-    suspend fun getDbSmsMessages() {
+    fun getDbSmsMessages() {
         val cursor = app.contentResolver?.query(
             Uri.parse("content://sms/inbox"),
             null,
@@ -80,12 +84,9 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
 
             do {
                 val dateString = cursor.getString(dateId)
-
 //                if (cursor.getString(nameId) == "MPESA") {
-
                 val maskedPhoneNumber = sharedPreferences.getBoolean(PREF_MASKED_NUMBER, false)
                 val smsFilter = SmsFilter(cursor.getString(messageId), maskedPhoneNumber)
-
                 when (mpesaType) {
                     PAY_BILL -> {
                         if (smsFilter.mpesaType == PAY_BILL) {
@@ -113,36 +114,28 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
                     }
                 }
 //                }
-
                 setCount(count)
             } while (cursor.moveToNext())
             cursor.close()
         }
-
         sortCursor(smsItem)
     }
 
-
     private fun sortCursor(rowNumbers: ArrayList<String>) {
+        Debug.startMethodTracing("cursor.trace")
         val projections = arrayOf("address", "body", "date")
         var inClause: String = rowNumbers.toString()
         inClause = inClause.replace('[', '(').replace(']', ')')
         val selection = "date IN  $inClause"
-
-        val cursor = app.contentResolver?.query(
-            Uri.parse("content://sms/inbox"),
-            projections,
-            selection,
-            null,
-            null
-        )
-
+        val cursor = app.contentResolver?.query(Uri.parse("content://sms/inbox"),
+            projections, selection, null, null)
         cursor?.let { setInputMessage(it) }
+        Debug.stopMethodTracing()
     }
 
 
     private fun setCount(count: Int) {
-            _messageCount.postValue(count)
+        _messageCount.postValue(count)
 
     }
 

@@ -95,8 +95,8 @@ class SmsInboxFragment : Fragment() {
             it?.let {
                 it.count
                 inboxAdapter.swapCursor(it)
-//                used to
-//                (binding.recyclerViewMessageList.layoutManager as GridLayoutManager).scrollToPositionWithOffset(0, 0)
+ //    used to
+ //    (binding.recyclerViewMessageList.layoutManager as GridLayoutManager).scrollToPositionWithOffset(0, 0)
             }
         })
 

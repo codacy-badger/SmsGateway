@@ -6,6 +6,7 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.os.Debug
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.preference.Preference
@@ -29,10 +30,11 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        Debug.startMethodTracing("preferenceSettings.trace")
         setPreferencesFromResource(R.xml.preferences, rootKey)
-
         onPreferenceClickListener = this
         onSharedPreferenceChangeListener = this
+        Debug.stopMethodTracing()
     }
 
     //shared preference listener
@@ -144,15 +146,18 @@ class SettingsFragment : PreferenceFragmentCompat(),
     }
 
     private fun startServices(input: String) {
+//        Debug.startMethodTracing("Settings-start-service.trace")
         if (ServiceState.STOPPED == context?.let { getServiceState(it) }) {
             val serviceIntent = Intent(activity as Activity, AppServices::class.java)
             serviceIntent.action = AppServiceActions.START.name
             serviceIntent.putExtra(INPUT_EXTRAS, input)
             ContextCompat.startForegroundService(activity as Activity, serviceIntent)
         }
+//        Debug.stopMethodTracing()
     }
 
     private fun stopServices() {
+//        Debug.startMethodTracing("Settings-stop-service.trace")
         context?.let { SpUtil.setPreferenceString(it, PREF_STATUS_MESSAGE, "$APP_NAME is disabled") }
         context?.let { SpUtil.setPreferenceString(it, PREF_STATUS_COLOR, RED_COLOR) }
 
@@ -164,6 +169,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
 //            context?.stopService(serviceIntent)
         ContextCompat.startForegroundService(activity as Activity, serviceIntent)
 //        }
+//        Debug.stopMethodTracing()
     }
 
 

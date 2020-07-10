@@ -99,7 +99,7 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
             true,
             { consumerTag: String?, delivery: Delivery ->
                 val m = String(delivery.body, StandardCharsets.UTF_8)
-                var phoneNumber = ""
+                var phoneNumber =""
                 var message = ""
 
                 try {
