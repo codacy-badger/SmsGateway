@@ -28,7 +28,8 @@ const val KEY_EMAIL="KEY_EMAIL"
 const val KEY_PHONE_NUMBER="KEY_PHONE_NUMBER"
 const val KEY_TASK_PRINT="KEY_TASK_PRINT"
 const val KEY_TASK_MESSAGE_API="KEY_TASK_MESSAGE_API"
-const val MINIMUM_TIME:Long= 60000
+const val MINIMUM_LOCATION_TIME:Long= 120000
+const val MINIMUM_LOCATION_DISTANCE= 0.7f
 const val ERROR_CONNECTING_TO_SERVER="Error connecting to server"
 const val ANDROID_PHONE="android phone"
 

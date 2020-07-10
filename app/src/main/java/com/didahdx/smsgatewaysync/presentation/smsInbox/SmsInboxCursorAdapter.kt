@@ -25,7 +25,7 @@ class SmsInboxCursorAdapter(
 
         fun bind(item: SmsInboxInfo, clickListener: SmsAdapterListener) {
             binding.messageText = item
-            binding.clickListener = clickListener
+//            binding.clickListener = clickListener
         }
 
         companion object {

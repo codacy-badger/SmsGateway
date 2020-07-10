@@ -59,17 +59,20 @@ class SmsInboxFragment : Fragment() {
         smsInboxViewModel = ViewModelProvider(this, factory).get(SmsInboxViewModel::class.java)
 
         binding.smsInboxViewModel = smsInboxViewModel
-        val cursor: Cursor? = null
-        val inboxAdapter =
-            SmsInboxCursorAdapter(
-                cursor,
-                SmsAdapterListener { sms ->
-                    smsInboxViewModel.onMessageDetailClicked(sms)
-                })
+//        val cursor: Cursor? = null
+//        val inboxAdapter =
+//            SmsInboxCursorAdapter(
+//                cursor,
+//                SmsAdapterListener { sms ->
+//                    smsInboxViewModel.onMessageDetailClicked(sms)
+//                })
+        val adapter=SmsInboxAdapter(SmsInboxAdapterListener { sms->
+            smsInboxViewModel.onMessageDetailClicked(sms)
+        })
 
         val manager = GridLayoutManager(activity, 1, GridLayoutManager.VERTICAL, false)
         binding.recyclerViewMessageList2.layoutManager = manager
-        binding.recyclerViewMessageList2.adapter = inboxAdapter
+        binding.recyclerViewMessageList2.adapter = adapter
         binding.lifecycleOwner = this
 
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_SMS)
@@ -94,8 +97,8 @@ class SmsInboxFragment : Fragment() {
             binding.progressBar2.hide()
             binding.textLoading2.hide()
             it?.let {
-                it.count
-                inboxAdapter.swapCursor(it)
+                it.size
+                adapter.submitList(it)
  //    used to
  //    (binding.recyclerViewMessageList.layoutManager as GridLayoutManager).scrollToPositionWithOffset(0, 0)
             }
@@ -114,10 +117,10 @@ class SmsInboxFragment : Fragment() {
             }
         }
 
-        CoroutineScope(IO).launch {
-            binding.refreshLayoutHome2.isRefreshing = true
-            smsInboxViewModel.getDbSmsMessages()
-        }
+//        CoroutineScope(IO).launch {
+//            binding.refreshLayoutHome2.isRefreshing = true
+//            smsInboxViewModel.getDbSmsMessages()
+//        }
 
         return binding.root
     }

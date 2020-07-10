@@ -9,7 +9,6 @@ import com.didahdx.smsgatewaysync.databinding.SmsInboxContainerBinding
 import com.didahdx.smsgatewaysync.domain.SmsInboxInfo
 import com.didahdx.smsgatewaysync.presentation.smsInbox.SmsInboxAdapter.SmsInboxViewHolder.Companion.from
 
-
 class SmsInboxAdapter(private val clickListener: SmsInboxAdapterListener) :
     ListAdapter<SmsInboxInfo, SmsInboxAdapter.SmsInboxViewHolder>(
         SmsInboxAdapterDiffCallback()
@@ -21,7 +20,7 @@ class SmsInboxAdapter(private val clickListener: SmsInboxAdapterListener) :
 
         fun bind(item: SmsInboxInfo, clickListener: SmsInboxAdapterListener) {
             binding.messageText = item
-//            binding.clickListener = clickListener
+            binding.clickListener = clickListener
             binding.executePendingBindings()
         }
 

@@ -611,7 +611,7 @@ class AppServices : Service(), UiUpdaterInterface {
                 longitude?.let { userLongitude = it }
 
 //                context.toast("Gps/Network Location  $userLatitude  $userLongitude $altitude")
-                Timber.d("Gps/Network Location  $userLatitude  $userLongitude $altitude")
+                Timber.d("Received Gps/Network Location  $userLatitude  $userLongitude $altitude")
             }
         }
     }

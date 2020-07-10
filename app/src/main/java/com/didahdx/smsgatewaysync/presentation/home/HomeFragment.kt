@@ -88,8 +88,7 @@ class HomeFragment : Fragment() {
     )
 
     lateinit var notificationManager: NotificationManagerCompat
-    var notificationCounter = 3000
-    var importantSmsNotification = 2
+
 
 
     private var locationBroadcastReceiver: BroadcastReceiver? = null

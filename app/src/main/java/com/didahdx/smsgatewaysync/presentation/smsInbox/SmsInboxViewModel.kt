@@ -27,6 +27,7 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
     var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT, Locale.US)
     val app = application
     val database = dataSource
+
     //data to be passed to next screen
     private val _eventMessageClicked = MutableLiveData<SmsInboxInfo>()
     val eventMessageClicked: LiveData<SmsInboxInfo>
@@ -39,7 +40,9 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
 
     init {
         _messageCount.value = 0
+    getDbSmsMessages()
     }
+
 
     fun onMessageDetailClicked(id: SmsInboxInfo) {
         _eventMessageClicked.value = id
@@ -49,17 +52,18 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
         _eventMessageClicked.value = null
     }
 
-    private val _messageArrayList = MutableLiveData<Cursor>()
-    val messageArrayList: LiveData<Cursor>
+    private val _messageArrayList = MutableLiveData<List<SmsInboxInfo>>()
+    val messageArrayList: LiveData<List<SmsInboxInfo>>
         get() = _messageArrayList
 
 
-    private fun setInputMessage(message: Cursor) {
+    private fun setInputMessage(message: List<SmsInboxInfo>) {
         _messageArrayList.postValue(message)
     }
 
 
     fun getDbSmsMessages() {
+        CoroutineScope(IO).launch {
         val cursor = app.contentResolver?.query(
             Uri.parse("content://sms/inbox"),
             null,
@@ -74,7 +78,7 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
 //            val nameId = cursor.getColumnIndex("address")
             val messageId = cursor.getColumnIndex("body")
             val dateId = cursor.getColumnIndex("date")
-            val mpesaType = SpUtil.getPreferenceString(app,PREF_MPESA_TYPE, DIRECT_MPESA)
+            val mpesaType = SpUtil.getPreferenceString(app, PREF_MPESA_TYPE, DIRECT_MPESA)
 
             Timber.i("mpesa sms $mpesaType ")
             var count = 0
@@ -83,7 +87,7 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
                 val dateString = cursor.getString(dateId)
 //                if (cursor.getString(nameId) == "MPESA") {
 
-                val maskedPhoneNumber = SpUtil.getPreferenceBoolean(app,PREF_MASKED_NUMBER)
+                val maskedPhoneNumber = SpUtil.getPreferenceBoolean(app, PREF_MASKED_NUMBER)
 
                 val smsFilter = SmsFilter(cursor.getString(messageId), maskedPhoneNumber)
                 when (mpesaType) {
@@ -118,25 +122,65 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
             cursor.close()
         }
         sortCursor(smsItem)
+        }
     }
 
     private fun sortCursor(rowNumbers: ArrayList<String>) {
-
+        CoroutineScope(IO).launch {
+        val smsInbox = ArrayList<SmsInboxInfo>()
 //        Debug.startMethodTracing("cursor.trace")
-            val projections = arrayOf("address", "body", "da     te")
-            var inClause: String = rowNumbers.toString()
-            inClause = inClause.replace('[', '(').replace(']', ')')
-            val selection = "date IN  $inClause"
+        val projections = arrayOf("address", "body", "date")
+        var inClause: String = rowNumbers.toString()
+        inClause = inClause.replace('[', '(').replace(']', ')')
+        val selection = "date IN  $inClause"
 
-           val cursor = app.contentResolver?.query(
-                Uri.parse("content://sms/inbox"),
-                projections,
-                selection,
-                null,
-                null
-            )
+        val mCursor = app.contentResolver?.query(
+            Uri.parse("content://sms/inbox"),
+            projections,
+            selection,
+            null,
+            null
+        )
 
-            cursor?.let { setInputMessage(it) }
+        if (mCursor != null && mCursor.moveToNext()) {
+            do {
+                val nameId = mCursor.getColumnIndex("address")
+                val messageId = mCursor.getColumnIndex("body")
+                val dateId = mCursor.getColumnIndex("date")
+                val dateString = dateId.let { mCursor.getString(it) }
+                val smsFilter =
+                    messageId.let { messageId ->
+                        mCursor.getString(messageId)?.let { SmsFilter(it, false) }
+                    }
+
+                nameId.let { mCursor.getString(it) }?.let {
+                    dateString?.toLong()?.let { it1 ->
+                        if (smsFilter != null) {
+                            mCursor.getString(messageId)?.let { it2 ->
+                                SmsInboxInfo(
+                                    messageId,
+                                    it2,
+                                    sdf.format(Date(dateString.toLong()))
+                                        .toString(),
+                                    it,
+                                    smsFilter.mpesaId,
+                                    smsFilter.phoneNumber,
+                                    smsFilter.amount,
+                                    smsFilter.accountNumber,
+                                    smsFilter.name,
+                                    it1, false, "", ""
+                                )
+                            }?.let { it3 -> smsInbox.add(it3) }
+                        }
+                    }
+                }
+
+            } while (mCursor.moveToNext())
+            mCursor.close()
+        }
+
+        setInputMessage(smsInbox)}
+//            cursor?.let { setInputMessage(it) }
 //        Debug.stopMethodTracing()
     }
 
@@ -189,7 +233,7 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
                 val nameId = cursor.getColumnIndex("address")
                 val messageId = cursor.getColumnIndex("body")
                 val dateId = cursor.getColumnIndex("date")
-                val mpesaType = SpUtil.getPreferenceString(app,PREF_MPESA_TYPE, DIRECT_MPESA)
+                val mpesaType = SpUtil.getPreferenceString(app, PREF_MPESA_TYPE, DIRECT_MPESA)
 
                 Timber.i("mpesa sms $mpesaType ")
                 do {
@@ -198,7 +242,7 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
                     val sender = cursor.getString(nameId)
 //                if (cursor.getString(nameId) == "MPESA") {
 
-                    val maskedPhoneNumber = SpUtil.getPreferenceBoolean(app,PREF_MASKED_NUMBER)
+                    val maskedPhoneNumber = SpUtil.getPreferenceBoolean(app, PREF_MASKED_NUMBER)
                     val smsFilter = SmsFilter(cursor.getString(messageId), maskedPhoneNumber)
                     val data = database.getMessage(smsFilter.mpesaId)
 

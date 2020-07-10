@@ -48,8 +48,7 @@ class LocationGpsService : Service() {
                 intent.putExtra(LATITUDE_EXTRA, location.latitude.toString())
                 intent.putExtra(ALTITUDE_EXTRA, location.altitude.toString())
 
-                Timber.d("Gps Location ${location.latitude} ${location.longitude}   ${location.altitude} ")
-                println("Gps Location  ${location.latitude}  ${location.longitude} ${location.altitude}  ")
+                Timber.d("Sent Gps Location ${location.latitude} ${location.longitude}   ${location.altitude} ")
                 sendBroadcast(intent)
             }
 
@@ -58,51 +57,50 @@ class LocationGpsService : Service() {
                 status: Int,
                 extras: Bundle
             ) {
-
                 Timber.d("Location status changed $provider $status $extras")
             }
 
             override fun onProviderEnabled(provider: String) {
-                if (provider == LocationManager.GPS_PROVIDER) {
-                    locationManager?.removeUpdates(locationListener)
-                    if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-                        != PackageManager.PERMISSION_GRANTED && checkSelfPermission(
-                            Manifest.permission.ACCESS_COARSE_LOCATION
-                        )
-                        != PackageManager.PERMISSION_GRANTED
-                    ) {
-                        return
-                    }
-                    locationManager?.requestLocationUpdates(
-                        LocationManager.GPS_PROVIDER, MINIMUM_TIME,
-                        0f,
-                        locationListener
-                    )
-                }
+//                if (provider == LocationManager.GPS_PROVIDER) {
+//                    locationManager?.removeUpdates(locationListener)
+//                    if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+//                        != PackageManager.PERMISSION_GRANTED && checkSelfPermission(
+//                            Manifest.permission.ACCESS_COARSE_LOCATION
+//                        )
+//                        != PackageManager.PERMISSION_GRANTED
+//                    ) {
+//                        return
+//                    }
+//                    locationManager?.requestLocationUpdates(
+//                        LocationManager.GPS_PROVIDER, MINIMUM_LOCATION_TIME,
+//                        MINIMUM_LOCATION_DISTANCE,
+//                        locationListener
+//                    )
+//                }
                 Timber.d("Location provider Enabled $provider")
             }
 
             override fun onProviderDisabled(provider: String) {
-                if (provider == LocationManager.GPS_PROVIDER) {
-                    locationManager?.removeUpdates(locationListener)
-                    if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-                        != PackageManager.PERMISSION_GRANTED &&
-                        checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
-                        != PackageManager.PERMISSION_GRANTED) {
-                        return
-                    }
-                    locationManager?.requestLocationUpdates(
-                        LocationManager.NETWORK_PROVIDER, MINIMUM_TIME,
-                        0f,
-                        locationListener
-                    )
-
-                    locationManager?.requestLocationUpdates(
-                        LocationManager.GPS_PROVIDER, MINIMUM_TIME,
-                        0f,
-                        locationListener
-                    )
-                }
+//                if (provider == LocationManager.GPS_PROVIDER) {
+//                    locationManager?.removeUpdates(locationListener)
+//                    if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+//                        != PackageManager.PERMISSION_GRANTED &&
+//                        checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
+//                        != PackageManager.PERMISSION_GRANTED) {
+//                        return
+//                    }
+//                    locationManager?.requestLocationUpdates(
+//                        LocationManager.NETWORK_PROVIDER, MINIMUM_LOCATION_TIME,
+//                        MINIMUM_LOCATION_DISTANCE,
+//                        locationListener
+//                    )
+//
+//                    locationManager?.requestLocationUpdates(
+//                        LocationManager.GPS_PROVIDER, MINIMUM_LOCATION_TIME,
+//                        MINIMUM_LOCATION_DISTANCE,
+//                        locationListener
+//                    )
+//                }
 
 //                Timber.d("Location provider Disabled $provider")
             }
@@ -133,14 +131,14 @@ class LocationGpsService : Service() {
 
 
             locationManager.requestLocationUpdates(
-                LocationManager.GPS_PROVIDER, MINIMUM_TIME,
-                0f,
+                LocationManager.GPS_PROVIDER, MINIMUM_LOCATION_TIME,
+                MINIMUM_LOCATION_DISTANCE,
                 locationListener
             )
 
             locationManager.requestLocationUpdates(
-                LocationManager.NETWORK_PROVIDER, MINIMUM_TIME,
-                0f,
+                LocationManager.NETWORK_PROVIDER, MINIMUM_LOCATION_TIME,
+                MINIMUM_LOCATION_DISTANCE,
                 locationListener
             )
 

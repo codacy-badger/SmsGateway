@@ -28,7 +28,7 @@
         app:cardCornerRadius="10dp"
         app:contentPadding="5dp">
 
-        <RelativeLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="90dp"
             android:layout_margin="4dp">
@@ -37,19 +37,26 @@
                 android:id="@+id/text_view_sender1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/sender" />
+                android:layout_marginStart="6dp"
+                android:layout_marginTop="6dp"
+                android:text="@string/sender"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
 
             <TextView
                 android:id="@+id/text_view_sender"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentTop="true"
-                android:layout_marginStart="4dp"
-                android:layout_marginBottom="5dp"
+                android:layout_marginStart="12dp"
+                android:layout_marginTop="6dp"
                 android:layout_toEndOf="@id/text_view_sender1"
                 android:textColor="@color/black"
                 android:textStyle="italic|bold"
                 app:Sender="@{messageText}"
+                app:layout_constraintStart_toEndOf="@+id/text_view_sender1"
+                app:layout_constraintTop_toTopOf="parent"
                 tools:text="Mpesa" />
 
             <TextView
@@ -57,23 +64,27 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentBottom="true"
-                android:layout_marginStart="4dp"
+                android:layout_marginStart="6dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="6dp"
                 app:MpesaId="@{messageText}"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/text_view_name"
                 tools:text="mpesaId" />
-
 
             <TextView
                 android:id="@+id/text_view_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/text_view_sender1"
-                android:layout_marginStart="5dp"
-                android:layout_marginTop="7dp"
-                android:layout_marginBottom="7dp"
+                android:layout_marginStart="6dp"
+                android:layout_marginTop="8dp"
                 android:textStyle="bold"
                 app:Name="@{messageText}"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/text_view_sender1"
                 tools:text="mpesa message body" />
-
 
             <TextView
                 android:id="@+id/text_view_time"
@@ -81,10 +92,13 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentTop="true"
                 android:layout_alignParentEnd="true"
-                android:layout_marginBottom="5dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginEnd="6dp"
                 android:ellipsize="end"
                 android:textStyle="italic"
                 app:Time="@{messageText}"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
                 tools:text="5:00pm" />
 
             <TextView
@@ -93,11 +107,15 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
                 android:layout_alignParentBottom="true"
+                android:layout_marginEnd="6dp"
+                android:layout_marginBottom="6dp"
                 app:Amount="@{messageText}"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
                 tools:text="2,000.00" />
 
 
-        </RelativeLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.cardview.widget.CardView>
 </layout>
