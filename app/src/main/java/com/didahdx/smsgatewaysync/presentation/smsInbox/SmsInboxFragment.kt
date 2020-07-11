@@ -26,6 +26,7 @@ import com.didahdx.smsgatewaysync.utilities.hide
 import kotlinx.android.synthetic.main.fragment_sms_inbox.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
@@ -91,7 +92,6 @@ class SmsInboxFragment : Fragment() {
             }
         })
 
-
         smsInboxViewModel.messageArrayList.observe(viewLifecycleOwner, Observer {
             binding.refreshLayoutHome2.isRefreshing = false
             binding.progressBar2.hide()
@@ -117,6 +117,7 @@ class SmsInboxFragment : Fragment() {
             }
         }
 
+        binding.refreshLayoutHome2.isRefreshing = true
 //        CoroutineScope(IO).launch {
 //            binding.refreshLayoutHome2.isRefreshing = true
 //            smsInboxViewModel.getDbSmsMessages()
@@ -133,8 +134,10 @@ class SmsInboxFragment : Fragment() {
     //broadcast sms receiver
     private val mSmsReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent?) {
-            CoroutineScope(IO).launch {
+            CoroutineScope(Main).launch {
                 refresh_layout_home2?.isRefreshing = true
+            }
+            CoroutineScope(IO).launch {
                 smsInboxViewModel.getDbSmsMessages()
             }
         }
