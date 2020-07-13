@@ -46,6 +46,7 @@ import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import timber.log.Timber
@@ -72,9 +73,7 @@ class AppServices : Service(), UiUpdaterInterface {
     private var wakeLock: PowerManager.WakeLock? = null
     lateinit var notification: Notification
 
-
-    @Volatile
-    lateinit var rabbitmqClient: RabbitmqClient
+//    lateinit var rabbitmqClient: RabbitmqClient
 
     override fun onCreate() {
         super.onCreate()
@@ -84,7 +83,7 @@ class AppServices : Service(), UiUpdaterInterface {
         startForeground(1, notification)
 
         CoroutineScope(IO).launch {
-            rabbitmqClient = RabbitmqClient(this@AppServices, user?.email!!)
+            val rabbitmqClient = RabbitmqClient(this@AppServices, user?.email!!)
             val urlEnabled = SpUtil.getPreferenceBoolean(this@AppServices, PREF_HOST_URL_ENABLED)
             val isServiceOn = SpUtil.getPreferenceBoolean(this@AppServices, PREF_SERVICES_KEY)
             if (isServiceOn && !urlEnabled) {
@@ -715,12 +714,14 @@ class AppServices : Service(), UiUpdaterInterface {
                 it.release()
             }
         }
+
         AppLog.logMessage("Sms Service stopped", this)
 //        CoroutineScope(IO).launch {
 //            rabbitmqClient.disconnect()
 //        }
 
         toast("Service destroyed")
+    CoroutineScope(IO).cancel()
     }
 
     private fun setupRabbitmqPingingWork() {
