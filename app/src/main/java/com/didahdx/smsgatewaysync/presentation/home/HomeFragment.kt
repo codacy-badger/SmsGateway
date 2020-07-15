@@ -281,12 +281,12 @@ class HomeFragment : Fragment() {
             try {
 
                 val isServiceOn =
-                    context?.let { SpUtil.getPreferenceBoolean(it, PREF_SERVICES_KEY) } ?: true
-                if (intent != null && isServiceOn && BATTERY_LOCAL_BROADCAST_RECEIVER == intent.action) {
+                    context.let { SpUtil.getPreferenceBoolean(context, PREF_SERVICES_KEY) }
+                if (isServiceOn && BATTERY_LOCAL_BROADCAST_RECEIVER == intent.action) {
                     if (intent.extras != null) {
                         val batteryVoltage =
                             intent.extras!!.getString(BATTERY_VOLTAGE_EXTRA) ?: NOT_AVAILABLE
-                        var batteryPercentage =
+                        val batteryPercentage =
                             intent.extras!!.getString(BATTERY_PERCENTAGE_EXTRA).toString()
                                 ?: NOT_AVAILABLE
                         val batteryCondition =

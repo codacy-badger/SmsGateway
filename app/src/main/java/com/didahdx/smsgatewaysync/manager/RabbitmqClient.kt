@@ -135,7 +135,7 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
     private fun consumeNotification() {
 
         val autoAck = false
-        channel?.basicConsume(
+        channel.basicConsume(
             NOTIFICATION, autoAck,
             object : DefaultConsumer(channel) {
                 @Throws(IOException::class)
@@ -147,11 +147,11 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
                 ) {
                     val deliveryTag = envelope.deliveryTag
                     channel.basicAck(deliveryTag, false)
-//                    uiUpdater?.toasterMessage("deliveryTag $deliveryTag body ${body?.let { String(it) }} ")
-//                    uiUpdater?.sendSms(
-//                        "+254719134650",
-//                        "deliveryTag $deliveryTag body ${body?.let { String(it) }} "
-//                    )
+    //                    uiUpdater?.toasterMessage("deliveryTag $deliveryTag body ${body?.let { String(it) }} ")
+    //                    uiUpdater?.sendSms(
+    //                        "+254719134650",
+    //                        "deliveryTag $deliveryTag body ${body?.let { String(it) }} "
+    //                    )
                 }
             })
 

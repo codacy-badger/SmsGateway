@@ -34,10 +34,8 @@ class LoginActivity : AppCompatActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         val fragments: List<Fragment> = supportFragmentManager.fragments
-        if (fragments != null) {
-            for (fragment in fragments) {
-                fragment.onRequestPermissionsResult(requestCode, permissions, grantResults)
-            }
+        for (fragment in fragments) {
+            fragment.onRequestPermissionsResult(requestCode, permissions, grantResults)
         }
 
         when (requestCode) {

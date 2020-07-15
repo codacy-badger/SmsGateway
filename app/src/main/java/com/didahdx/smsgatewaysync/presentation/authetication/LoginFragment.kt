@@ -90,7 +90,7 @@ class LoginFragment : Fragment(R.layout.fragment_login), View.OnClickListener {
 
         val user: FirebaseUser? = auth.currentUser
         if (user != null) {
-            navController?.navigate(R.id.action_loginFragment_to_mainActivity)
+            navController.navigate(R.id.action_loginFragment_to_mainActivity)
             requireActivity().onBackPressed()
 
         }
@@ -107,7 +107,7 @@ class LoginFragment : Fragment(R.layout.fragment_login), View.OnClickListener {
                 requireContext().toast("signInWithEmail:success")
                 val user: FirebaseUser? = auth.currentUser
                 if (user != null) {
-                    navController?.navigate(R.id.action_loginFragment_to_mainActivity)
+                    navController.navigate(R.id.action_loginFragment_to_mainActivity)
                     requireActivity().onBackPressed()
                 }
             } else { // If sign in fails, display a message to the user.

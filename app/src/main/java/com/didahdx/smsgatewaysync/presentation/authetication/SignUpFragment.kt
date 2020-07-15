@@ -140,7 +140,7 @@ class SignUpFragment : Fragment(R.layout.fragment_sign_up), View.OnClickListener
                     )
                     val user: FirebaseUser? = auth.currentUser
                     val database: FirebaseDatabase = FirebaseDatabase.getInstance()
-                    var myRef: DatabaseReference? = null
+                 lateinit var myRef: DatabaseReference
                     if (user != null) {
                         myRef = database
                             .getReference("users")
