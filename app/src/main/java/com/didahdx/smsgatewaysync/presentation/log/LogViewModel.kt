@@ -26,7 +26,6 @@ class LogViewModel(application: Application, Logs: AppLog) : ViewModel() {
         CoroutineScope(IO).launch {
             val log = logs.readLog(app)
             _appLogs.postValue(log)
-
         }
     }
 

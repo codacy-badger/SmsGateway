@@ -11,22 +11,9 @@ import androidx.lifecycle.ViewModelProvider
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.databinding.FragmentLogBinding
 import com.didahdx.smsgatewaysync.utilities.AppLog
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.cancel
 
-
-/**
- * A simple [Fragment] subclass.
- * Activities that contain this fragment must implement the
- * [LogFragment.OnFragmentInteractionListener] interface
- * to handle interaction events.
- * Use the [LogFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class LogFragment : Fragment() {
 
-    var log: String = " "
     lateinit var logViewModel: LogViewModel
 
     override fun onCreateView(
@@ -50,11 +37,6 @@ class LogFragment : Fragment() {
             }
         })
 
-        return binding.root;
-    }
-
-    override fun onPause() {
-        super.onPause()
-        CoroutineScope(IO).cancel()
+        return binding.root
     }
 }

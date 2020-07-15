@@ -35,11 +35,9 @@ class SendApiWorker(appContext: Context, params: WorkerParameters) :
 //                postMessage(message, context)
             }
         } catch (e: HttpException) {
-            delay(30000)
             Timber.d(" $e ${e.localizedMessage}")
             return Result.retry()
         } catch (e: TimeoutException) {
-            delay(30000)
             Timber.d(" $e ${e.localizedMessage}")
             return Result.retry()
         }catch (e: Exception) {

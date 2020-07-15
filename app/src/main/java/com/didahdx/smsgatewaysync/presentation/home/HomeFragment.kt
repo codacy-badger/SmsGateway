@@ -50,6 +50,7 @@ import com.google.gson.Gson
 import kotlinx.android.synthetic.main.fragment_home.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import retrofit2.Call
@@ -88,8 +89,6 @@ class HomeFragment : Fragment() {
     )
 
     lateinit var notificationManager: NotificationManagerCompat
-
-
 
     private var locationBroadcastReceiver: BroadcastReceiver? = null
     var userLongitude: String = " "
@@ -188,7 +187,9 @@ class HomeFragment : Fragment() {
         val isServiceOn =
             context?.let { SpUtil.getPreferenceBoolean(it, PREF_SERVICES_KEY) } ?: true
 
-        binding.textViewConnectionType.text = getConnectionType()
+        CoroutineScope(IO).launch {
+            getConnectionType()
+        }
         if(isServiceOn){
             val color = context?.let { SpUtil.getPreferenceString(it, PREF_STATUS_COLOR, RED_COLOR) }
             val status = context?.let {
@@ -278,7 +279,6 @@ class HomeFragment : Fragment() {
     private val batteryReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             try {
-
 
                 val isServiceOn =
                     context?.let { SpUtil.getPreferenceBoolean(it, PREF_SERVICES_KEY) } ?: true
@@ -460,31 +460,6 @@ class HomeFragment : Fragment() {
     override fun onPause() {
         super.onPause()
         CoroutineScope(IO).cancel()
-    }
-
-
-    private fun startServices(input: String) {
-        val isServiceRunning =
-            context?.let { SpUtil.getPreferenceBoolean(it, PREF_SERVICES_KEY) } ?: true
-
-        if (isServiceRunning) {
-            try {
-                val notification = context?.let {
-                    NotificationCompat.Builder(it, CHANNEL_ID)
-                        .setContentTitle(getString(R.string.app_name))
-                        .setContentText(input)
-                        .setSmallIcon(R.drawable.ic_home)
-                        .setPriority(NotificationCompat.PRIORITY_LOW)
-                        .build()
-                }
-                if (notification != null) {
-                    notificationManager.notify(1, notification)
-                }
-
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
     }
 
 
@@ -737,7 +712,7 @@ class HomeFragment : Fragment() {
         WorkManager.getInstance(context).enqueue(request)
     }
 
-    fun getConnectionType(): String {
+   suspend fun getConnectionType()  {
         val connectionManager =
             context?.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         var connectionType = ""
@@ -765,7 +740,9 @@ class HomeFragment : Fragment() {
             }
         }
 
-        return connectionType
+        CoroutineScope(Main).launch {
+        text_view_connection_type.text=connectionType
+        }
     }
 
 }

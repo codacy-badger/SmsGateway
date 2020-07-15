@@ -1,5 +1,8 @@
 package com.didahdx.smsgatewaysync.utilities
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.launch
 import java.util.*
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -24,29 +27,28 @@ class SmsFilter() {
 
     //returns the sms format to be printed
     fun checkSmsType(message: String, maskedPhoneNumber: Boolean): String {
-
-        try {
-            getOTPValues(message)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-
-        try {
-            mpesaId = message.trim().split("\\s".toRegex()).first().trim()
-
-            if (!MPESA_ID_PATTERN.toRegex().matches(mpesaId)) {
-                mpesaId = NOT_AVAILABLE
+            try {
+                getOTPValues(message)
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
 
-            amount = extractAmount(message)
-            date = message.substring(message.indexOf("/") - 2, message.lastIndexOf("/") + 3).trim()
-            time = message.substring(message.indexOf(":") - 2, message.indexOf(":") + 6).trim()
-            name = extractName(message)
+            try {
+                mpesaId = message.trim().split("\\s".toRegex()).first().trim()
 
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+                if (!MPESA_ID_PATTERN.toRegex().matches(mpesaId)) {
+                    mpesaId = NOT_AVAILABLE
+                }
 
+                amount = extractAmount(message)
+                date =
+                    message.substring(message.indexOf("/") - 2, message.lastIndexOf("/") + 3).trim()
+                time = message.substring(message.indexOf(":") - 2, message.indexOf(":") + 6).trim()
+                name = extractName(message)
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
 
         return messageFormat(maskedPhoneNumber)
     }

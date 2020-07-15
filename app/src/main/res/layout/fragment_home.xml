@@ -32,7 +32,7 @@
                 <LinearLayout
                     android:id="@+id/linear_status"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="0dp"
                     android:orientation="vertical"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
@@ -42,7 +42,6 @@
                         android:id="@+id/text_view_status"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="9dp"
                         android:padding="3dp"
                         android:textAlignment="center"
                         android:textColor="@color/white" />
@@ -59,15 +58,14 @@
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/recycler_view_message_list"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
                     android:layout_below="@id/linear_status"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintHorizontal_bias="0.0"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/linear_status"
-                    app:layout_constraintVertical_bias="0.0"
                     tools:listitem="@layout/message_container" />
             </androidx.constraintlayout.widget.ConstraintLayout>
 

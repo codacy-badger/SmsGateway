@@ -44,26 +44,14 @@ class SendRabbitMqWorker(appContext: Context, params: WorkerParameters) :
                 }
             }
         } catch (e: HttpException) {
-            delay(30000)
             Timber.d("Worker $e ${e.localizedMessage}")
             logMessage("Worker $e ${e.localizedMessage}", app)
             return Result.retry()
         } catch (e: TimeoutException) {
-            delay(30000)
             logMessage("Worker $e ${e.localizedMessage}", app)
             Timber.d("Worker $e ${e.localizedMessage}")
             return Result.retry()
-        } catch (e: AlreadyClosedException) {
-            delay(30000)
-            logMessage("Worker $e ${e.localizedMessage}", app)
-            Timber.d("Worker $e ${e.localizedMessage}")
-            return Result.retry()
-        } catch (e: IOException) {
-            delay(30000)
-            logMessage("Worker $e ${e.localizedMessage}", app)
-            Timber.d("Worker $e ${e.localizedMessage}")
-            return Result.retry()
-        } catch (e: Exception) {
+        }  catch (e: Exception) {
             logMessage("Worker $e ${e.localizedMessage}", app)
             Timber.d("Worker $e ${e.localizedMessage}")
 

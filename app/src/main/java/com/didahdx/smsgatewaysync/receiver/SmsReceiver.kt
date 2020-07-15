@@ -11,11 +11,19 @@ import androidx.preference.PreferenceManager
 import androidx.work.*
 import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
 import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
+import com.didahdx.smsgatewaysync.domain.SmsInboxInfo
+import com.didahdx.smsgatewaysync.printerlib.IPrintToPrinter
+import com.didahdx.smsgatewaysync.printerlib.WoosimPrnMng
+import com.didahdx.smsgatewaysync.printerlib.utils.PrefMng
+import com.didahdx.smsgatewaysync.printerlib.utils.Tools
+import com.didahdx.smsgatewaysync.printerlib.utils.printerFactory
 import com.didahdx.smsgatewaysync.utilities.*
 import com.didahdx.smsgatewaysync.work.SendRabbitMqWorker
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.*
@@ -23,16 +31,20 @@ import java.util.*
 
 class SmsReceiver : BroadcastReceiver() {
     private val newIntent = Intent(SMS_LOCAL_BROADCAST_RECEIVER)
-    var phoneNumber: String? = " "
-    var messageText: String? = ""
+    var phoneNumber: String = " "
+    var messageText: String = ""
     var time: Long? = null
-    private val smsFilter = SmsFilter()
+    private var mPrnMng: WoosimPrnMng? = null
+    private var userLatitude = ""
+    private var userLongitude = ""
+    private val user = FirebaseAuth.getInstance().currentUser
 
     override fun onReceive(context: Context, intent: Intent) {
-        val printingReference = SpUtil.getPreferenceString(context,PREF_MPESA_TYPE, DIRECT_MPESA)
-        val autoPrint = SpUtil.getPreferenceBoolean(context,PREF_AUTO_PRINT)
-        val maskedPhoneNumber = SpUtil.getPreferenceBoolean(context,PREF_MASKED_NUMBER)
-        context.toast(" sms background $autoPrint ")
+        val printingReference =  SpUtil.getPreferenceString(context, PREF_MPESA_TYPE, DIRECT_MPESA)
+        val autoPrint = SpUtil.getPreferenceBoolean(context, PREF_AUTO_PRINT)
+        val maskedPhoneNumber = SpUtil.getPreferenceBoolean(context, PREF_MASKED_NUMBER)
+        userLatitude=SpUtil.getPreferenceString(context,PREF_LATITUDE," ")
+        userLongitude=SpUtil.getPreferenceString(context,PREF_LONGITUDE," ")
 
         if (SMS_RECEIVED_INTENT == intent.action) {
             Timber.d("action original ${intent.action}")
@@ -48,7 +60,7 @@ class SmsReceiver : BroadcastReceiver() {
                     } else {
                         SmsMessage.createFromPdu(sms[i] as ByteArray)
                     }
-                    phoneNumber = smsMessage.originatingAddress
+                    phoneNumber = smsMessage.originatingAddress.toString()?: " "
                     time = smsMessage.timestampMillis
                     messageBuilder.append(smsMessage.messageBody.toString())
 
@@ -60,23 +72,111 @@ class SmsReceiver : BroadcastReceiver() {
                 newIntent.putExtra("phoneNumber", phoneNumber)
                 newIntent.putExtra("messageText", messageText)
                 newIntent.putExtra("date", time)
-                var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT, Locale.US)
-                CoroutineScope(IO).launch {
+                val sdf = SimpleDateFormat(DATE_FORMAT, Locale.US)
+                val printType = SpUtil.getPreferenceString(context, PREF_PRINT_TYPE, "")
+                val obj: JSONObject? = JSONObject()
+                val smsFilter = SmsFilter(messageText, maskedPhoneNumber)
+                val printMessage =
+                    smsFilter.checkSmsType(messageText.trim(), maskedPhoneNumber)
+                val importantSmsType =
+                    SpUtil.getPreferenceString(context, PREF_IMPORTANT_SMS_NOTIFICATION, " ")
+                if (smsFilter.mpesaType == importantSmsType || importantSmsType == "All") {
+                    Timber.i(" $messageText \n $phoneNumber ")
+                    NotificationUtil.notificationMessage(
+                        messageText, phoneNumber,
+                        context, userLatitude, userLongitude
+                    )
+                }
+
+                obj?.put("type", "message")
+                obj?.put("message_body", messageText)
+                obj?.put("receipt_date", sdf.format(time?.let { Date(it) }).toString())
+                obj?.put("sender_id", phoneNumber)
+                obj?.put("longitude", userLongitude)
+                obj?.put("latitude", userLatitude)
+                obj?.put("client_sender", user?.email!!)
+                obj?.put("client_gateway_type", "android_phone")
+
+
+                if (smsFilter.mpesaType != NOT_AVAILABLE) {
+                    obj?.put("message_type", "mpesa")
+                    obj?.put("voucher_number", smsFilter.mpesaId)
+                    obj?.put("transaction_type", smsFilter.mpesaType)
+                    obj?.put("phone_number", smsFilter.phoneNumber)
+                    obj?.put("name", smsFilter.name)
+                    if (smsFilter.time != NOT_AVAILABLE && smsFilter.date != NOT_AVAILABLE) {
+                        obj?.put(
+                            "transaction_date",
+                            "${smsFilter.date} ${smsFilter.time}"
+                        )
+                    } else if (smsFilter.date != NOT_AVAILABLE) {
+                        obj?.put("transaction_date", smsFilter.date)
+                    } else if (smsFilter.time !=
+                        NOT_AVAILABLE
+                    ) {
+                        obj?.put("transaction_date", smsFilter.time)
+                    }
+                    obj?.put("amount", smsFilter.amount)
+
+                } else {
+                    obj?.put("message_type", "recieved_sms")
+                }
+
+                obj?.toString()?.let {
+                    var status = false
+                    val urlEnabled = SpUtil.getPreferenceBoolean(context, PREF_HOST_URL_ENABLED)
+                    if (!urlEnabled) {
+                        val data = Data.Builder()
+                            .putString(KEY_TASK_MESSAGE, it)
+                            .putString(KEY_EMAIL, user?.email)
+                            .build()
+                        sendToRabbitMQ(context, data)
+                        status = true
+                    }
+
+                    val sdf = SimpleDateFormat(DATE_FORMAT, Locale.getDefault())
                     val message2: MpesaMessageInfo?
 
-                    if (messageText != null && time != null && phoneNumber != null) {
-                        val smsFilter = SmsFilter(messageText!!, false)
-                        message2 = MpesaMessageInfo(
-                            messageText!!.trim(),
+                    if (time != null) {
+                        val maskedPhoneNumber =
+                            SpUtil.getPreferenceBoolean(context, PREF_MASKED_NUMBER)
+                        val smsFilter = SmsFilter(messageText, maskedPhoneNumber)
+
+                        Timber.i("Otp code ${smsFilter.otpCode} website ${smsFilter.otpWebsite}")
+
+                        val smspost = SmsInboxInfo(
+                            0, messageText.trim(),
                             sdf.format(Date(time!!)).toString(),
-                            phoneNumber!!,
+                            phoneNumber,
                             smsFilter.mpesaId,
                             smsFilter.phoneNumber,
                             smsFilter.amount,
                             smsFilter.accountNumber,
                             smsFilter.name,
                             time!!,
-                            false, "", ""
+                            true, userLongitude, userLatitude
+                        )
+//                       postMessage(smspost)
+                    }
+                }
+
+
+                CoroutineScope(IO).launch {
+                    val message2: MpesaMessageInfo?
+
+                    if (time != null) {
+                        val smsFilter = SmsFilter(messageText, false)
+                        message2 = MpesaMessageInfo(
+                            messageText.trim(),
+                            sdf.format(Date(time!!)).toString(),
+                            phoneNumber,
+                            smsFilter.mpesaId,
+                            smsFilter.phoneNumber,
+                            smsFilter.amount,
+                            smsFilter.accountNumber,
+                            smsFilter.name,
+                            time!!,
+                            false, userLongitude, userLatitude
                         )
 
                         context.let { tex ->
@@ -86,35 +186,37 @@ class SmsReceiver : BroadcastReceiver() {
 
                     }
                 }
-
-                var message2: MpesaMessageInfo? = null
-
-                if (messageText != null && time != null && phoneNumber != null) {
-                    val smsFilter = SmsFilter(messageText!!, false)
-                    message2 = MpesaMessageInfo(
-                        messageText!!.trim(),
-                        sdf.format(Date(time!!)).toString(),
-                        phoneNumber!!,
-                        smsFilter.mpesaId,
-                        smsFilter.phoneNumber,
-                        smsFilter.amount,
-                        smsFilter.accountNumber,
-                        smsFilter.name,
-                        time!!,
-                        false, "", ""
-                    )
-                }
-
                 LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
 
-                if ("MPESA" == phoneNumber) {
-
+//                    if ("MPESA" == phoneNumber) {
+                if (printingReference == smsFilter.mpesaType && autoPrint) {
+                    //Check if the Bluetooth is available and on.
+                    Tools.isBlueToothOn(context)
+                    val address: String = PrefMng.getDeviceAddr(context)
+                    if (address.isNotEmpty() && Tools.isBlueToothOn(context)) {
+                        val testPrinter: IPrintToPrinter =
+                            BluetoothPrinter(context, printMessage)
+                        //Connect to the printer and after successful connection issue the print command.
+                        mPrnMng = printerFactory.createPrnMng(context, address, testPrinter)
+                    } else {
+                        context.toast("Printer not connected ")
+                    }
                 }
-
+//                    }
             }
-
-
         }
+    }
+
+    private fun sendToRabbitMQ(context: Context, data: Data) {
+        val constraints =
+            Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
+
+        val request: OneTimeWorkRequest = OneTimeWorkRequestBuilder<SendRabbitMqWorker>()
+            .setConstraints(constraints)
+            .setInputData(data)
+            .build()
+
+        WorkManager.getInstance(context).enqueue(request)
     }
 
 }

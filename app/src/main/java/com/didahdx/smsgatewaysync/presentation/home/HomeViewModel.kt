@@ -31,7 +31,6 @@ class HomeViewModel(
         get() = _messageList
 
     // Create a Coroutine scope using a job to be able to cancel when needed
-    private var viewModelJob = Job()
     val sdf = SimpleDateFormat(DATE_FORMAT, Locale.US)
 
     // the Coroutine runs using the Main (UI) dispatcher
@@ -46,9 +45,9 @@ class HomeViewModel(
             CoroutineScope(IO).launch {
                 val messagesFilled = ArrayList<MpesaMessageInfo>()
                 it?.let {
-                    val mpesaType = SpUtil.getPreferenceString(app,PREF_MPESA_TYPE, DIRECT_MPESA)
+                    val mpesaType = SpUtil.getPreferenceString(app, PREF_MPESA_TYPE, DIRECT_MPESA)
                     var count = 0
-                    val maskedPhoneNumber = SpUtil.getPreferenceBoolean(app,PREF_MASKED_NUMBER)
+                    val maskedPhoneNumber = SpUtil.getPreferenceBoolean(app, PREF_MASKED_NUMBER)
                     for (i in it.indices) {
                         val smsFilter = SmsFilter(it[i].messageBody, maskedPhoneNumber)
                         setCount(count)
@@ -84,9 +83,7 @@ class HomeViewModel(
 
                 _messageList.postValue(messagesFilled.toList())
 
-                withContext(Main) {
-                    messagesFilledNew.addAll(messagesFilled)
-                }
+                messagesFilledNew.addAll(messagesFilled)
             }
             return@map messagesFilledNew.toList()
         }
@@ -94,7 +91,7 @@ class HomeViewModel(
 
 
     private fun setCount(count: Int) {
-            _messageCount.postValue(count)
+        _messageCount.postValue(count)
     }
 
     //data to be passed to next screen
@@ -125,14 +122,9 @@ class HomeViewModel(
     }
 
 
-    /**
-     * When the [ViewModel] is finished, we cancel our coroutine [viewModelJob], which tells the
-     * Retrofit service to stop.
-     */
     override fun onCleared() {
         super.onCleared()
         CoroutineScope(IO).cancel()
-        viewModelJob.cancel()
     }
 
 }

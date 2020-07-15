@@ -47,7 +47,21 @@ class LocationGpsService : Service() {
                 intent.putExtra(LONGITUDE_EXTRA, location.longitude.toString())
                 intent.putExtra(LATITUDE_EXTRA, location.latitude.toString())
                 intent.putExtra(ALTITUDE_EXTRA, location.altitude.toString())
-
+                SpUtil.setPreferenceString(
+                    this@LocationGpsService,
+                    PREF_LONGITUDE,
+                    location.longitude.toString()
+                )
+                SpUtil.setPreferenceString(
+                    this@LocationGpsService,
+                    PREF_LATITUDE,
+                    location.latitude.toString()
+                )
+                SpUtil.setPreferenceString(
+                    this@LocationGpsService,
+                    PREF_ALTITUDE,
+                    location.altitude.toString()
+                )
                 Timber.d("Sent Gps Location ${location.latitude} ${location.longitude}   ${location.altitude} ")
                 sendBroadcast(intent)
             }
@@ -142,12 +156,12 @@ class LocationGpsService : Service() {
                 locationListener
             )
 
-            if (!isGPSEnabled && !isNetworkEnabled){
+            if (!isGPSEnabled && !isNetworkEnabled) {
                 locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
             }
 
 
-    }
+        }
     }
 
     override fun onDestroy() {

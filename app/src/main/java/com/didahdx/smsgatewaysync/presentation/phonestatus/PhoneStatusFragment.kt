@@ -37,8 +37,6 @@ import kotlin.collections.HashMap
  */
 class PhoneStatusFragment : Fragment() {
     private val appPermissions = arrayOf(
-        Manifest.permission.ACCESS_FINE_LOCATION,
-        Manifest.permission.ACCESS_COARSE_LOCATION,
         Manifest.permission.READ_PHONE_STATE,
         Manifest.permission.READ_CALL_LOG,
         Manifest.permission.CALL_PHONE,
@@ -94,7 +92,7 @@ class PhoneStatusFragment : Fragment() {
                                 text_view_phone_status?.append("\nAirtime Balance KSh: $bal")
                             }
 
-                            context?.toast("ussd response: $response")
+//                            context?.toast("ussd response: $response")
                             Timber.e("Success with response : $response  ")
                         } catch (e: Exception) {
                             context?.let { AppLog.logMessage("$e  ${e.localizedMessage}", it) }
@@ -109,7 +107,7 @@ class PhoneStatusFragment : Fragment() {
                         failureCode: Int
                     ) {
                         super.onReceiveUssdResponseFailed(telephonyManager, request, failureCode)
-                        context?.toast(" request $request  \n failureCode $failureCode ")
+//                        context?.toast(" request $request  \n failureCode $failureCode ")
                         Timber.e("failed with code $failureCode")
                     }
                 }
@@ -230,8 +228,7 @@ class PhoneStatusFragment : Fragment() {
             )
 
             val mi = ActivityManager.MemoryInfo()
-            val activityManager =
-                requireContext().getSystemService(ACTIVITY_SERVICE) as ActivityManager?
+            val activityManager = requireContext().getSystemService(ACTIVITY_SERVICE) as ActivityManager?
             activityManager!!.getMemoryInfo(mi)
             val availableRAM: Double = mi.availMem / (0x100000L).toDouble()
             val TotalRam: Double = mi.totalMem / (0x100000L).toDouble()
@@ -272,6 +269,15 @@ class PhoneStatusFragment : Fragment() {
                     received
                 )
             )
+
+            context?.toast( String.format(
+                Locale.getDefault(),
+                "uid: %1d - name: %s: Sent = %1d, Rcvd = %1d",
+                runningApp.uid,
+                runningApp.processName,
+                sent,
+                received
+            ))
 
             message += "${Locale.getDefault()} uid: ${runningApp.uid} - name:" +
                     " ${runningApp.processName}: Sent = $sent, Rcvd = $received"
@@ -392,29 +398,5 @@ class PhoneStatusFragment : Fragment() {
         alert.show()
         return alert
     }
-
-
-//    operator fun get(context: Context, key: String?): String? {
-//        var ret = ""
-//        try {
-//            val cl = context.classLoader
-//            val SystemProperties = cl.loadClass("android.os.SystemProperties")
-//
-//            //Parameters Types
-//            val paramTypes: Array<Class<*>?> = arrayOfNulls(1)
-//            paramTypes[0] = String::class.java
-//            val get: Method = SystemProperties.getMethod("get", *paramTypes)
-//
-//            //Parameters
-//            val params = arrayOfNulls<Any>(1)
-//            params[0] = String(key)
-//            ret = get.invoke(SystemProperties, params)
-//        } catch (e: java.lang.Exception) {
-//            ret = ""
-//            //TODO : Error handling
-//        }
-//        return ret
-//    }
-
 
 }

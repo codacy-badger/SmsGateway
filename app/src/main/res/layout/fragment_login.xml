@@ -49,6 +49,7 @@
                     android:drawableStart="@drawable/ic_email"
                     android:drawablePadding="12dp"
                     android:hint="Email"
+                    android:text="didahdaniel@gmail.com"
                     android:inputType="textEmailAddress" />
 
             </com.google.android.material.textfield.TextInputLayout>
@@ -70,6 +71,7 @@
                     android:drawableStart="@drawable/ic_lock"
                     android:drawablePadding="12dp"
                     android:hint="Password"
+                    android:text="opicho"
                     android:inputType="textPassword" />
 
             </com.google.android.material.textfield.TextInputLayout>

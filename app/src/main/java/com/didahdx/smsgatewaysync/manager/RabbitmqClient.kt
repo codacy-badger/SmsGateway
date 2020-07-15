@@ -189,7 +189,7 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
     }
 
     override fun handleRecoveryStarted(recoverable: Recoverable?) {
-        Timber.d(" automatic connection recovery starts.")
+        Timber.d(" automatic connection recovery starts. ")
         uiUpdater?.updateStatusViewWith("Retrying connecting to server", RED_COLOR)
         uiUpdater?.logMessage("Automatic connection recovery started")
     }
