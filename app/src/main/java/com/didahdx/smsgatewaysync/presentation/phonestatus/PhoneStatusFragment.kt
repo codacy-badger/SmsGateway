@@ -75,8 +75,7 @@ class PhoneStatusFragment : Fragment() {
         }
         var callback: UssdResponseCallback? = null
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            callback =
-                object : UssdResponseCallback() {
+            callback = object : UssdResponseCallback() {
                     override fun onReceiveUssdResponse(
                         telephonyManager: TelephonyManager,
                         request: String,
@@ -191,14 +190,16 @@ class PhoneStatusFragment : Fragment() {
             if (checkSelfPermission(
                     requireContext(),
                     Manifest.permission.READ_PHONE_STATE
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
-                stringBuilder.append("\nIMEI number : ${telephonyManager.deviceId} \n  ")
+                ) == PackageManager.PERMISSION_GRANTED) {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                    stringBuilder.append("\nIMEI number : ${telephonyManager.deviceId} \n  ")
+                    stringBuilder.append("\nSim Serial Number : ${telephonyManager.simSerialNumber}  \n ")
+                    val imsi: String = telephonyManager.subscriberId
+                    stringBuilder.append("\nIMSI : $imsi \n ")
+                }
                 stringBuilder.append("\nNetwork Name : ${telephonyManager.networkOperatorName} \n  ")
-                stringBuilder.append("\nSim Serial Number : ${telephonyManager.simSerialNumber}  \n ")
-                val imsi: String = telephonyManager.subscriberId
-                stringBuilder.append("\nIMSI : $imsi \n ")
             }
+
 
             stringBuilder.append("\nPhone manufacturer : ${Build.MANUFACTURER} \n  ")
             stringBuilder.append("\nPhone model : ${Build.MODEL} \n")
@@ -270,14 +271,14 @@ class PhoneStatusFragment : Fragment() {
                 )
             )
 
-            context?.toast( String.format(
-                Locale.getDefault(),
-                "uid: %1d - name: %s: Sent = %1d, Rcvd = %1d",
-                runningApp.uid,
-                runningApp.processName,
-                sent,
-                received
-            ))
+//            context?.toast( String.format(
+//                Locale.getDefault(),
+//                "uid: %1d - name: %s: Sent = %1d, Rcvd = %1d",
+//                runningApp.uid,
+//                runningApp.processName,
+//                sent,
+//                received
+//            ))
 
             message += "${Locale.getDefault()} uid: ${runningApp.uid} - name:" +
                     " ${runningApp.processName}: Sent = $sent, Rcvd = $received"
