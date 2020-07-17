@@ -31,11 +31,32 @@ class PrinterFragment : Fragment(R.layout.fragment_printer), View.OnClickListene
         filter.addAction(BluetoothDevice.ACTION_FOUND)
         filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
         context?.registerReceiver(mReceiver, filter)
+
+    }
+
+    private fun getCheckedPrinter() {
+
+        when (context?.let { PrefMng.getActivePrinter(it) }) {
+            PrefMng.PRN_BIXOLON_SELECTED -> {
+                radBixolon?.isChecked = true
+            }
+            PrefMng.PRN_RONGTA_SELECTED -> {
+                radRongta?.isChecked = true
+            }
+            PrefMng.PRN_WOOSIM_SELECTED -> {
+                radWoosim?.isChecked = true
+            }
+            PrefMng.PRN_OTHER_PRINTERS_SELECTED -> {
+                radOthers?.isChecked = true
+            }
+        }
+
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         connectPrinterButton.setOnClickListener(this)
+        getCheckedPrinter()
 //        printerConnected.text = "Printer Connected: No"
     }
 
@@ -47,7 +68,7 @@ class PrinterFragment : Fragment(R.layout.fragment_printer), View.OnClickListene
                 val mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
                 if (mBluetoothAdapter != null) {
                     if (mBluetoothAdapter.isEnabled) {
-                        if (saveSelectedPrinterBrand()){
+                        if (saveSelectedPrinterBrand()) {
                             this.findNavController()
                                 .navigate(R.id.action_printerFragment_to_printerDetailFragment)
                         }
@@ -61,7 +82,7 @@ class PrinterFragment : Fragment(R.layout.fragment_printer), View.OnClickListene
                 }
             }
 
-            removePrinter ->{
+            removePrinter -> {
                 context?.let { PrefMng.saveDeviceAddr(it, "") }
             }
 
@@ -74,13 +95,13 @@ class PrinterFragment : Fragment(R.layout.fragment_printer), View.OnClickListene
             val action = intent?.action
 
             if (BluetoothDevice.ACTION_FOUND == action) {
-                printerConnected.text = "Printer Found"
+                printerConnected?.text = "Printer Found"
                 context.toast("Printer found")
                 //Device found
             } else if (BluetoothDevice.ACTION_ACL_CONNECTED == action) {
                 context.toast("Printer connected")
                 //Device is now connected
-                printerConnected.text = "Printer Connected: Yes"
+                printerConnected?.text = "Printer Connected: Yes"
             } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED == action) {
                 context.toast("Printer discovery finished")
                 //Done searching
@@ -90,7 +111,7 @@ class PrinterFragment : Fragment(R.layout.fragment_printer), View.OnClickListene
             } else if (BluetoothDevice.ACTION_ACL_DISCONNECTED == action) {
                 context.toast("Printer is disconnect")
                 //Device has disconnected
-                printerConnected.text = "Printer Connected: No"
+                printerConnected?.text = "Printer Connected: No"
             }
         }
     }
@@ -115,7 +136,7 @@ class PrinterFragment : Fragment(R.layout.fragment_printer), View.OnClickListene
             context?.let { PrefMng.saveActivePrinter(it, PrefMng.PRN_OTHER_PRINTERS_SELECTED) }
             return true
         }
-        context?.toast( R.string.choose_printer)
+        context?.toast(R.string.choose_printer)
         return false
     }
 

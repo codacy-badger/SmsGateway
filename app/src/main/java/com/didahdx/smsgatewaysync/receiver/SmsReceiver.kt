@@ -40,11 +40,11 @@ class SmsReceiver : BroadcastReceiver() {
     private val user = FirebaseAuth.getInstance().currentUser
 
     override fun onReceive(context: Context, intent: Intent) {
-        val printingReference =  SpUtil.getPreferenceString(context, PREF_MPESA_TYPE, DIRECT_MPESA)
+        val printingReference = SpUtil.getPreferenceString(context, PREF_MPESA_TYPE, DIRECT_MPESA)
         val autoPrint = SpUtil.getPreferenceBoolean(context, PREF_AUTO_PRINT)
         val maskedPhoneNumber = SpUtil.getPreferenceBoolean(context, PREF_MASKED_NUMBER)
-        userLatitude=SpUtil.getPreferenceString(context,PREF_LATITUDE," ")
-        userLongitude=SpUtil.getPreferenceString(context,PREF_LONGITUDE," ")
+        userLatitude = SpUtil.getPreferenceString(context, PREF_LATITUDE, " ")
+        userLongitude = SpUtil.getPreferenceString(context, PREF_LONGITUDE, " ")
 
         if (SMS_RECEIVED_INTENT == intent.action) {
             Timber.d("action original ${intent.action}")
@@ -60,7 +60,7 @@ class SmsReceiver : BroadcastReceiver() {
                     } else {
                         SmsMessage.createFromPdu(sms[i] as ByteArray)
                     }
-                    phoneNumber = smsMessage.originatingAddress.toString()?: " "
+                    phoneNumber = smsMessage.originatingAddress.toString() ?: " "
                     time = smsMessage.timestampMillis
                     messageBuilder.append(smsMessage.messageBody.toString())
 
@@ -215,8 +215,9 @@ class SmsReceiver : BroadcastReceiver() {
             .setConstraints(constraints)
             .setInputData(data)
             .build()
-
-        WorkManager.getInstance(context).enqueue(request)
+        val isServiceOn = SpUtil.getPreferenceBoolean(context, PREF_SERVICES_KEY)
+        if (isServiceOn)
+            WorkManager.getInstance(context).enqueue(request)
     }
 
 }

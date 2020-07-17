@@ -1,5 +1,6 @@
 package com.didahdx.smsgatewaysync.utilities
 
+import com.google.firebase.perf.metrics.AddTrace
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
@@ -26,6 +27,7 @@ class SmsFilter() {
     }
 
     //returns the sms format to be printed
+    @AddTrace(name = "SmsFilterCheckSmsType", enabled = true /* optional */)
     fun checkSmsType(message: String, maskedPhoneNumber: Boolean): String {
             try {
                 getOTPValues(message)

@@ -15,6 +15,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission
+        android:name="android.permission.READ_PRIVILEGED_PHONE_STATE"
+        tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -37,6 +40,10 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
+        <meta-data
+            android:name="firebase_performance_logcat_enabled"
+            android:value="true" />
+
         <receiver
             android:name=".receiver.OutgoingSmsReceiver"
             android:enabled="true"
@@ -61,10 +68,7 @@
         <!-- <action android:name="android.provider.Telephony.SMS_RECEIVED" /> -->
         <!-- </intent-filter> -->
         <!-- </receiver> -->
-        <service
-            android:name=".services.LocationGpsService"
-            android:enabled="true"
-            android:exported="false" />
+        <service android:name=".services.LocationGpsService" />
 
         <receiver
             android:name=".receiver.BootReceiver"
@@ -84,7 +88,6 @@
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -94,9 +97,7 @@
             android:launchMode="singleTask"
             android:theme="@style/AppTheme.NoActionBar" />
 
-        <service
-            android:name=".services.AppServices"
-            android:exported="false" />
+        <service android:name=".services.AppServices" />
     </application>
 
 </manifest>

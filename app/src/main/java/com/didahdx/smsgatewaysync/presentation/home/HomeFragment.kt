@@ -7,10 +7,7 @@ import android.content.*
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.Uri
-import android.os.Build
-import android.os.Bundle
-import android.os.Environment
-import android.os.StatFs
+import android.os.*
 import android.provider.Settings
 import android.telephony.TelephonyManager
 import android.view.*
@@ -46,6 +43,7 @@ import com.didahdx.smsgatewaysync.presentation.activities.LoginActivity
 import com.didahdx.smsgatewaysync.utilities.*
 import com.didahdx.smsgatewaysync.work.SendRabbitMqWorker
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.perf.metrics.AddTrace
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.fragment_home.*
 import kotlinx.coroutines.CoroutineScope
@@ -101,6 +99,7 @@ class HomeFragment : Fragment() {
 
     lateinit var navController: NavController
 
+    @AddTrace(name = "HomeFragmentOnCreate", enabled = true /* optional */)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
@@ -190,8 +189,9 @@ class HomeFragment : Fragment() {
         CoroutineScope(IO).launch {
             getConnectionType()
         }
-        if(isServiceOn){
-            val color = context?.let { SpUtil.getPreferenceString(it, PREF_STATUS_COLOR, RED_COLOR) }
+        if (isServiceOn) {
+            val color =
+                context?.let { SpUtil.getPreferenceString(it, PREF_STATUS_COLOR, RED_COLOR) }
             val status = context?.let {
                 SpUtil.getPreferenceString(it, PREF_STATUS_MESSAGE, ERROR_CONNECTING_TO_SERVER)
             } ?: ERROR_CONNECTING_TO_SERVER
@@ -211,13 +211,12 @@ class HomeFragment : Fragment() {
                 }
 
             }
-        }else{
+        } else {
             binding.textViewStatus.backgroundGrey()
             binding.textViewConnectionType.backgroundGrey()
             binding.linearStatus.backgroundGrey()
             binding.textViewStatus.text = "$APP_NAME is disabled"
         }
-
 
 
         // Inflate the layout for this fragment
@@ -248,7 +247,7 @@ class HomeFragment : Fragment() {
             context?.let { SpUtil.getPreferenceBoolean(it, PREF_SERVICES_KEY) } ?: true
         notificationManager = NotificationManagerCompat.from(requireContext())
 
-        if (isServiceOn && ServiceState.STOPPED == context?.let { getServiceState(it) } ) {
+        if (isServiceOn && ServiceState.STOPPED == context?.let { getServiceState(it) }) {
             startServices()
             context?.toast(" Service started home ${context?.let { getServiceState(it) }}")
         }
@@ -277,7 +276,10 @@ class HomeFragment : Fragment() {
     }
 
     private val batteryReceiver = object : BroadcastReceiver() {
+
+        @AddTrace(name = "HomeFragmentOnReceive", enabled = true /* optional */)
         override fun onReceive(context: Context, intent: Intent) {
+            Debug.startMethodTracing("homebateryreceiver.trace")
             try {
 
                 val isServiceOn =
@@ -370,15 +372,15 @@ class HomeFragment : Fragment() {
                             .putString(KEY_TASK_MESSAGE, gson.toJson(phoneStatus))
                             .putString(KEY_EMAIL, user?.email)
                             .build()
-                        if (context != null) {
-                            sendToRabbitMQ(context, data)
-                        }
+                        sendToRabbitMQ(context, data)
 
                     }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
+
+            Debug.stopMethodTracing()
         }
     }
 
@@ -708,11 +710,12 @@ class HomeFragment : Fragment() {
             .setConstraints(constraints)
             .setInputData(data)
             .build()
-
-        WorkManager.getInstance(context).enqueue(request)
+        val isServiceOn = SpUtil.getPreferenceBoolean(context, PREF_SERVICES_KEY)
+        if (isServiceOn)
+            WorkManager.getInstance(context).enqueue(request)
     }
 
-   suspend fun getConnectionType()  {
+    suspend fun getConnectionType() {
         val connectionManager =
             context?.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         var connectionType = ""
@@ -741,7 +744,7 @@ class HomeFragment : Fragment() {
         }
 
         CoroutineScope(Main).launch {
-        text_view_connection_type.text=connectionType
+            text_view_connection_type.text = connectionType
         }
     }
 

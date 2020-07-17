@@ -67,7 +67,7 @@ object NotificationUtil {
         notification.flags = Notification.FLAG_AUTO_CANCEL
 
         getNotificationManager(context).notify(importantSmsNotification, notification)
-        importantSmsNotification++
+//        importantSmsNotification++
     }
 
 

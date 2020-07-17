@@ -15,6 +15,7 @@ import com.didahdx.smsgatewaysync.BuildConfig
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.utilities.*
+import com.google.firebase.perf.metrics.AddTrace
 import timber.log.Timber
 
 
@@ -28,7 +29,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
     lateinit var onSharedPreferenceChangeListener: SharedPreferences.OnSharedPreferenceChangeListener
     lateinit var onPreferenceClickListener: Preference.OnPreferenceClickListener
 
-
+    @AddTrace(name = "SettingsFragmentsOnCreateFragment", enabled = true /* optional */)
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         Debug.startMethodTracing("preferenceSettings.trace")
         setPreferencesFromResource(R.xml.preferences, rootKey)
@@ -145,8 +146,9 @@ class SettingsFragment : PreferenceFragmentCompat(),
         )
     }
 
+    @AddTrace(name = "SettingsFragmentStartService", enabled = true /* optional */)
     private fun startServices(input: String) {
-//        Debug.startMethodTracing("Settings-start-service.trace")
+        Debug.startMethodTracing("Settings-start-service.trace")
         if (ServiceState.STOPPED == context?.let { getServiceState(it) }) {
             context?.let { SpUtil.setPreferenceString(it, PREF_STATUS_MESSAGE, "$APP_NAME is running") }
             context?.let { SpUtil.setPreferenceString(it, PREF_STATUS_COLOR, GREEN_COLOR) }
@@ -156,11 +158,12 @@ class SettingsFragment : PreferenceFragmentCompat(),
             context?.let {  setServiceState(it,ServiceState.STARTING)}
             ContextCompat.startForegroundService(activity as Activity, serviceIntent)
         }
-//        Debug.stopMethodTracing()
+        Debug.stopMethodTracing()
     }
 
+    @AddTrace(name = "SettingsFragmentStopService", enabled = true /* optional */)
     private fun stopServices() {
-//        Debug.startMethodTracing("Settings-stop-service.trace")
+        Debug.startMethodTracing("Settings-stop-service.trace")
         context?.let { SpUtil.setPreferenceString(it, PREF_STATUS_MESSAGE, "$APP_NAME is disabled") }
         context?.let { SpUtil.setPreferenceString(it, PREF_STATUS_COLOR, RED_COLOR) }
 
@@ -172,7 +175,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
 //            context?.stopService(serviceIntent)
         ContextCompat.startForegroundService(activity as Activity, serviceIntent)
 //        }
-//        Debug.stopMethodTracing()
+        Debug.stopMethodTracing()
     }
 
 

@@ -14,30 +14,18 @@ import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import android.telecom.TelecomManager
-import android.telephony.SmsMessage
 import android.telephony.TelephonyManager
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationCompat.DEFAULT_LIGHTS
-import androidx.core.app.NotificationCompat.DEFAULT_VIBRATE
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.work.*
-import androidx.work.impl.utils.WakeLocks.newWakeLock
 import com.didahdx.smsgatewaysync.R
-import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
-import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
 import com.didahdx.smsgatewaysync.domain.LogFormat
-import com.didahdx.smsgatewaysync.domain.SmsInboxInfo
-import com.didahdx.smsgatewaysync.manager.RabbitMqRunnable
 import com.didahdx.smsgatewaysync.manager.RabbitmqClient
 import com.didahdx.smsgatewaysync.presentation.UiUpdaterInterface
 import com.didahdx.smsgatewaysync.presentation.activities.MainActivity
-import com.didahdx.smsgatewaysync.printerlib.IPrintToPrinter
 import com.didahdx.smsgatewaysync.printerlib.WoosimPrnMng
-import com.didahdx.smsgatewaysync.printerlib.utils.PrefMng
-import com.didahdx.smsgatewaysync.printerlib.utils.Tools
-import com.didahdx.smsgatewaysync.printerlib.utils.printerFactory
 import com.didahdx.smsgatewaysync.receiver.ConnectionReceiver
 import com.didahdx.smsgatewaysync.receiver.SmsReceiver
 import com.didahdx.smsgatewaysync.utilities.*
@@ -45,6 +33,7 @@ import com.didahdx.smsgatewaysync.work.SendApiWorker
 import com.didahdx.smsgatewaysync.work.SendRabbitMqWorker
 import com.didahdx.smsgatewaysync.work.SendSmsWorker
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.perf.metrics.AddTrace
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
@@ -54,7 +43,6 @@ import kotlinx.coroutines.launch
 import org.json.JSONObject
 import timber.log.Timber
 import java.lang.reflect.Method
-import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -76,11 +64,15 @@ class AppServices : Service(), UiUpdaterInterface {
     private var wakeLock: PowerManager.WakeLock? = null
     lateinit var notification: Notification
 
+    @Volatile
+    var stopThread = false
 //    lateinit var rabbitmqClient: RabbitmqClient
 
+    @AddTrace(name = "AppServicesOnCreate", enabled = true /* optional */)
     override fun onCreate() {
         super.onCreate()
         toast("Service started")
+        stopThread = false
         AppLog.logMessage("Sms Service started", this)
         val notification = NotificationUtil.notificationStatus(this, "Service starting", false)
         startForeground(1, notification)
@@ -115,6 +107,7 @@ class AppServices : Service(), UiUpdaterInterface {
     }
 
 
+    @AddTrace(name = "AppServiceStartCommand", enabled = true /* optional */)
     override fun onStartCommand(intent: Intent?, flagings: Int, startId: Int): Int {
         if (intent != null) {
             when (intent.action) {
@@ -197,6 +190,7 @@ class AppServices : Service(), UiUpdaterInterface {
     private val phoneCallReceiver = object : BroadcastReceiver() {
         //The receiver will be recreated whenever android feels like it.
         // We need a static variable to remember data between instantiations
+        @AddTrace(name = "AppServicePhoneCallOnReceive", enabled = true /* optional */)
         override fun onReceive(context: Context, intent: Intent) {
             if (intent.action.equals("android.intent.action.NEW_OUTGOING_CALL")) {
                 savedNumber = intent.extras!!.getString("android.intent.extra.PHONE_NUMBER")
@@ -431,8 +425,9 @@ class AppServices : Service(), UiUpdaterInterface {
             .setConstraints(constraints)
             .setInputData(data)
             .build()
-
-        WorkManager.getInstance(context).enqueue(request)
+        val isServiceOn = SpUtil.getPreferenceBoolean(context, PREF_SERVICES_KEY)
+        if (isServiceOn)
+            WorkManager.getInstance(context).enqueue(request)
     }
 
 
@@ -518,23 +513,30 @@ class AppServices : Service(), UiUpdaterInterface {
                 it.release()
             }
         }
-
+        stopThread = true
+        cancelPinging()
         AppLog.logMessage("Sms Service stopped", this)
 //        CoroutineScope(IO).launch {
 //            rabbitmqClient.disconnect()
 //        }
 
+//        unregisterReceiver(ConnectionReceiver())
+//        unregisterReceiver(SmsReceiver())
+//        unregisterReceiver(locationBroadcastReceiver)
+//        unregisterReceiver(phoneCallReceiver)
+
         toast("Service destroyed")
         CoroutineScope(IO).cancel()
     }
 
+    @AddTrace(name = "AppServiceSetupPingingWork", enabled = true /* optional */)
     private fun setupRabbitmqPingingWork() {
         val email = FirebaseAuth.getInstance().currentUser?.email ?: NOT_AVAILABLE
         val logFormat = LogFormat(
             date = Date().toString(),
             type = "logs",
             client_gateway_type = ANDROID_PHONE,
-            log = "ping",
+            log = "pinging server",
             client_sender = email
         )
 
@@ -550,13 +552,41 @@ class AppServices : Service(), UiUpdaterInterface {
             .setConstraints(constraints)
             .setInputData(data)
             .build()
-
         Timber.d("WorkManager: Periodic Work request for sync is scheduled")
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-            SendRabbitMqWorker.WORK_NAME,
-            ExistingPeriodicWorkPolicy.KEEP,
-            repeatingRequest
-        )
+        val isServiceOn = SpUtil.getPreferenceBoolean(this, PREF_SERVICES_KEY)
+        if (isServiceOn)
+            WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+                SendRabbitMqWorker.PING_WORK_NAME,
+                ExistingPeriodicWorkPolicy.KEEP,
+                repeatingRequest
+            )
     }
 
+    fun cancelPinging() {
+        WorkManager.getInstance(this).cancelAllWorkByTag(SendRabbitMqWorker.PING_WORK_NAME)
+    }
+
+
+    class RabbitMqRunnable(
+        context: Context,
+        email: String,
+        uiUpdaterInterface: UiUpdaterInterface
+    ) :
+        Runnable {
+        private val mContext = context
+        private val mEmail = email
+        private val updaterInterface = uiUpdaterInterface
+
+        override fun run() {
+            Timber.d(" ${Thread.currentThread().name} ")
+            val rabbitMqClient = RabbitmqClient(updaterInterface, mEmail)
+            val urlEnabled = SpUtil.getPreferenceBoolean(mContext, PREF_HOST_URL_ENABLED)
+            val isServiceOn = SpUtil.getPreferenceBoolean(mContext, PREF_SERVICES_KEY)
+            if (isServiceOn && !urlEnabled) {
+                setServiceState(mContext, ServiceState.STARTING)
+                rabbitMqClient.connection(mContext)
+                Timber.d("The service has been created".toUpperCase(Locale.getDefault()))
+            }
+        }
+    }
 }

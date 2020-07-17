@@ -43,12 +43,6 @@ class LoginFragment : Fragment(R.layout.fragment_login), View.OnClickListener {
 
             if (validateEmail() && validatePassword()) {
                 loginUser()
-//                checkSmsPermission()
-//                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_SMS)
-//                    == PackageManager.PERMISSION_GRANTED
-//                ) {
-//
-//                }
             }
 
         }
@@ -91,7 +85,7 @@ class LoginFragment : Fragment(R.layout.fragment_login), View.OnClickListener {
         val user: FirebaseUser? = auth.currentUser
         if (user != null) {
             navController.navigate(R.id.action_loginFragment_to_mainActivity)
-            requireActivity().onBackPressed()
+            activity?.onBackPressed()
 
         }
 

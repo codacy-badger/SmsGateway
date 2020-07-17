@@ -8,6 +8,9 @@ import com.didahdx.smsgatewaysync.domain.LogFormat
 import com.didahdx.smsgatewaysync.work.SendRabbitMqWorker
 import com.google.firebase.auth.FirebaseAuth
 import com.google.gson.Gson
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.*
 import java.util.*
@@ -34,7 +37,7 @@ object AppLog {
         }
 
         val logs: LogFormat = Gson().fromJson(log, LogFormat::class.java)
-        val value="\n\n${logs.date} \n ${logs.log}"
+        val value = "\n\n${logs.date} \n ${logs.log}"
 
         var fileOutputStream: FileOutputStream? = null
 
@@ -120,7 +123,7 @@ object AppLog {
                 arrayLogs.add(it)
             }
 
-            if (arrayLogs.size > 62) {
+            if (arrayLogs.size > 42) {
                 val stringBuilder = StringBuilder()
                 val count = arrayLogs.size - 10
                 for (i in arrayLogs.indices) {
@@ -161,11 +164,12 @@ object AppLog {
             .setConstraints(constraints)
             .setInputData(data)
             .build()
-
-        WorkManager.getInstance(context).enqueue(request)
+        val isServiceOn = SpUtil.getPreferenceBoolean(context, PREF_SERVICES_KEY)
+        if (isServiceOn)
+            WorkManager.getInstance(context).enqueue(request)
     }
 
-    fun logMessage(message: String,context: Context) {
+    fun logMessage(message: String, context: Context) {
         val email = FirebaseAuth.getInstance().currentUser?.email ?: NOT_AVAILABLE
         val logFormat = LogFormat(
             date = Date().toString(),
@@ -174,7 +178,18 @@ object AppLog {
             log = message,
             client_sender = email
         )
-        writeToLog(context, Gson().toJson(logFormat), true)
+        val writeLogRunnable = WriteLogRunnable(context, logFormat)
+        Thread(writeLogRunnable).start()
+    }
+
+    class WriteLogRunnable(mContext: Context, mLogFormat: LogFormat) : Runnable {
+        val context = mContext
+        private val logFormat = mLogFormat
+        override fun run() {
+            CoroutineScope(IO).launch {
+                writeToLog(context, Gson().toJson(logFormat), true)
+            }
+        }
     }
 }
 

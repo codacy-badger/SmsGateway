@@ -15,6 +15,7 @@ import android.telephony.SubscriptionManager
 import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.preference.PreferenceManager
 import androidx.work.CoroutineWorker
+import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.didahdx.smsgatewaysync.domain.MessageInfo
 import com.didahdx.smsgatewaysync.utilities.*
@@ -66,7 +67,6 @@ class SendSmsWorker(appContext: Context, params: WorkerParameters) :
                 )
                 == PackageManager.PERMISSION_GRANTED
             ) {
-
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
                     if (checkSelfPermission(
                             context,

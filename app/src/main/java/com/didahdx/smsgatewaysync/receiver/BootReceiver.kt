@@ -16,7 +16,7 @@ class BootReceiver : BroadcastReceiver() {
             val user = FirebaseAuth.getInstance().currentUser?.email ?: NOT_AVAILABLE
             val isServiceOn = SpUtil.getPreferenceBoolean(context, PREF_SERVICES_KEY)
             if (user.isNotEmpty() && user != NOT_AVAILABLE && getRestartServiceState(context)
-                && getServiceState(context) == STOPPED && isServiceOn) {
+                && isServiceOn) {
                 Intent(context, AppServices::class.java).also {
                     it.action = AppServiceActions.START.name
                     it.putExtra(INPUT_EXTRAS, "Service is starting")

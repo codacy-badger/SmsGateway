@@ -2,13 +2,16 @@ package com.didahdx.smsgatewaysync.work
 
 import android.content.Context
 import androidx.work.CoroutineWorker
+import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.didahdx.smsgatewaysync.manager.RabbitMqConnector
 import com.didahdx.smsgatewaysync.utilities.*
 import com.didahdx.smsgatewaysync.utilities.AppLog.logMessage
+import com.google.firebase.perf.metrics.AddTrace
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.AlreadyClosedException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -24,8 +27,10 @@ class SendRabbitMqWorker(appContext: Context, params: WorkerParameters) :
 
     companion object {
         const val WORK_NAME = "com.didahdx.smsgatewaysync.work.SendRabbitMqWorker"
+        const val PING_WORK_NAME = "com.didahdx.smsgatewaysync.work.SendRabbitMqWorker.PINGING"
     }
 
+    @AddTrace(name = "SendRabbitMqWorkerDoWork", enabled = true /* optional */)
     override suspend fun doWork(): Result {
         try {
             val data = inputData
@@ -33,13 +38,15 @@ class SendRabbitMqWorker(appContext: Context, params: WorkerParameters) :
             val email = data.getString(KEY_EMAIL)
             val isServiceOn = SpUtil.getPreferenceBoolean(app, PREF_SERVICES_KEY)
             if (message != null && email != null) {
-                if (RabbitMqConnector.connection.isOpen && isServiceOn) {
-                    publishMessage(message, email)
+                if (RabbitMqConnector.connection.isOpen ) {
+                    CoroutineScope(IO).launch {
+                        publishMessage(message, email)
+                    }
                 } else {
 //                    CoroutineScope(Main).launch {
 //                        app.toast("$WORK_NAME \n ${RabbitMqConnector.connection.isOpen} CONNECTION IS NOT OPEN ")
 //                    }
-                    delay(30000)
+
                     return Result.retry()
                 }
             }
@@ -47,12 +54,8 @@ class SendRabbitMqWorker(appContext: Context, params: WorkerParameters) :
             Timber.d("Worker $e ${e.localizedMessage}")
             logMessage("Worker $e ${e.localizedMessage}", app)
             return Result.retry()
-        } catch (e: TimeoutException) {
-            logMessage("Worker $e ${e.localizedMessage}", app)
-            Timber.d("Worker $e ${e.localizedMessage}")
-            return Result.retry()
-        }  catch (e: Exception) {
-            logMessage("Worker $e ${e.localizedMessage}", app)
+        } catch (e: Exception) {
+//            logMessage("Worker $e ${e.localizedMessage}", app)
             Timber.d("Worker $e ${e.localizedMessage}")
 
             CoroutineScope(Main).launch {
