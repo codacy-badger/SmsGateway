@@ -1,24 +1,17 @@
-package com.didahdx.smsgatewaysync.receiver
+package com.didahdx.smsgatewaysync.broadcastReceivers
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
-import com.didahdx.smsgatewaysync.domain.LogFormat
-import com.didahdx.smsgatewaysync.utilities.ANDROID_PHONE
 import com.didahdx.smsgatewaysync.utilities.AppLog
-import com.didahdx.smsgatewaysync.utilities.NOT_AVAILABLE
 import com.didahdx.smsgatewaysync.utilities.toast
-import com.google.firebase.auth.FirebaseAuth
-import com.google.gson.Gson
 import timber.log.Timber
-import java.util.*
 
 /**
  * used to check the network connection
  * **/
 class ConnectionReceiver : BroadcastReceiver() {
-    private val DEBUG_TAG = "NetworkStatusExample"
 
     override fun onReceive(context: Context, intent: Intent) {
         if (ConnectivityManager.CONNECTIVITY_ACTION == intent.action) {

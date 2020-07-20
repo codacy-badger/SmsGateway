@@ -1,9 +1,8 @@
-package com.didahdx.smsgatewaysync.receiver
+package com.didahdx.smsgatewaysync.broadcastReceivers
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import com.didahdx.smsgatewaysync.utilities.ACTION_MMS_RECEIVED
 import timber.log.Timber
 

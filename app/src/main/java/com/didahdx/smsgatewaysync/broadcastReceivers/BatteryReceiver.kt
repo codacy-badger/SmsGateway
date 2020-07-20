@@ -1,4 +1,4 @@
-package com.didahdx.smsgatewaysync.receiver
+package com.didahdx.smsgatewaysync.broadcastReceivers
 
 import android.content.BroadcastReceiver
 import android.content.Context
