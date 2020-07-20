@@ -6,6 +6,7 @@ import androidx.work.WorkerParameters
 import com.didahdx.smsgatewaysync.manager.RabbitMqConnector
 import com.didahdx.smsgatewaysync.utilities.*
 import com.didahdx.smsgatewaysync.utilities.AppLog.logMessage
+import com.google.firebase.perf.metrics.AddTrace
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.AlreadyClosedException
 import kotlinx.coroutines.CoroutineScope
@@ -24,8 +25,10 @@ class SendRabbitMqWorker(appContext: Context, params: WorkerParameters) :
 
     companion object {
         const val WORK_NAME = "com.didahdx.smsgatewaysync.work.SendRabbitMqWorker"
+        const val PING_WORK_NAME = "com.didahdx.smsgatewaysync.work.SendRabbitMqWorker.PINGING"
     }
 
+    @AddTrace(name = "SendRabbitMqWorkerDoWork", enabled = true /* optional */)
     override suspend fun doWork(): Result {
         try {
             val data = inputData

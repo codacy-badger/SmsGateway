@@ -1,6 +1,5 @@
 package com.didahdx.smsgatewaysync.services
 
-import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.PendingIntent
 import android.app.Service
@@ -9,52 +8,31 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.ConnectivityManager
-import android.os.Binder
-import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
-import android.telecom.TelecomManager
-import android.telephony.SmsMessage
-import android.telephony.TelephonyManager
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationCompat.DEFAULT_LIGHTS
-import androidx.core.app.NotificationCompat.DEFAULT_VIBRATE
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.work.*
-import androidx.work.impl.utils.WakeLocks.newWakeLock
 import com.didahdx.smsgatewaysync.R
-import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
-import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
 import com.didahdx.smsgatewaysync.domain.LogFormat
-import com.didahdx.smsgatewaysync.domain.SmsInboxInfo
 import com.didahdx.smsgatewaysync.manager.RabbitMqRunnable
-import com.didahdx.smsgatewaysync.manager.RabbitmqClient
 import com.didahdx.smsgatewaysync.presentation.UiUpdaterInterface
 import com.didahdx.smsgatewaysync.presentation.activities.MainActivity
-import com.didahdx.smsgatewaysync.printerlib.IPrintToPrinter
 import com.didahdx.smsgatewaysync.printerlib.WoosimPrnMng
-import com.didahdx.smsgatewaysync.printerlib.utils.PrefMng
-import com.didahdx.smsgatewaysync.printerlib.utils.Tools
-import com.didahdx.smsgatewaysync.printerlib.utils.printerFactory
-import com.didahdx.smsgatewaysync.receiver.ConnectionReceiver
-import com.didahdx.smsgatewaysync.receiver.SmsReceiver
+import com.didahdx.smsgatewaysync.broadcastReceivers.ConnectionReceiver
 import com.didahdx.smsgatewaysync.utilities.*
-import com.didahdx.smsgatewaysync.work.SendApiWorker
 import com.didahdx.smsgatewaysync.work.SendRabbitMqWorker
-import com.didahdx.smsgatewaysync.work.SendSmsWorker
+import com.didahdx.smsgatewaysync.work.WorkerUtil
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.perf.metrics.AddTrace
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import org.json.JSONObject
 import timber.log.Timber
-import java.lang.reflect.Method
-import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -65,44 +43,33 @@ class AppServices : Service(), UiUpdaterInterface {
     private var userLongitude = ""
     private val user = FirebaseAuth.getInstance().currentUser
 
-    //The receiver will be recreated whenever android feels like it.  We need a static variable to remember data between instantiations
-    private var lastState = TelephonyManager.CALL_STATE_IDLE
-    private var callStartTime: Date? = null
-    private var isIncoming = false
-    private var savedNumber: String? = null //because the passed incoming is only valid in ringing
-    private val newIntent = Intent(CALL_LOCAL_BROADCAST_RECEIVER)
     private val statusIntent = Intent(STATUS_INTENT_BROADCAST_RECEIVER)
     private var mPrnMng: WoosimPrnMng? = null
     private var wakeLock: PowerManager.WakeLock? = null
     lateinit var notification: Notification
 
-//    lateinit var rabbitmqClient: RabbitmqClient
-
+    //    lateinit var rabbitmqClient: RabbitmqClient
+    @AddTrace(name = "AppServicesOnCreate", enabled = true /* optional */)
     override fun onCreate() {
         super.onCreate()
         toast("Service started")
-        AppLog.logMessage("Sms Service started", this)
         val notification = NotificationUtil.notificationStatus(this, "Service starting", false)
         startForeground(1, notification)
+        AppLog.logMessage("Sms Service started", this)
 
         val rabbitMqRunnable = user?.email?.let { RabbitMqRunnable(this, it, this) }
         Thread(rabbitMqRunnable).start()
 
         CoroutineScope(IO).launch {
-            setupRabbitmqPingingWork()
+            setupRabbitMqPing()
         }
 
         registerReceiver(
             ConnectionReceiver(),
             IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
         )
-        registerReceiver(SmsReceiver(), IntentFilter(SMS_RECEIVED_INTENT))
+
         registerReceiver(locationBroadcastReceiver, IntentFilter(LOCATION_UPDATE_INTENT))
-
-        val phoneCallFilter = IntentFilter(PHONE_STATE)
-        phoneCallFilter.addAction(NEW_OUTGOING_CALL)
-        registerReceiver(phoneCallReceiver, phoneCallFilter)
-
 
         wakeLock = (getSystemService(Context.POWER_SERVICE) as PowerManager).run {
             newWakeLock(
@@ -114,7 +81,7 @@ class AppServices : Service(), UiUpdaterInterface {
         }
     }
 
-
+    @AddTrace(name = "AppServiceStartCommand", enabled = true /* optional */)
     override fun onStartCommand(intent: Intent?, flagings: Int, startId: Int): Int {
         if (intent != null) {
             when (intent.action) {
@@ -134,7 +101,7 @@ class AppServices : Service(), UiUpdaterInterface {
     private fun stopAppService(intent: Intent) {
         setServiceState(this, ServiceState.STOPPED)
         // Stop foreground service and remove the notification.
-        stopForeground(true);
+        stopForeground(true)
 
         // Stop the foreground service.
         stopSelf()
@@ -194,218 +161,6 @@ class AppServices : Service(), UiUpdaterInterface {
     }
 
 
-    private val phoneCallReceiver = object : BroadcastReceiver() {
-        //The receiver will be recreated whenever android feels like it.
-        // We need a static variable to remember data between instantiations
-        override fun onReceive(context: Context, intent: Intent) {
-            if (intent.action.equals("android.intent.action.NEW_OUTGOING_CALL")) {
-                savedNumber = intent.extras!!.getString("android.intent.extra.PHONE_NUMBER")
-            } else {
-
-                val stateStr =
-                    intent.extras!!.getString(TelephonyManager.EXTRA_STATE)
-                val number =
-                    intent.extras!!.getString(TelephonyManager.EXTRA_INCOMING_NUMBER)
-                var state = 0
-                if (stateStr == TelephonyManager.EXTRA_STATE_IDLE) {
-                    state = TelephonyManager.CALL_STATE_IDLE
-                } else if (stateStr == TelephonyManager.EXTRA_STATE_OFFHOOK) {
-                    state = TelephonyManager.CALL_STATE_OFFHOOK
-                } else if (stateStr == TelephonyManager.EXTRA_STATE_RINGING) {
-                    state = TelephonyManager.CALL_STATE_RINGING
-                }
-
-                Timber.d("phone receiver called $number")
-                onCallStateChanged(context, state, number)
-            }
-        }
-    }
-
-    //Deals with actual events
-    //Incoming call-  goes from IDLE to RINGING when it rings, to OFFHOOK when it's answered, to IDLE when its hung up
-    //Outgoing call-  goes from IDLE to OFFHOOK when it dials out, to IDLE when hung up
-    private fun onCallStateChanged(context: Context?, state: Int, number: String?) {
-
-        Timber.d("caall called")
-        if (lastState == state) {
-            //No change, debounce extras
-            return
-        }
-        when (state) {
-            TelephonyManager.CALL_STATE_RINGING -> {
-                isIncoming = true
-                callStartTime = Date()
-                savedNumber = number
-                if (context != null) {
-                    newIntent.putExtra(CALL_TYPE_EXTRA, "incomingCallReceived")
-                    newIntent.putExtra(PHONE_NUMBER_EXTRA, number)
-                    newIntent.putExtra(START_TIME_EXTRA, Date().toString())
-                    LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
-                    checkCall(context, "incomingCallReceived", number, Date().toString(), "")
-
-                }
-            }
-            TelephonyManager.CALL_STATE_OFFHOOK ->                 //Transition of ringing->offhook are pickups of incoming calls.  Nothing done on them
-                if (lastState != TelephonyManager.CALL_STATE_RINGING) {
-                    isIncoming = false
-                    callStartTime = Date()
-                    if (context != null) {
-                        newIntent.putExtra(CALL_TYPE_EXTRA, "onOutgoingCallStarted")
-                        newIntent.putExtra(PHONE_NUMBER_EXTRA, savedNumber)
-                        newIntent.putExtra(START_TIME_EXTRA, Date().toString())
-                        LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
-
-                        checkCall(
-                            context, "onOutgoingCallStarted",
-                            savedNumber, Date().toString(), ""
-                        )
-
-                    }
-                } else {
-                    isIncoming = true
-                    callStartTime = Date()
-                    if (context != null) {
-                        newIntent.putExtra(CALL_TYPE_EXTRA, "onIncomingCallAnswered")
-                        newIntent.putExtra(PHONE_NUMBER_EXTRA, savedNumber)
-                        newIntent.putExtra(START_TIME_EXTRA, Date().toString())
-                        LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
-
-                        checkCall(
-                            context, "onIncomingCallAnswered",
-                            savedNumber, Date().toString(), ""
-                        )
-
-                    }
-                }
-            TelephonyManager.CALL_STATE_IDLE ->                 //Went to idle-  this is the end of a call.  What type depends on previous state(s)
-                if (lastState == TelephonyManager.CALL_STATE_RINGING) {
-                    //Ring but no pickup-  a miss
-                    if (context != null) {
-                        newIntent.putExtra(CALL_TYPE_EXTRA, "onMissedCall")
-                        newIntent.putExtra(PHONE_NUMBER_EXTRA, savedNumber)
-                        newIntent.putExtra(START_TIME_EXTRA, callStartTime.toString())
-                        LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
-
-                        checkCall(
-                            context, "onMissedCall",
-                            savedNumber, callStartTime.toString(), ""
-                        )
-                    }
-                } else if (isIncoming) {
-                    if (context != null) {
-                        newIntent.putExtra(CALL_TYPE_EXTRA, "onIncomingCallEnded")
-                        newIntent.putExtra(PHONE_NUMBER_EXTRA, savedNumber)
-                        newIntent.putExtra(START_TIME_EXTRA, callStartTime.toString())
-                        newIntent.putExtra(END_TIME_EXTRA, Date().toString())
-                        LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
-
-                        checkCall(
-                            context, "onIncomingCallEnded",
-                            savedNumber, callStartTime.toString(), Date().toString()
-                        )
-
-                    }
-                } else {
-                    if (context != null) {
-                        newIntent.putExtra(CALL_TYPE_EXTRA, "onOutgoingCallEnded")
-                        newIntent.putExtra(PHONE_NUMBER_EXTRA, savedNumber)
-                        newIntent.putExtra(START_TIME_EXTRA, callStartTime.toString())
-                        newIntent.putExtra(END_TIME_EXTRA, Date().toString())
-                        LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
-
-                        checkCall(
-                            context, "onOutgoingCallEnded",
-                            savedNumber, callStartTime.toString(), Date().toString()
-                        )
-
-                    }
-                }
-        }
-        lastState = state
-    }
-
-    private fun checkCall(
-        context: Context, callType: String, phoneNumber: String?,
-        startTime: String, endTime: String
-    ) {
-
-        if (callType == "incomingCallReceived") {
-            hangUpCall(context)
-        }
-
-        val obj: JSONObject? = JSONObject()
-        obj?.put("type", "calls")
-        obj?.put("longitude", userLongitude)
-        obj?.put("latitude", userLatitude)
-        obj?.put("client_sender", user?.email)
-        obj?.put("client_gateway_type", "android_phone")
-        obj?.put("call_type", callType)
-        obj?.put("phone_number", phoneNumber)
-        obj?.put("start_time", startTime)
-        obj?.put("end_time", endTime)
-
-        val data = Data.Builder()
-            .putString(KEY_TASK_MESSAGE, obj.toString())
-            .putString(KEY_EMAIL, user?.email)
-            .build()
-        sendToRabbitMQ(context, data)
-
-    }
-
-
-    //used to hang Up Phone Call
-    private fun hangUpCall(context: Context) {
-        val hangup = SpUtil.getPreferenceBoolean(this, PREF_HANG_UP) ?: false
-        if (hangup) {
-            val tm = context.getSystemService(Context.TELECOM_SERVICE) as TelecomManager
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                tm.endCall()
-            } else {
-                disconnectCall()
-            }
-        }
-    }
-
-
-    @SuppressLint("PrivateApi")
-    private fun disconnectCall() {
-        try {
-            val serviceManagerName = "android.os.ServiceManager"
-            val serviceManagerNativeName = "android.os.ServiceManagerNative"
-            val telephonyName = "com.android.internal.telephony.ITelephony"
-            val telephonyClass: Class<*>
-            val telephonyStubClass: Class<*>
-            val serviceManagerClass: Class<*>
-            val serviceManagerNativeClass: Class<*>
-            val telephonyEndCall: Method
-            val telephonyObject: Any
-            val serviceManagerObject: Any
-            telephonyClass = Class.forName(telephonyName)
-            telephonyStubClass = telephonyClass.classes[0]
-            serviceManagerClass = Class.forName(serviceManagerName)
-            serviceManagerNativeClass = Class.forName(serviceManagerNativeName)
-            val getService =  // getDefaults[29];
-                serviceManagerClass.getMethod("getService", String::class.java)
-            val tempInterfaceMethod = serviceManagerNativeClass.getMethod(
-                "asInterface",
-                IBinder::class.java
-            )
-            val tmpBinder = Binder()
-            tmpBinder.attachInterface(null, "fake")
-            serviceManagerObject = tempInterfaceMethod.invoke(null, tmpBinder)
-            val retbinder = getService.invoke(serviceManagerObject, "phone") as IBinder
-            val serviceMethod = telephonyStubClass.getMethod("asInterface", IBinder::class.java)
-            telephonyObject = serviceMethod.invoke(null, retbinder)
-            telephonyEndCall = telephonyClass.getMethod("endCall")
-            telephonyEndCall.invoke(telephonyObject)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Timber.i("FATAL ERROR: could not connect to telephony subsystem")
-            Timber.i("Exception object: $e  ${e.localizedMessage}")
-            AppLog.logMessage(" $e  ${e.localizedMessage}", this)
-        }
-    }
-
     private val locationBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             if (LOCATION_UPDATE_INTENT == intent.action) {
@@ -420,42 +175,6 @@ class AppServices : Service(), UiUpdaterInterface {
             }
         }
     }
-
-
-    //used to show to notification
-    private fun sendToRabbitMQ(context: Context, data: Data) {
-        val constraints =
-            Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
-
-        val request: OneTimeWorkRequest = OneTimeWorkRequestBuilder<SendRabbitMqWorker>()
-            .setConstraints(constraints)
-            .setInputData(data)
-            .build()
-
-        WorkManager.getInstance(context).enqueue(request)
-    }
-
-
-    private fun sendSms(data: Data) {
-        val request: OneTimeWorkRequest = OneTimeWorkRequestBuilder<SendSmsWorker>()
-            .setInputData(data)
-            .build()
-
-        WorkManager.getInstance(this).enqueue(request)
-    }
-
-    private fun sendToApi(data: Data) {
-        val constraints =
-            Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
-
-        val request: OneTimeWorkRequest = OneTimeWorkRequestBuilder<SendApiWorker>()
-            .setConstraints(constraints)
-            .setInputData(data)
-            .build()
-
-        WorkManager.getInstance(this).enqueue(request)
-    }
-
 
     override fun notificationMessage(message: String) {
         NotificationUtil.updateNotificationStatus(this, message, true)
@@ -497,7 +216,7 @@ class AppServices : Service(), UiUpdaterInterface {
             .putString(KEY_PHONE_NUMBER, phoneNumber)
             .build()
 
-        sendSms(data)
+        WorkerUtil.sendSms(data,this)
     }
 
     override fun updateSettings(preferenceType: String, key: String, value: String) {
@@ -519,6 +238,7 @@ class AppServices : Service(), UiUpdaterInterface {
             }
         }
 
+        cancelPing()
         AppLog.logMessage("Sms Service stopped", this)
 //        CoroutineScope(IO).launch {
 //            rabbitmqClient.disconnect()
@@ -528,7 +248,7 @@ class AppServices : Service(), UiUpdaterInterface {
         CoroutineScope(IO).cancel()
     }
 
-    private fun setupRabbitmqPingingWork() {
+    private fun setupRabbitMqPing() {
         val email = FirebaseAuth.getInstance().currentUser?.email ?: NOT_AVAILABLE
         val logFormat = LogFormat(
             date = Date().toString(),
@@ -546,17 +266,19 @@ class AppServices : Service(), UiUpdaterInterface {
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
 
-        val repeatingRequest = PeriodicWorkRequestBuilder<SendRabbitMqWorker>(20, TimeUnit.MINUTES)
+        val repeatingRequest = PeriodicWorkRequestBuilder<SendRabbitMqWorker>(18, TimeUnit.MINUTES)
             .setConstraints(constraints)
             .setInputData(data)
             .build()
-
         Timber.d("WorkManager: Periodic Work request for sync is scheduled")
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-            SendRabbitMqWorker.WORK_NAME,
-            ExistingPeriodicWorkPolicy.KEEP,
-            repeatingRequest
-        )
+        val isServiceOn = SpUtil.getPreferenceBoolean(this, PREF_SERVICES_KEY)
+        if (isServiceOn)
+            WorkManager.getInstance(this).enqueueUniquePeriodicWork(SendRabbitMqWorker.PING_WORK_NAME,
+                ExistingPeriodicWorkPolicy.KEEP,
+                repeatingRequest)
     }
 
+    private fun cancelPing() {
+        WorkManager.getInstance(this).cancelAllWorkByTag(SendRabbitMqWorker.PING_WORK_NAME)
+    }
 }

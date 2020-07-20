@@ -9,6 +9,7 @@ import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.utilities.*
+import timber.log.Timber
 
 
 class LoginActivity : AppCompatActivity() {
@@ -48,8 +49,9 @@ class LoginActivity : AppCompatActivity() {
             }
             PERMISSION_FOREGROUND_SERVICES_CODE -> {
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
+                    Timber.d("Permission granted to run foreground services")
                 } else {
+                    Timber.d("Permission denied to run foreground services")
                     toast("Permission denied")
                 }
             }

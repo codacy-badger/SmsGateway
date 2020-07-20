@@ -3,11 +3,14 @@ package com.didahdx.smsgatewaysync.utilities
 import android.content.Context
 import android.content.Context.MODE_APPEND
 import androidx.preference.PreferenceManager
-import androidx.work.*
+import androidx.work.Data
 import com.didahdx.smsgatewaysync.domain.LogFormat
-import com.didahdx.smsgatewaysync.work.SendRabbitMqWorker
+import com.didahdx.smsgatewaysync.work.WorkerUtil
 import com.google.firebase.auth.FirebaseAuth
 import com.google.gson.Gson
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.*
 import java.util.*
@@ -30,7 +33,7 @@ object AppLog {
             .build()
 
         if (send) {
-            sendToRabbitMQ(context, data)
+            WorkerUtil.sendToRabbitMQ(context, data)
         }
 
         val logs: LogFormat = Gson().fromJson(log, LogFormat::class.java)
@@ -152,19 +155,6 @@ object AppLog {
 
     }
 
-
-    private fun sendToRabbitMQ(context: Context, data: Data) {
-        val constraints =
-            Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
-
-        val request: OneTimeWorkRequest = OneTimeWorkRequestBuilder<SendRabbitMqWorker>()
-            .setConstraints(constraints)
-            .setInputData(data)
-            .build()
-
-        WorkManager.getInstance(context).enqueue(request)
-    }
-
     fun logMessage(message: String,context: Context) {
         val email = FirebaseAuth.getInstance().currentUser?.email ?: NOT_AVAILABLE
         val logFormat = LogFormat(
@@ -174,8 +164,17 @@ object AppLog {
             log = message,
             client_sender = email
         )
-        writeToLog(context, Gson().toJson(logFormat), true)
+        val writeLogRunnable = WriteLogRunnable(context, logFormat)
+        Thread(writeLogRunnable).start()
+    }
+
+   private class WriteLogRunnable(mContext: Context, mLogFormat: LogFormat) : Runnable {
+        val context = mContext
+        private val logFormat = mLogFormat
+        override fun run() {
+            CoroutineScope(IO).launch {
+                writeToLog(context, Gson().toJson(logFormat), true)
+            }
+        }
     }
 }
-
-

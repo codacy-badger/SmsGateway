@@ -12,7 +12,7 @@ object RabbitMqConnector {
         connectionFactory.host = "128.199.174.204"
         connectionFactory.username = "didahdx"
         connectionFactory.password = "test"
-        connectionFactory.requestedHeartbeat = 20
+        connectionFactory.requestedHeartbeat = 30
 //        connectionFactory.handshakeTimeout=60000
 //        connectionFactory.shutdownTimeout=60000
 //        connectionFactory.connectionTimeout = 120000

@@ -12,6 +12,7 @@ import android.os.Bundle
 import android.os.IBinder
 import androidx.core.app.ActivityCompat
 import com.didahdx.smsgatewaysync.utilities.*
+import com.google.firebase.perf.metrics.AddTrace
 import timber.log.Timber
 
 class LocationGpsService : Service() {
@@ -39,7 +40,7 @@ class LocationGpsService : Service() {
         super.onLowMemory()
     }
 
-
+    @AddTrace(name = "LoactionGpsServiceOnCreate", enabled = true /* optional */)
     override fun onCreate() {
         locationListener = object : LocationListener {
             override fun onLocationChanged(location: Location) {

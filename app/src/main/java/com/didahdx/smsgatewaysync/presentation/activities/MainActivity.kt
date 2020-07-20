@@ -18,10 +18,11 @@ import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
 import androidx.preference.PreferenceManager
 import com.didahdx.smsgatewaysync.R
-import com.didahdx.smsgatewaysync.receiver.*
+import com.didahdx.smsgatewaysync.broadcastReceivers.*
 import com.didahdx.smsgatewaysync.utilities.*
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.perf.metrics.AddTrace
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_layout.*
 import kotlinx.android.synthetic.main.navigation_header.view.*
@@ -32,6 +33,7 @@ class MainActivity : AppCompatActivity() {
     private var mFirebaseAnalytics: FirebaseAnalytics? = null
     lateinit var navController: NavController
 
+    @AddTrace(name="MainActivityOnCreate")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -47,13 +49,6 @@ class MainActivity : AppCompatActivity() {
 
         //registering broadcast receiver for battery
         registerReceiver(BatteryReceiver(), IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-
-        //registering broadcast receiver for connection
-        val callFilter = IntentFilter("android.intent.action.NEW_OUTGOING_CALL")
-        callFilter.addAction("android.intent.action.PHONE_STATE")
-
-        //registering broadcast receiver for callReceiver
-//        registerReceiver(PhoneCallReceiver(), callFilter)
 
         //saving apps preference
         PreferenceManager.setDefaultValues(
@@ -71,6 +66,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     //used to check foreground services permission on android 9+
+    @AddTrace(name="MainActivityCheckForegroundPermission")
     private fun checkForegroundPermission() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE)
             != PackageManager.PERMISSION_GRANTED
@@ -122,13 +118,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-    }
-
-
-
-    override fun onDestroy() {
-        super.onDestroy()
-
     }
 
 }
