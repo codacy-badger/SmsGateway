@@ -193,11 +193,14 @@ class PhoneStatusFragment : Fragment() {
                     Manifest.permission.READ_PHONE_STATE
                 ) == PackageManager.PERMISSION_GRANTED
             ) {
-                stringBuilder.append("\nIMEI number : ${telephonyManager.deviceId} \n  ")
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                    stringBuilder.append("\nIMEI number : ${telephonyManager.deviceId} \n  ")
+                    stringBuilder.append("\nSim Serial Number : ${telephonyManager.simSerialNumber}  \n ")
+                    val imsi: String = telephonyManager.subscriberId
+                    stringBuilder.append("\nIMSI : $imsi \n ")
+                }
                 stringBuilder.append("\nNetwork Name : ${telephonyManager.networkOperatorName} \n  ")
-                stringBuilder.append("\nSim Serial Number : ${telephonyManager.simSerialNumber}  \n ")
-                val imsi: String = telephonyManager.subscriberId
-                stringBuilder.append("\nIMSI : $imsi \n ")
+
             }
 
             stringBuilder.append("\nPhone manufacturer : ${Build.MANUFACTURER} \n  ")
