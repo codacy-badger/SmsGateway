@@ -21,11 +21,11 @@ class App : MultiDexApplication() {
 
     override fun onCreate() {
         super.onCreate()
-//        FirebaseApp.initializeApp(this)
         instance = this
         createNotificationChannel()
-        Timber.plant(Timber.DebugTree())
-
+        if(BuildConfig.DEBUG){
+            Timber.plant(Timber.DebugTree())
+        }
 
     }
 
