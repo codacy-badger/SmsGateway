@@ -12,6 +12,8 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.printerlib.utils.PrefMng
+import com.didahdx.smsgatewaysync.utilities.PREF_PRINTER_NAME
+import com.didahdx.smsgatewaysync.utilities.SpUtil
 import com.didahdx.smsgatewaysync.utilities.toast
 import kotlinx.android.synthetic.main.fragment_printer.*
 
@@ -36,6 +38,7 @@ class PrinterFragment : Fragment(R.layout.fragment_printer), View.OnClickListene
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         connectPrinterButton.setOnClickListener(this)
+        getCheckedPrinter()
 //        printerConnected.text = "Printer Connected: No"
     }
 
@@ -74,13 +77,13 @@ class PrinterFragment : Fragment(R.layout.fragment_printer), View.OnClickListene
             val action = intent?.action
 
             if (BluetoothDevice.ACTION_FOUND == action) {
-                printerConnected.text = "Printer Found"
+                printerConnected?.text = "Printer Found"
                 context.toast("Printer found")
                 //Device found
             } else if (BluetoothDevice.ACTION_ACL_CONNECTED == action) {
                 context.toast("Printer connected")
                 //Device is now connected
-                printerConnected.text = "Printer Connected: Yes"
+                printerConnected?.text = "Printer Connected: Yes"
             } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED == action) {
                 context.toast("Printer discovery finished")
                 //Done searching
@@ -90,7 +93,7 @@ class PrinterFragment : Fragment(R.layout.fragment_printer), View.OnClickListene
             } else if (BluetoothDevice.ACTION_ACL_DISCONNECTED == action) {
                 context.toast("Printer is disconnect")
                 //Device has disconnected
-                printerConnected.text = "Printer Connected: No"
+                printerConnected?.text = "Printer Connected: No"
             }
         }
     }
@@ -117,6 +120,27 @@ class PrinterFragment : Fragment(R.layout.fragment_printer), View.OnClickListene
         }
         context?.toast( R.string.choose_printer)
         return false
+    }
+
+    private fun getCheckedPrinter() {
+
+        when (context?.let { PrefMng.getActivePrinter(it) }) {
+            PrefMng.PRN_BIXOLON_SELECTED -> {
+                radBixolon?.isChecked = true
+            }
+            PrefMng.PRN_RONGTA_SELECTED -> {
+                radRongta?.isChecked = true
+            }
+            PrefMng.PRN_WOOSIM_SELECTED -> {
+                radWoosim?.isChecked = true
+            }
+            PrefMng.PRN_OTHER_PRINTERS_SELECTED -> {
+                radOthers?.isChecked = true
+            }
+        }
+
+        val printerName=context?.let { SpUtil.getPreferenceString(it,PREF_PRINTER_NAME," ") }
+        printerConnected?.text="Connected to $printerName"
     }
 
     override fun onDestroy() {
