@@ -6,46 +6,58 @@ import android.content.Context
 import android.os.Build
 import androidx.multidex.MultiDex
 import androidx.multidex.MultiDexApplication
-import com.didahdx.smsgatewaysync.receiver.BatteryReceiver
-import com.didahdx.smsgatewaysync.receiver.ConnectionReceiver
-import com.didahdx.smsgatewaysync.utilities.CHANNEL_ID
-import com.mazenrashed.printooth.Printooth
+import com.didahdx.smsgatewaysync.utilities.*
+import timber.log.Timber
 
 class App : MultiDexApplication() {
 
-     override fun attachBaseContext(context: Context) {
+
+    override fun attachBaseContext(context: Context) {
         super.attachBaseContext(context)
         MultiDex.install(this)
     }
 
+
     override fun onCreate() {
         super.onCreate()
-        instance=this
+        instance = this
         createNotificationChannel()
-        Printooth.init(this)
+        if(BuildConfig.DEBUG){
+            Timber.plant(Timber.DebugTree())
+        }
+
     }
 
-    fun setConnectionListener(listener: ConnectionReceiver.ConnectionReceiverListener){
-        ConnectionReceiver.connectionReceiverListener=listener
-    }
-    
-
-
-    companion object{
+    companion object {
         @get:Synchronized
-        lateinit var instance:App
+        lateinit var instance: App
     }
-
 
 
     private fun createNotificationChannel() {
-        if(Build.VERSION.SDK_INT>Build.VERSION_CODES.O){
-            var notificationChannel=NotificationChannel(CHANNEL_ID,
-                "Sms service channel",
-                NotificationManager.IMPORTANCE_DEFAULT)
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.O) {
+            val notificationChannel = NotificationChannel(
+                CHANNEL_ID,
+                CHANNEL_SMS_SERVICE_NAME,
+                NotificationManager.IMPORTANCE_LOW
+            )
 
-            val manager : NotificationManager?= getSystemService(NotificationManager::class.java)
+            val updateNotificationChannel = NotificationChannel(
+                CHANNEL_ID_2,
+                CHANNEL_CLIENT_NOTIFICATION_NAME,
+                NotificationManager.IMPORTANCE_LOW
+            )
+
+            val smsNotificationChannel = NotificationChannel(
+                CHANNEL_ID_3,
+                CHANNEL_IMPORTANT_SMS_NOTIFICATION,
+                NotificationManager.IMPORTANCE_HIGH
+            )
+
+            val manager: NotificationManager? = getSystemService(NotificationManager::class.java)
             manager?.createNotificationChannel(notificationChannel)
+            manager?.createNotificationChannel(updateNotificationChannel)
+            manager?.createNotificationChannel(smsNotificationChannel)
         }
     }
 

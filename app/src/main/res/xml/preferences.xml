@@ -8,11 +8,11 @@
         android:title="Services"
         app:iconSpaceReserved="false">
         <SwitchPreferenceCompat
-            app:iconSpaceReserved="false"
             android:key="services_key"
             android:summary="Used to enable or disable the running services of the application"
             android:title="Enable or Disable services"
-            app:defaultValue="true" />
+            app:defaultValue="true"
+            app:iconSpaceReserved="false" />
 
     </PreferenceCategory>
 
@@ -20,7 +20,7 @@
         android:title="Url Configuration"
         app:iconSpaceReserved="false">
         <SwitchPreferenceCompat
-            android:defaultValue="true"
+            android:defaultValue="false"
             android:key="push_url"
             android:summary="Enable forwarding to a custom Host url"
             android:title="Enable Host Url"
@@ -39,8 +39,9 @@
     <PreferenceCategory
         android:title="Messages"
         app:iconSpaceReserved="false">
+
         <ListPreference
-            android:defaultValue="All"
+            android:defaultValue="Direct Mpesa"
             android:entries="@array/mpesa_types"
             android:entryValues="@array/mpesa_types"
             android:key="mpesa_types"
@@ -71,33 +72,84 @@
             android:title="Auto Delete messages"
             app:iconSpaceReserved="false" />
 
+        <ListPreference
+            android:entries="@array/sim_cards"
+            android:entryValues="@array/sim_cards"
+            android:key="sim_card"
+            android:summary="Choose your default sim card to use for the application"
+            android:title="Sending Out Sms Sim"
+            app:iconSpaceReserved="false" />
+
 
     </PreferenceCategory>
 
     <PreferenceCategory
         android:title="Printing"
         app:iconSpaceReserved="false">
-        <SwitchPreferenceCompat
-            android:defaultValue="false"
-            android:key="connect_printer"
-            android:summary="Connect to a printer"
-            android:title="Add Printer"
-            app:iconSpaceReserved="false" />
 
         <SwitchPreferenceCompat
             android:defaultValue="false"
-            android:dependency="connect_printer"
             android:key="auto_print"
             android:summary="Allow automatic printing on incoming sms"
             android:title="Auto Printing"
             app:iconSpaceReserved="false" />
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="@string/preference_masked_key"
+            android:summary="Mask phone number on printing"
+            android:title="Mask Phone Number"
+            app:iconSpaceReserved="false" />
+
+        <ListPreference
+            android:defaultValue="Direct Mpesa"
+            android:entries="@array/print_types"
+            android:entryValues="@array/print_types"
+            android:key="print_types"
+            android:summary="Types of mpesa transaction to be printed"
+            android:title="Messages Types to Print"
+            app:iconSpaceReserved="false" />
+
     </PreferenceCategory>
 
+    <PreferenceCategory
+        android:title="Calls"
+        app:iconSpaceReserved="false">
 
-    <Preference
-        android:title="Send feedback"
-        app:iconSpaceReserved="false"
-        app:key="feedback"
-        app:summary="Report technical issues or suggest new features" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="@string/preference_hangup"
+            android:summary="Hang up all incoming calls"
+            android:title="Hang up incoming calls"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="Notification"
+        app:iconSpaceReserved="false">
+
+        <ListPreference
+            android:defaultValue="None"
+            android:entries="@array/mpesa_types_notification"
+            android:entryValues="@array/mpesa_types_notification"
+            android:key="mpesa_types_notification"
+            android:summary="Types of mpesa transaction to receive notifications of"
+            android:title="Mpesa type"
+            app:iconSpaceReserved="false" />
+
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:iconSpaceReserved="false">
+
+        <Preference
+            android:title="Send feedback"
+            app:iconSpaceReserved="false"
+            app:key="feedback"
+            app:summary="Report technical issues or suggest new features" />
+
+    </PreferenceCategory>
+
 
 </PreferenceScreen>

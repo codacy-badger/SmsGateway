@@ -5,39 +5,35 @@
 
     <group android:checkableBehavior="single">
         <item
-            android:id="@+id/nav_home"
+            android:id="@+id/homeFragment"
             android:icon="@drawable/ic_home"
             android:title="@string/menu_home" />
 
         <item
-            android:id="@+id/nav_log"
+            android:id="@+id/logFragment"
             android:icon="@drawable/ic_logs"
             android:title="@string/menu_logs" />
 
         <item
-            android:id="@+id/nav_about"
+            android:id="@+id/aboutFragment"
             android:icon="@drawable/ic_about"
             android:title="@string/menu_about" />
 
         <item
+            android:id="@+id/phoneStatusFragment"
             android:icon="@drawable/ic_phone_status"
-            android:id="@+id/nav_phone_status"
-            android:title="@string/menu_phone_status"
-            />
+            android:title="@string/menu_phone_status" />
 
         <item
-            android:id="@+id/nav_settings"
+            android:id="@+id/printerFragment"
+            android:icon="@drawable/ic_print_black"
+            android:title="@string/printer" />
+
+        <item
+            android:id="@+id/settingsFragment"
             android:icon="@drawable/ic_settings"
             android:title="@string/menu_settings" />
     </group>
-
-<group android:menuCategory="secondary"
-    android:checkableBehavior="single">
-    <item
-        android:id="@+id/nav_logout"
-        android:icon="@drawable/ic_logout"
-        android:title="@string/menu_logout" />
-</group>
 
 
 </menu>

@@ -3,34 +3,34 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.SettingsFragment">
+    tools:context=".presentation.settings.SettingsFragment">
 
     <Button
         android:id="@+id/btn_add_printer"
         android:layout_width="wrap_content"
-        android:layout_marginTop="12dp"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
         android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="12dp"
         android:text="Add Printer" />
 
     <Button
         android:id="@+id/btn_remove_printer"
         android:layout_width="wrap_content"
-        android:layout_marginTop="12dp"
         android:layout_height="wrap_content"
-       android:layout_centerHorizontal="true"
         android:layout_below="@id/btn_add_printer"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="12dp"
         android:text="Remove Printer" />
 
 
     <Button
         android:id="@+id/btn_check_balance"
         android:layout_width="wrap_content"
-        android:layout_marginTop="12dp"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
         android:layout_below="@id/btn_remove_printer"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="12dp"
         android:text="Check balance" />
 
 

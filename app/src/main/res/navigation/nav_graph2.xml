@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph2"
+    app:startDestination="@id/homeFragment">
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.didahdx.smsgatewaysync.presentation.home.HomeFragment"
+        android:label="Home"
+        tools:layout="@layout/fragment_home">
+        <action
+            android:id="@+id/action_homeFragment_to_smsDetailsFragment"
+            app:destination="@id/smsDetailsFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+    </fragment>
+    <fragment
+        android:id="@+id/aboutFragment"
+        android:name="com.didahdx.smsgatewaysync.presentation.about.AboutFragment"
+        android:label="About"
+
+        tools:layout="@layout/fragment_about" />
+    <fragment
+        android:id="@+id/phoneStatusFragment"
+        android:name="com.didahdx.smsgatewaysync.presentation.phonestatus.PhoneStatusFragment"
+        android:label="Phone Status"
+        tools:layout="@layout/fragment_phone_status" />
+    <fragment
+        android:id="@+id/logFragment"
+        android:name="com.didahdx.smsgatewaysync.presentation.log.LogFragment"
+        android:label="Logs"
+        tools:layout="@layout/fragment_log" />
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.didahdx.smsgatewaysync.presentation.settings.SettingsFragment"
+        android:label="Settings"
+        tools:layout="@layout/fragment_settings" />
+    <fragment
+        android:id="@+id/smsInboxFragment"
+        android:name="com.didahdx.smsgatewaysync.presentation.smsInbox.SmsInboxFragment"
+        android:label="Sms Inbox"
+        tools:layout="@layout/fragment_sms_inbox">
+        <action
+            android:id="@+id/action_smsInboxFragment_to_smsDetailsFragment"
+            app:destination="@id/smsDetailsFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+    </fragment>
+    <fragment
+        android:id="@+id/smsDetailsFragment"
+        android:name="com.didahdx.smsgatewaysync.presentation.smsDetails.SmsDetailsFragment"
+        android:label="Sms Details"
+        tools:layout="@layout/fragment_sms_details">
+        <argument
+            android:name="SmsInfo"
+            app:argType="com.didahdx.smsgatewaysync.domain.SmsInfo" />
+    </fragment>
+    <fragment
+        android:id="@+id/printerFragment"
+        android:name="com.didahdx.smsgatewaysync.presentation.printer.PrinterFragment"
+        android:label="Printer"
+        tools:layout="@layout/fragment_printer">
+        <action
+            android:id="@+id/action_printerFragment_to_printerDetailFragment"
+            app:destination="@id/printerDetailFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+    </fragment>
+    <fragment
+        android:id="@+id/printerDetailFragment"
+        android:name="com.didahdx.smsgatewaysync.presentation.printer.PrinterDetailFragment"
+        android:label="Printer Detail"
+        tools:layout="@layout/fragment_printer_detail" />
+</navigation>

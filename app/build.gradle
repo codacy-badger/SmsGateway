@@ -1,21 +1,27 @@
+import java.util.Date
+
 apply plugin: 'com.android.application'
+apply plugin: 'com.getkeepsafe.dexcount'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
 // Apply the Crashlytics Gradle plugin
 apply plugin: 'com.google.firebase.crashlytics'
 apply plugin: 'com.google.gms.google-services'
-
+apply plugin: 'kotlin-kapt'
+apply plugin: "androidx.navigation.safeargs.kotlin"
+apply plugin: 'com.google.firebase.firebase-perf'
 
 android {
     compileSdkVersion 29
-    buildToolsVersion "29.0.2"
+    buildToolsVersion "29.0.3"
+    useLibrary 'org.apache.http.legacy'
     defaultConfig {
         applicationId "com.didahdx.smsgatewaysync"
-        minSdkVersion 19
+        minSdkVersion 24
         targetSdkVersion 29
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.4-alpha"
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -27,26 +33,69 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = 1.8
-        targetCompatibility = 1.8
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8.toString()
+    }
+
+    buildFeatures {
+        dataBinding = true
+    }
+
+    // Customize your APK name here
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+//            def appId = variant.applicationId// com.exampleFree.app OR com.examplePaid.app
+//            def formattedDate = new Date().format('yyyy-MM-dd-HH-mm')
+            def formattedDate = new Date().format('yyyy-MM-dd')
+            def versionName = variant.versionName
+//            def versionCode = variant.versionCode //e.g 1.0
+//            def flavorName = variant.flavorName //e.g. Free
+            def buildType = variant.buildType.name //e.g. debug
+//            def variantName = variant.name //e.g. FreeDebug
+
+            ext.revision = getGitRevParseInfo("--short")
+            ext.branch = getGitRevParseInfo("--abbrev-ref")
+
+            //customize your app name by using variables
+            outputFileName = "app-${buildType}-${versionName}-${ext.revision}-${formattedDate}.apk"
+        }
+    }
+
+//    lintOptions {
+//        abortOnError false
+//    }
+
+}
+
+static def getGitRevParseInfo(what) {
+    def cmd = "git rev-parse " + what + " HEAD"
+    def proc = cmd.execute()
+    proc.text.trim()
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'androidx.core:core-ktx:1.2.0'
-    implementation 'com.google.android.material:material:1.0.0'
+    implementation 'androidx.core:core-ktx:1.3.0'
+    implementation 'com.google.android.material:material:1.1.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
+
+    //printer
+    implementation files('libs/WoosimLib231.jar')
+
     // ViewModel and LiveData
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
-    annotationProcessor "androidx.lifecycle:lifecycle-compiler:2.2.0"
+    implementation 'com.google.firebase:firebase-perf:19.0.8'
+    kapt "androidx.lifecycle:lifecycle-compiler:2.2.0"
     implementation "androidx.lifecycle:lifecycle-viewmodel:2.2.0"
 
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    testImplementation 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.13'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
@@ -55,45 +104,51 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.3'
 
     implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.0.0'
-    implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.0.0"
-
-    //pdf file generator
-    implementation 'com.itextpdf:itextpdf:5.5.13.1'
+    implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"
 
 // Recommended: Add the Firebase SDK for Google Analytics.
-    implementation 'com.google.firebase:firebase-analytics:17.2.3'
-    implementation 'com.google.firebase:firebase-auth:19.2.0'
-    implementation 'com.google.firebase:firebase-core:17.2.3'
-    implementation 'com.google.firebase:firebase-database:19.2.1'
+    implementation 'com.google.firebase:firebase-analytics:17.4.4'
+    implementation 'com.google.firebase:firebase-auth:19.3.2'
+    implementation 'com.google.firebase:firebase-core:17.4.4'
+    implementation 'com.google.firebase:firebase-database:19.3.1'
     // Add the Firebase SDK for Crashlytics.
-    implementation 'com.google.firebase:firebase-crashlytics:17.0.0-beta01'
-
+    implementation 'com.google.firebase:firebase-crashlytics:17.1.1'
     implementation "androidx.cardview:cardview:1.0.0"
     implementation 'com.android.support:multidex:1.0.3'
 
-    //bluetooth print
-    implementation 'com.github.mazenrashed:Printooth:1.2.1'
-
-    //app center traffic
-    def appCenterSdkVersion = '2.5.1'
-    implementation "com.microsoft.appcenter:appcenter-analytics:${appCenterSdkVersion}"
-    implementation "com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}"
-
-
     // Kotlin preference settings
-    implementation "androidx.preference:preference-ktx:1.1.0"
+    implementation "androidx.preference:preference-ktx:1.1.1"
 
+    //rabbitmq client
+    implementation 'com.rabbitmq:amqp-client:5.9.0'
+
+    //room db library
+    implementation "androidx.room:room-runtime:2.2.5"
+    kapt "androidx.room:room-compiler:2.2.5"
+    implementation "androidx.room:room-ktx:2.2.5"
+
+
+<<<<<<< HEAD
     //Active mqtt
 //    implementation 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.2'
 //    implementation 'org.eclipse.paho:org.eclipse.paho.android.service:1.1.1'
 
     //rabbitmq client
 //    implementation 'com.rabbitmq:amqp-client:5.8.0'
+=======
+    def nav_version = "2.3.0"
+    // Kotlin
+    implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"
+    implementation "androidx.navigation:navigation-ui-ktx:$nav_version"
 
-    //activemq apache broker and client lib
-    // https://mvnrepository.com/artifact/org.apache.activemq/activemq-core
-//    implementation 'org.apache.activemq:activemq-core:5.7.0'
+    // Testing Navigation
+    androidTestImplementation "androidx.navigation:navigation-testing:$nav_version"
+    implementation 'com.jakewharton.timber:timber:4.7.1'
+>>>>>>> stable
 
+    androidTestImplementation 'androidx.test:rules:1.3.0-rc01'
+
+<<<<<<< HEAD
     //activemq latest client lib
    // https://mvnrepository.com/artifact/org.apache.activemq/activemq-client
    implementation 'org.apache.activemq:activemq-client:5.15.12'
@@ -101,8 +156,17 @@ dependencies {
     //activemq
     // https://mvnrepository.com/artifact/org.apache.activemq/activemq-broker
     implementation 'org.apache.activemq:activemq-broker:5.15.12'
+=======
+    def work_version = "2.3.4"
+    // Kotlin + coroutines
+    implementation "androidx.work:work-runtime-ktx:$work_version"
 
-    //room db library
-    implementation "androidx.room:room-runtime:2.2.4"
-    annotationProcessor "androidx.room:room-compiler:2.2.4"
+    // Retrofit with Moshi Converter
+    implementation "com.squareup.retrofit2:retrofit:2.6.0"
+    implementation "com.squareup.retrofit2:converter-gson:2.6.0"
+    implementation 'com.google.code.gson:gson:2.8.6'
+>>>>>>> stable
+
+    // debugImplementation because LeakCanary should only run in debug builds.
+    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.4'
 }

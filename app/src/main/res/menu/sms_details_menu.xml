@@ -10,7 +10,7 @@
 
     <item
         android:id="@+id/action_forward_sms"
-        android:icon="@drawable/ic_next"
+        android:icon="@drawable/ic_share"
         android:title="@string/action_forward_sms"
         app:showAsAction="ifRoom" />
 
