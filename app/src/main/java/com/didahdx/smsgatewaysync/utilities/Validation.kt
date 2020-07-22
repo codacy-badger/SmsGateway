@@ -2,7 +2,7 @@ package com.didahdx.smsgatewaysync.utilities
 
 import java.util.regex.Pattern
 
-class Validation {
+object Validation {
 
     /**
      * valid email pattern

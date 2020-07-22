@@ -106,9 +106,4 @@ object NotificationUtil {
         return notification
     }
 
-    fun cancel(context: Context) {
-        val nm = context
-            .getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-//        nm.cancel()
-    }
 }

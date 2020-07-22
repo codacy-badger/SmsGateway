@@ -2,6 +2,7 @@ package com.didahdx.smsgatewaysync.work
 
 import android.content.Context
 import androidx.work.CoroutineWorker
+import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.didahdx.smsgatewaysync.manager.RabbitMqConnector
 import com.didahdx.smsgatewaysync.utilities.*
@@ -20,7 +21,7 @@ import java.util.concurrent.TimeoutException
 
 
 class SendRabbitMqWorker(appContext: Context, params: WorkerParameters) :
-    CoroutineWorker(appContext, params) {
+    Worker(appContext, params) {
     val app = appContext
 
     companion object {
@@ -29,7 +30,7 @@ class SendRabbitMqWorker(appContext: Context, params: WorkerParameters) :
     }
 
     @AddTrace(name = "SendRabbitMqWorkerDoWork", enabled = true /* optional */)
-    override suspend fun doWork(): Result {
+    override  fun doWork(): Result {
         try {
             val data = inputData
             val message = data.getString(KEY_TASK_MESSAGE)
@@ -42,7 +43,7 @@ class SendRabbitMqWorker(appContext: Context, params: WorkerParameters) :
 //                    CoroutineScope(Main).launch {
 //                        app.toast("$WORK_NAME \n ${RabbitMqConnector.connection.isOpen} CONNECTION IS NOT OPEN ")
 //                    }
-                    delay(30000)
+
                     return Result.retry()
                 }
             }
@@ -68,6 +69,7 @@ class SendRabbitMqWorker(appContext: Context, params: WorkerParameters) :
     }
 
     private fun publishMessage(message: String, email: String) {
+        Timber.d("Thread name ${Thread.currentThread().name}")
         val channel = RabbitMqConnector.channel
         val props = AMQP.BasicProperties.Builder()
             .correlationId(email)
@@ -78,16 +80,10 @@ class SendRabbitMqWorker(appContext: Context, params: WorkerParameters) :
         channel.waitForConfirms()
         channel.addConfirmListener(
             { deliveryTag, multiple ->
-                CoroutineScope(Main).launch {
-                    app.toast(" Delivery ack $deliveryTag   multiple   $multiple")
-                }
-    //                channel.close()
+                    Timber.d(" Delivery ack $deliveryTag   multiple   $multiple")
             },
             { deliveryTag, multiple ->
-                CoroutineScope(Main).launch {
-                    app.toast(" Delivery Not ack $deliveryTag   multiple $multiple")
-                }
-    //                channel.close()
+                    Timber.d(" Delivery Not ack $deliveryTag   multiple $multiple")
             })
 
         channel.basicPublish(

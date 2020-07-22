@@ -7,6 +7,7 @@ import com.didahdx.smsgatewaysync.data.db.IncomingMessagesDao
 import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
 import com.didahdx.smsgatewaysync.domain.SmsInfo
 import com.didahdx.smsgatewaysync.utilities.*
+import com.google.firebase.perf.metrics.AddTrace
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
@@ -30,15 +31,13 @@ class HomeViewModel(
     val messageList: LiveData<List<MpesaMessageInfo>>
         get() = _messageList
 
-    // Create a Coroutine scope using a job to be able to cancel when needed
-    val sdf = SimpleDateFormat(DATE_FORMAT, Locale.US)
-
     // the Coroutine runs using the Main (UI) dispatcher
 //    private val coroutineScope = CoroutineScope(viewModelJob + Main)
     private val database = dataSource
     private val app = application
     private var incomingMessages = database.getAllMessages()
 
+    @AddTrace(name="HomeViewModelGetFilteredData")
     fun getFilteredData(): LiveData<List<MpesaMessageInfo>> {
         return Transformations.map(incomingMessages) {
             val messagesFilledNew = ArrayList<MpesaMessageInfo>()

@@ -17,6 +17,8 @@ import com.didahdx.smsgatewaysync.printerlib.utils.Tools
 import com.didahdx.smsgatewaysync.printerlib.utils.printerFactory
 import com.didahdx.smsgatewaysync.utilities.*
 import com.didahdx.smsgatewaysync.work.SendRabbitMqWorker
+import com.didahdx.smsgatewaysync.work.WorkerUtil
+import com.didahdx.smsgatewaysync.work.WorkerUtil.sendToRabbitMQ
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
@@ -35,7 +37,7 @@ class SmsReceiver : BroadcastReceiver() {
     private var mPrnMng: WoosimPrnMng? = null
     private var userLatitude = ""
     private var userLongitude = ""
-    private val user = FirebaseAuth.getInstance().currentUser
+    private val user = FirebaseAuth.getInstance().currentUser?.email ?: NOT_AVAILABLE
 
     override fun onReceive(context: Context, intent: Intent) {
         val printingReference = SpUtil.getPreferenceString(context, PREF_MPESA_TYPE, DIRECT_MPESA)
@@ -70,7 +72,6 @@ class SmsReceiver : BroadcastReceiver() {
                 newIntent.putExtra("phoneNumber", phoneNumber)
                 newIntent.putExtra("messageText", messageText)
                 newIntent.putExtra("date", time)
-                val sdf = SimpleDateFormat(DATE_FORMAT, Locale.US)
                 val printType = SpUtil.getPreferenceString(context, PREF_PRINT_TYPE, "")
                 val obj: JSONObject? = JSONObject()
                 val smsFilter = SmsFilter(messageText, maskedPhoneNumber)
@@ -88,11 +89,11 @@ class SmsReceiver : BroadcastReceiver() {
 
                 obj?.put("type", "message")
                 obj?.put("message_body", messageText)
-                obj?.put("receipt_date", sdf.format(time?.let { Date(it) }).toString())
+                obj?.put("receipt_date", time?.let { Date(it) }?.let { Conversion.getFormattedDate(it) })
                 obj?.put("sender_id", phoneNumber)
                 obj?.put("longitude", userLongitude)
                 obj?.put("latitude", userLatitude)
-                obj?.put("client_sender", user?.email!!)
+                obj?.put("client_sender", user)
                 obj?.put("client_gateway_type", "android_phone")
 
 
@@ -126,13 +127,12 @@ class SmsReceiver : BroadcastReceiver() {
                     if (!urlEnabled) {
                         val data = Data.Builder()
                             .putString(KEY_TASK_MESSAGE, it)
-                            .putString(KEY_EMAIL, user?.email)
+                            .putString(KEY_EMAIL, user)
                             .build()
                         sendToRabbitMQ(context, data)
                         status = true
                     }
 
-                    val sdf = SimpleDateFormat(DATE_FORMAT, Locale.getDefault())
                     val message2: MpesaMessageInfo?
 
                     if (time != null) {
@@ -144,7 +144,7 @@ class SmsReceiver : BroadcastReceiver() {
 
                         val smspost = SmsInboxInfo(
                             0, messageText.trim(),
-                            sdf.format(Date(time!!)).toString(),
+                            Conversion.getFormattedDate(Date(time!!)),
                             phoneNumber,
                             smsFilter.mpesaId,
                             smsFilter.phoneNumber,
@@ -166,7 +166,7 @@ class SmsReceiver : BroadcastReceiver() {
                         val smsFilter = SmsFilter(messageText, false)
                         message2 = MpesaMessageInfo(
                             messageText.trim(),
-                            sdf.format(Date(time!!)).toString(),
+                           Conversion.getFormattedDate(Date(time!!)),
                             phoneNumber,
                             smsFilter.mpesaId,
                             smsFilter.phoneNumber,
@@ -203,20 +203,6 @@ class SmsReceiver : BroadcastReceiver() {
 //                    }
             }
         }
-    }
-
-    private fun sendToRabbitMQ(context: Context, data: Data) {
-        val constraints =
-            Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
-
-        val request: OneTimeWorkRequest = OneTimeWorkRequestBuilder<SendRabbitMqWorker>()
-            .setConstraints(constraints)
-            .setInputData(data)
-            .build()
-
-        val isServiceOn = SpUtil.getPreferenceBoolean(context, PREF_SERVICES_KEY)
-        if (isServiceOn)
-            WorkManager.getInstance(context).enqueue(request)
     }
 
 }

@@ -44,9 +44,8 @@ class MainActivity : AppCompatActivity() {
 
         // Obtain the FirebaseAnalytics instance.
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this)
-//        registerReceiver(SmsReceiver(), IntentFilter(SMS_RECEIVED_INTENT))
-        registerReceiver(MmsReceiver(), IntentFilter(ACTION_MMS_RECEIVED))
 
+        registerReceiver(MmsReceiver(), IntentFilter(ACTION_MMS_RECEIVED))
         //registering broadcast receiver for battery
         registerReceiver(BatteryReceiver(), IntentFilter(Intent.ACTION_BATTERY_CHANGED))
 

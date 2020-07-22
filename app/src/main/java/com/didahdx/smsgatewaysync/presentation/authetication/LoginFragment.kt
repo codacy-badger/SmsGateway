@@ -19,7 +19,6 @@ import kotlinx.android.synthetic.main.fragment_login.*
  * A simple [Fragment] subclass.
  */
 class LoginFragment : Fragment(R.layout.fragment_login), View.OnClickListener {
-    private val validation = Validation()
     lateinit var auth: FirebaseAuth
     lateinit var navController: NavController
 
@@ -72,7 +71,7 @@ class LoginFragment : Fragment(R.layout.fragment_login), View.OnClickListener {
         val email: String =
             edit_text_sign_up_email.editText?.text.toString().trim()
         return if (email.isNotEmpty()) {
-            if (validation.isValidEmailId(email)) {
+            if (Validation.isValidEmailId(email)) {
                 edit_text_sign_up_email.error = null
                 true
             } else {

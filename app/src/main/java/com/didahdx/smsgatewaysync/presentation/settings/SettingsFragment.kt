@@ -29,13 +29,21 @@ class SettingsFragment : PreferenceFragmentCompat(),
     lateinit var onSharedPreferenceChangeListener: SharedPreferences.OnSharedPreferenceChangeListener
     lateinit var onPreferenceClickListener: Preference.OnPreferenceClickListener
 
-    @AddTrace(name = "SettingsOnCreatePreferences", enabled = true /* optional */)
-    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        Debug.startMethodTracing("preferenceSettings.trace")
-        setPreferencesFromResource(R.xml.preferences, rootKey)
+    @AddTrace(name="SettingsFragmentOnCreate")
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        addPreferencesFromResource(R.xml.preferences)
         onPreferenceClickListener = this
         onSharedPreferenceChangeListener = this
-        Debug.stopMethodTracing()
+    }
+
+    @AddTrace(name = "SettingsOnCreatePreferences", enabled = true /* optional */)
+    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+//        Debug.startMethodTracing("preferenceSettings.trace")
+//        setPreferencesFromResource(R.xml.preferences, rootKey)
+//        onPreferenceClickListener = this
+//        onSharedPreferenceChangeListener = this
+//        Debug.stopMethodTracing()
     }
 
     //shared preference listener
@@ -92,7 +100,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
             }
 
             PREF_FEEDBACK -> {
-
+                sendEmail()
             }
         }
     }

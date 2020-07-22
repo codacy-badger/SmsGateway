@@ -40,7 +40,6 @@ class PhoneCallReceiver : BroadcastReceiver() {
 
         if (intent.action.equals("android.intent.action.NEW_OUTGOING_CALL")) {
             savedNumber = intent.extras!!.getString("android.intent.extra.PHONE_NUMBER")
-            context.toast("outgoing call $savedNumber")
 
         } else {
 
@@ -163,6 +162,7 @@ class PhoneCallReceiver : BroadcastReceiver() {
 
         if (callType == "incomingCallReceived") {
             hangUpCall(context)
+            AppLog.logMessage("$callType from $phoneNumber automatic call hangUp at time $startTime",context)
         }
         val phone = phoneNumber ?: " "
         val email = FirebaseAuth.getInstance().currentUser?.email ?: NOT_AVAILABLE
@@ -187,7 +187,7 @@ class PhoneCallReceiver : BroadcastReceiver() {
     }
 
     private fun hangUpCall(context: Context) {
-        val hangup = SpUtil.getPreferenceBoolean(context, PREF_HANG_UP) ?: false
+        val hangup = SpUtil.getPreferenceBoolean(context, PREF_HANG_UP)
         if (hangup) {
             val tm = context.getSystemService(Context.TELECOM_SERVICE) as TelecomManager
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {

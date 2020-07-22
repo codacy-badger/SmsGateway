@@ -3,6 +3,7 @@ package com.didahdx.smsgatewaysync.manager
 import android.content.Context
 import com.didahdx.smsgatewaysync.presentation.UiUpdaterInterface
 import com.didahdx.smsgatewaysync.utilities.*
+import com.google.firebase.perf.metrics.AddTrace
 import timber.log.Timber
 import java.util.*
 
@@ -11,6 +12,8 @@ class RabbitMqRunnable(context: Context, email: String, uiUpdaterInterface: UiUp
     private val mContext = context
     private val mEmail = email
     private val updaterInterface = uiUpdaterInterface
+
+    @AddTrace(name="RabbitMqRunnable_run")
     override fun run() {
         Timber.d(" ${Thread.currentThread().name} ")
         val rabbitMqClient = RabbitmqClient(updaterInterface, mEmail)
@@ -21,6 +24,8 @@ class RabbitMqRunnable(context: Context, email: String, uiUpdaterInterface: UiUp
             rabbitMqClient.connection(mContext)
             Timber.d("The service has been created".toUpperCase(Locale.getDefault()))
         }
+
+
     }
 
 }

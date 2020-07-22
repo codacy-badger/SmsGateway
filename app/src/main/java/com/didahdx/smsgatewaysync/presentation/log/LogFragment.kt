@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.didahdx.smsgatewaysync.R
+import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
 import com.didahdx.smsgatewaysync.databinding.FragmentLogBinding
 import com.didahdx.smsgatewaysync.utilities.AppLog
 
@@ -25,14 +26,15 @@ class LogFragment : Fragment() {
             DataBindingUtil.inflate(inflater,R.layout.fragment_log, container, false)
 
         val application = requireNotNull(this.activity).application
-        val factory = LogViewModelFactory(application, AppLog)
+        val database = MessagesDatabase(application).getLogInfoDao()
+        val factory = LogViewModelFactory(application, database)
         logViewModel = ViewModelProvider(this, factory).get(LogViewModel::class.java)
         binding.logViewModel = logViewModel
         binding.lifecycleOwner = this
 
 
-        logViewModel.appLogs.observe(viewLifecycleOwner, Observer { log ->
-            log?.let {
+        logViewModel.presentlog.observe(viewLifecycleOwner, Observer {
+            it?.let {
                 binding.textViewLog.text = it
             }
         })

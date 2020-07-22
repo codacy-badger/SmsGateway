@@ -3,6 +3,7 @@ package com.didahdx.smsgatewaysync.manager
 import android.content.Context
 import com.didahdx.smsgatewaysync.presentation.UiUpdaterInterface
 import com.didahdx.smsgatewaysync.utilities.*
+import com.google.firebase.perf.metrics.AddTrace
 import com.rabbitmq.client.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
@@ -20,9 +21,11 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
 
     @Volatile
     private var connection: Connection? = null
+    @Volatile
     private lateinit var channel: Channel
     var count = 0
 
+    @AddTrace(name="RabbitmqClient_connection")
     fun connection(context: Context) {
         try {
             connection = RabbitMqConnector.connection
@@ -74,7 +77,7 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
             Timber.d("$e  ${e.localizedMessage}")
             uiUpdater?.logMessage("$e \n ${e.localizedMessage}")
             val isServiceOn = SpUtil.getPreferenceBoolean(context, PREF_SERVICES_KEY)
-            if (count <= 10 && isServiceOn && ServiceState.STOPPED != getServiceState(context)) {
+            if (count <= 10 && isServiceOn) {
                 uiUpdater?.logMessage("Retrying to connect in ${(1000 * count).toLong() / 60000L} Minutes")
                 CoroutineScope(IO).launch {
                     delay((1000 * count).toLong())
@@ -88,9 +91,8 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
         }
     }
 
-
+    @AddTrace(name="RabbitmqClient_consumeMessages")
     private fun consumeMessages() {
-
         channel.basicConsume(
             email,
             true,
@@ -131,7 +133,7 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
         consumeNotification()
     }
 
-
+    @AddTrace(name="RabbitmqClient_consumeNotification")
     private fun consumeNotification() {
 
         val autoAck = false
@@ -182,18 +184,21 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
 //        uiUpdater?.toasterMessage("delivery Tag Failed Sender $deliveryTag")
     }
 
+    @AddTrace(name="RabbitmqClient_handleRecovery")
     override fun handleRecovery(recoverable: Recoverable?) {
         Timber.d(" automatic connection recovery has completed.")
         uiUpdater?.logMessage("Automatic connection recovery has completed.")
         uiUpdater?.updateStatusViewWith("$APP_NAME is running", GREEN_COLOR)
     }
 
+    @AddTrace(name="RabbitmqClient_handleRecoveryStarted")
     override fun handleRecoveryStarted(recoverable: Recoverable?) {
         Timber.d(" automatic connection recovery starts. ")
         uiUpdater?.updateStatusViewWith("Retrying connecting to server", RED_COLOR)
         uiUpdater?.logMessage("Automatic connection recovery started")
     }
 
+    @AddTrace(name="RabbitmqClient_shutdownCompleted")
     override fun shutdownCompleted(cause: ShutdownSignalException?) {
         Timber.d(" $cause \n ${cause?.localizedMessage}")
         uiUpdater?.updateStatusViewWith(

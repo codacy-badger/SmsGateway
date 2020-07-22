@@ -27,5 +27,4 @@ interface IncomingMessagesDao {
 
     @Query("SELECT * FROM mpesaMessageInfo WHERE status=:status ORDER BY id DESC")
     suspend fun getPeddingMessages(status: Boolean): List<MpesaMessageInfo>
-
 }

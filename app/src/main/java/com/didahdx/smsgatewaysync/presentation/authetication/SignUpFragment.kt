@@ -20,9 +20,7 @@ import kotlinx.android.synthetic.main.fragment_sign_up.*
  */
 class SignUpFragment : Fragment(R.layout.fragment_sign_up), View.OnClickListener {
 
-    val validation = Validation()
     private lateinit var auth: FirebaseAuth
-
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -50,7 +48,7 @@ class SignUpFragment : Fragment(R.layout.fragment_sign_up), View.OnClickListener
         val email: String =
             edit_text_email.editText?.text.toString().trim()
         return if (email.isNotEmpty()) {
-            if (validation.isValidEmailId(email)) {
+            if (Validation.isValidEmailId(email)) {
                 edit_text_email.error = null
                 true
             } else {

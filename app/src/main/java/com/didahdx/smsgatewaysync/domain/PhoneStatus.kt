@@ -24,5 +24,9 @@ data class PhoneStatus(
     val longitude: String,
     val networkName: String,
     val simSerialNumber: String,
-    val type: String
+    val type: String,
+    val airtimeBalance: String,
+    val totalBundles:String,
+    val sentBundles:String,
+    val receivedBundles :String
 )

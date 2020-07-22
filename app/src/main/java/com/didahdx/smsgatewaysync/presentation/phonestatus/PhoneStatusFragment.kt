@@ -20,10 +20,7 @@ import androidx.core.content.PermissionChecker
 import androidx.core.content.PermissionChecker.checkSelfPermission
 import androidx.fragment.app.Fragment
 import com.didahdx.smsgatewaysync.R
-import com.didahdx.smsgatewaysync.utilities.AppLog
-import com.didahdx.smsgatewaysync.utilities.GIGABYTE
-import com.didahdx.smsgatewaysync.utilities.PERMISSION_REQUEST_ALL_CODE
-import com.didahdx.smsgatewaysync.utilities.toast
+import com.didahdx.smsgatewaysync.utilities.*
 import kotlinx.android.synthetic.main.fragment_phone_status.*
 import timber.log.Timber
 import java.text.DecimalFormat
@@ -52,6 +49,8 @@ class PhoneStatusFragment : Fragment() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             checkBalance()
         }
+
+        networkUsage()
         return inflater.inflate(R.layout.fragment_phone_status, container, false)
     }
 
@@ -89,12 +88,18 @@ class PhoneStatusFragment : Fragment() {
                                     response.indexOf("Bal:") + 4,
                                     response.indexOf(".")+3
                                 )
-                                text_view_phone_status?.append("\nAirtime Balance KSh: $bal")
+
+                                context?.let { SpUtil.setPreferenceString(it,PREF_AIRTIME_BALANCE,bal) }
+
+                            }else{
+                                context?.let { SpUtil.setPreferenceString(it,PREF_AIRTIME_BALANCE, NOT_AVAILABLE) }
                             }
 
 //                            context?.toast("ussd response: $response")
                             Timber.e("Success with response : $response  ")
                         } catch (e: Exception) {
+                            context?.let { SpUtil.setPreferenceString(it,PREF_AIRTIME_BALANCE,
+                                NOT_AVAILABLE) }
                             context?.let { AppLog.logMessage("$e  ${e.localizedMessage}", it) }
                             e.printStackTrace()
                             Timber.d("$e  ${e.localizedMessage}")
@@ -107,7 +112,6 @@ class PhoneStatusFragment : Fragment() {
                         failureCode: Int
                     ) {
                         super.onReceiveUssdResponseFailed(telephonyManager, request, failureCode)
-//                        context?.toast(" request $request  \n failureCode $failureCode ")
                         Timber.e("failed with code $failureCode")
                     }
                 }
@@ -196,8 +200,7 @@ class PhoneStatusFragment : Fragment() {
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
                     stringBuilder.append("\nIMEI number : ${telephonyManager.deviceId} \n  ")
                     stringBuilder.append("\nSim Serial Number : ${telephonyManager.simSerialNumber}  \n ")
-                    val imsi: String = telephonyManager.subscriberId
-                    stringBuilder.append("\nIMSI : $imsi \n ")
+                    stringBuilder.append("\nIMSI : ${telephonyManager.subscriberId} \n ")
                 }
                 stringBuilder.append("\nNetwork Name : ${telephonyManager.networkOperatorName} \n  ")
 
@@ -227,28 +230,32 @@ class PhoneStatusFragment : Fragment() {
             stringBuilder.append("\nTotal Storage : ${df2.format(megTotal)} GB\n")
             stringBuilder.append(
                 "\nFree Storage : ${df2.format(megAvailable)} GB  " +
-                        "(${df2.format(freePercent)}%)\n"
+                        "(${df2.format(freePercent)} %)\n"
             )
 
             val mi = ActivityManager.MemoryInfo()
             val activityManager = requireContext().getSystemService(ACTIVITY_SERVICE) as ActivityManager?
             activityManager!!.getMemoryInfo(mi)
-            val availableRAM: Double = mi.availMem / (0x100000L).toDouble()
-            val TotalRam: Double = mi.totalMem / (0x100000L).toDouble()
+            val availableRAM =Conversion.convertBytes(mi.availMem)
+            val TotalRam = Conversion.convertBytes(mi.totalMem)
             val percentAvail: Double = mi.availMem / mi.totalMem.toDouble() * 100.0
-            stringBuilder.append("\nTotal Ram : ${df2.format(TotalRam)} MB \n")
+            stringBuilder.append("\nTotal Ram : $TotalRam \n")
             stringBuilder.append(
-                "\nAvailable Ram : ${df2.format(availableRAM)} MB (${df2.format(
+                "\nAvailable Ram : $availableRAM (${df2.format(
                     percentAvail
-                )})% \n"
+                )} %) \n"
             )
 
 
-            text_view_phone_status?.text = stringBuilder.toString()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 checkBalance()
             }
-            stringBuilder.append(networkUsage())
+            networkUsage()
+
+            stringBuilder.append("\nSent bundles : "+ SpUtil.getPreferenceString(context, PREF_SENT_BUNDLES,"")+" \n")
+            stringBuilder.append("\nReceived bundles : "+SpUtil.getPreferenceString(context, PREF_RECEIVED_BUNDLES,"")+" \n")
+            stringBuilder.append("\nAirtime balance : "+SpUtil.getPreferenceString(context, PREF_AIRTIME_BALANCE,"")+" \n")
+            text_view_phone_status?.text = stringBuilder.toString()
         }
     }
 
@@ -265,23 +272,17 @@ class PhoneStatusFragment : Fragment() {
             Timber.d(
                 String.format(
                     Locale.getDefault(),
-                    "uid: %1d - name: %s: Sent = %1d, Rcvd = %1d",
+                    "\n uid: %1d - name: %s: Sent = %1d, Rcvd = %1d",
                     runningApp.uid,
                     runningApp.processName,
                     sent,
                     received
                 )
             )
-
-            context?.toast( String.format(
-                Locale.getDefault(),
-                "uid: %1d - name: %s: Sent = %1d, Rcvd = %1d",
-                runningApp.uid,
-                runningApp.processName,
-                sent,
-                received
-            ))
-
+            val sentBundle=(Conversion.convertBytes(sent)).toString()
+            val receivedBUndle=(Conversion.convertBytes(received)).toString()
+            context?.let { SpUtil.setPreferenceString(it, PREF_SENT_BUNDLES,sentBundle) }
+            context?.let { SpUtil.setPreferenceString(it, PREF_RECEIVED_BUNDLES,receivedBUndle) }
             message += "${Locale.getDefault()} uid: ${runningApp.uid} - name:" +
                     " ${runningApp.processName}: Sent = $sent, Rcvd = $received"
 
@@ -341,7 +342,7 @@ class PhoneStatusFragment : Fragment() {
 //                    var permResult = entry.value
 
                     if (shouldShowRequestPermissionRationale(permName)) {
-                        showDialog("", "This app needs $permName to work properly",
+                        context?.showDialog("", "This app needs $permName to work properly",
                             "Grant Permission"
                             , DialogInterface.OnClickListener { dialog, _ ->
                                 dialog.dismiss()
@@ -353,7 +354,7 @@ class PhoneStatusFragment : Fragment() {
                             }
                             , false)
                     } else {
-                        showDialog("",
+                        context?.showDialog("",
                             "You have denied some permissions. Allow all permissions at [Setting] > Permission",
                             "Go to Settings"
                             ,
@@ -382,24 +383,5 @@ class PhoneStatusFragment : Fragment() {
         }
     }
 
-
-    //used to display alert dialog box
-    private fun showDialog(
-        title: String, msg: String, postiveLabel: String,
-        postiveOnClick: DialogInterface.OnClickListener,
-        negativeLabel: String, negativeOnClick: DialogInterface.OnClickListener,
-        isCancelable: Boolean
-    ): AlertDialog {
-
-        val builder = AlertDialog.Builder(activity as Activity)
-        builder.setTitle(title)
-        builder.setCancelable(isCancelable)
-        builder.setMessage(msg)
-        builder.setPositiveButton(postiveLabel, postiveOnClick)
-        builder.setNegativeButton(negativeLabel, negativeOnClick)
-        val alert = builder.create()
-        alert.show()
-        return alert
-    }
 
 }

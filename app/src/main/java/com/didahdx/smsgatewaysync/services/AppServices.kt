@@ -55,12 +55,14 @@ class AppServices : Service(), UiUpdaterInterface {
         toast("Service started")
         val notification = NotificationUtil.notificationStatus(this, "Service starting", false)
         startForeground(1, notification)
-        AppLog.logMessage("Sms Service started", this)
+        AppLog.logMessage("Sms Service started", this,true)
+
 
         val rabbitMqRunnable = user?.email?.let { RabbitMqRunnable(this, it, this) }
         Thread(rabbitMqRunnable).start()
 
         CoroutineScope(IO).launch {
+            cancelPing()
             setupRabbitMqPing()
         }
 
@@ -192,6 +194,7 @@ class AppServices : Service(), UiUpdaterInterface {
         }
     }
 
+    @AddTrace(name = "AppServiceUpdateStatusViewWith")
     override fun updateStatusViewWith(status: String, color: String) {
         val context = this
         SpUtil.setPreferenceString(context, PREF_STATUS_MESSAGE, status)
@@ -204,7 +207,7 @@ class AppServices : Service(), UiUpdaterInterface {
             statusIntent.putExtra(STATUS_MESSAGE_EXTRA, status)
             statusIntent.putExtra(STATUS_COLOR_EXTRA, color)
             sendBroadcast(statusIntent)
-            AppLog.logMessage(status, context)
+            AppLog.logMessage(status, context,true)
             NotificationUtil.updateNotificationStatus(this, status, false)
         }
 
@@ -227,7 +230,7 @@ class AppServices : Service(), UiUpdaterInterface {
         AppLog.logMessage(message, this)
     }
 
-
+    @AddTrace(name = "AppServicesOnDestroy")
     override fun onDestroy() {
         mPrnMng?.releaseAllocatoins()
         super.onDestroy()
@@ -248,6 +251,7 @@ class AppServices : Service(), UiUpdaterInterface {
         CoroutineScope(IO).cancel()
     }
 
+    @AddTrace(name="AppServicesSetupRabbitMqPing")
     private fun setupRabbitMqPing() {
         val email = FirebaseAuth.getInstance().currentUser?.email ?: NOT_AVAILABLE
         val logFormat = LogFormat(
@@ -255,7 +259,9 @@ class AppServices : Service(), UiUpdaterInterface {
             type = "logs",
             client_gateway_type = ANDROID_PHONE,
             log = "ping",
-            client_sender = email
+            client_sender = email,
+            isUserVisible = true,
+            isUploaded =true
         )
 
         val data = Data.Builder()

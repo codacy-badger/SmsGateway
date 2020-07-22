@@ -16,7 +16,6 @@ class SmsInboxCursorAdapter(
     private val clickListener: SmsAdapterListener
 ) :
     RecyclerView.Adapter<SmsInboxCursorAdapter.SmsViewHolder>() {
-    var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT, Locale.getDefault())
 
     var mCursor = cursor
 
@@ -62,8 +61,7 @@ class SmsInboxCursorAdapter(
                                 SmsInboxInfo(
                                     messageId,
                                     it2,
-                                    sdf.format(Date(dateString.toLong()))
-                                        .toString(),
+                                   Conversion.getFormattedDate(Date(dateString.toLong())),
                                     it,
                                     smsFilter.mpesaId,
                                     smsFilter.phoneNumber,

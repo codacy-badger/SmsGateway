@@ -1,8 +1,10 @@
 package com.didahdx.smsgatewaysync.utilities
 
 import android.content.Context
+import android.content.DialogInterface
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import com.didahdx.smsgatewaysync.R
 import com.google.android.material.snackbar.Snackbar
 
@@ -44,6 +46,26 @@ fun View.backgroundGrey() {
     background =
         resources.getDrawable(R.color.grey, null)
 }
+
+//used to display alert dialog box
+fun Context.showDialog(
+    title: String, msg: String, postiveLabel: String,
+    postiveOnClick: DialogInterface.OnClickListener,
+    negativeLabel: String, negativeOnClick: DialogInterface.OnClickListener,
+    isCancelable: Boolean
+): AlertDialog {
+
+    val builder = AlertDialog.Builder(this)
+    builder.setTitle(title)
+    builder.setCancelable(isCancelable)
+    builder.setMessage(msg)
+    builder.setPositiveButton(postiveLabel, postiveOnClick)
+    builder.setNegativeButton(negativeLabel, negativeOnClick)
+    val alert = builder.create()
+    alert.show()
+    return alert;
+}
+
 
 fun View.snackBar(message: String) {
     Snackbar.make(this, message, Snackbar.LENGTH_LONG).also { snackBar ->

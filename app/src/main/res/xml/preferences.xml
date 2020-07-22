@@ -49,7 +49,7 @@
             android:title="Mpesa type"
             app:iconSpaceReserved="false" />
 
-        <SwitchPreferenceCompat
+        <CheckBoxPreference
             android:defaultValue="false"
             android:key="enable_forward_sms"
             android:summary="@string/phone_number"
@@ -65,7 +65,7 @@
             app:defaultValue="+2547xxxxxxxx"
             app:iconSpaceReserved="false" />
 
-        <SwitchPreferenceCompat
+        <CheckBoxPreference
             android:defaultValue="false"
             android:key="auto_delete"
             android:summary="Enable auto deleting messages that are sent to server"
@@ -87,7 +87,7 @@
         android:title="Printing"
         app:iconSpaceReserved="false">
 
-        <SwitchPreferenceCompat
+        <CheckBoxPreference
             android:defaultValue="false"
             android:key="auto_print"
             android:summary="Allow automatic printing on incoming sms"
@@ -137,13 +137,14 @@
             android:summary="Types of mpesa transaction to receive notifications of"
             android:title="Mpesa type"
             app:iconSpaceReserved="false" />
-
+        
 
     </PreferenceCategory>
 
     <PreferenceCategory app:iconSpaceReserved="false">
 
         <Preference
+            android:selectable="true"
             android:title="Send feedback"
             app:iconSpaceReserved="false"
             app:key="feedback"

@@ -21,7 +21,6 @@ const val CHANNEL_ID_2 = "update_services"
 const val CHANNEL_ID_3 = "important_sms"
 const val CHANNEL_CLIENT_NOTIFICATION_NAME = "update messages"
 const val CHANNEL_IMPORTANT_SMS_NOTIFICATION = "important sms "
-const val MESSAGE_DATABASE = "messageDatabase"
 const val ACTION_MMS_RECEIVED = "android.provider.Telephony.WAP_PUSH_RECEIVED"
 const val KEY_TASK_MESSAGE = "KEY_TASK_MESSAGE"
 const val KEY_EMAIL="KEY_EMAIL"
@@ -116,6 +115,9 @@ const val PREF_RABBITMQ_CONNECTION="PREF_RABBITMQ_CONNECTION"
 const val PREF_LONGITUDE="PREF_LONGITUDE"
 const val PREF_LATITUDE="PREF_LATITUDE"
 const val PREF_ALTITUDE="PREF_ALTITUDE"
+const val PREF_SENT_BUNDLES="PREF_SENT_BUNDLES"
+const val PREF_RECEIVED_BUNDLES="PREF_RECEIVED_BUNDLES"
+const val PREF_AIRTIME_BALANCE="PREF_AIRTIME_BALANCE"
 
 /**
  * preference type

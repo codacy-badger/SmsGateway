@@ -45,7 +45,9 @@ import com.didahdx.smsgatewaysync.services.LocationGpsService
 import com.didahdx.smsgatewaysync.presentation.activities.LoginActivity
 import com.didahdx.smsgatewaysync.utilities.*
 import com.didahdx.smsgatewaysync.work.SendRabbitMqWorker
+import com.didahdx.smsgatewaysync.work.WorkerUtil.sendToRabbitMQ
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.perf.metrics.AddTrace
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.fragment_home.*
 import kotlinx.coroutines.CoroutineScope
@@ -69,7 +71,6 @@ class HomeFragment : Fragment() {
 
     lateinit var mHomeViewModel: HomeViewModel
     var value = ""
-    private val sdf = SimpleDateFormat(DATE_FORMAT, Locale.US)
 
     private val appPermissions = arrayOf(
         Manifest.permission.ACCESS_FINE_LOCATION,
@@ -89,16 +90,9 @@ class HomeFragment : Fragment() {
     )
 
     lateinit var notificationManager: NotificationManagerCompat
-
-    private var locationBroadcastReceiver: BroadcastReceiver? = null
     var userLongitude: String = " "
     var userLatitude: String = " "
     val user = FirebaseAuth.getInstance().currentUser
-    var outgoingMessages: Queue<MessageInfo> = LinkedList()
-    var messageCount = 0
-    var lastMessageSentTime = 0
-    private val UPDATE_INTERVAL = 500 * 20 // 5 seconds*20
-
     lateinit var navController: NavController
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -119,7 +113,7 @@ class HomeFragment : Fragment() {
 
     }
 
-
+    @AddTrace(name = "HomeFragmentOnCreateView")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -190,8 +184,9 @@ class HomeFragment : Fragment() {
         CoroutineScope(IO).launch {
             getConnectionType()
         }
-        if(isServiceOn){
-            val color = context?.let { SpUtil.getPreferenceString(it, PREF_STATUS_COLOR, RED_COLOR) }
+        if (isServiceOn) {
+            val color =
+                context?.let { SpUtil.getPreferenceString(it, PREF_STATUS_COLOR, RED_COLOR) }
             val status = context?.let {
                 SpUtil.getPreferenceString(it, PREF_STATUS_MESSAGE, ERROR_CONNECTING_TO_SERVER)
             } ?: ERROR_CONNECTING_TO_SERVER
@@ -211,13 +206,12 @@ class HomeFragment : Fragment() {
                 }
 
             }
-        }else{
+        } else {
             binding.textViewStatus.backgroundGrey()
             binding.textViewConnectionType.backgroundGrey()
             binding.linearStatus.backgroundGrey()
             binding.textViewStatus.text = "$APP_NAME is disabled"
         }
-
 
 
         // Inflate the layout for this fragment
@@ -241,6 +235,7 @@ class HomeFragment : Fragment() {
         }
     }
 
+    @AddTrace(name = "HomeFragmentOnViewCreated")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -248,7 +243,7 @@ class HomeFragment : Fragment() {
             context?.let { SpUtil.getPreferenceBoolean(it, PREF_SERVICES_KEY) } ?: true
         notificationManager = NotificationManagerCompat.from(requireContext())
 
-        if (isServiceOn && ServiceState.STOPPED == context?.let { getServiceState(it) } ) {
+        if (isServiceOn && ServiceState.STOPPED == context?.let { getServiceState(it) }) {
             startServices()
             context?.toast(" Service started home ${context?.let { getServiceState(it) }}")
         }
@@ -360,7 +355,11 @@ class HomeFragment : Fragment() {
                             FreeRam = "${df2.format(availableRAM)} MB",
                             client_sender = user?.email!!,
                             date = Date().toString(),
-                            client_gateway_type = ANDROID_PHONE
+                            client_gateway_type = ANDROID_PHONE,
+                            totalBundles = "",
+                            sentBundles = "",
+                            receivedBundles = "",
+                            airtimeBalance = " "
                         )
 
                         val gson = Gson()
@@ -523,7 +522,7 @@ class HomeFragment : Fragment() {
                     var permResult = entry.value
 
                     if (shouldShowRequestPermissionRationale(permName)) {
-                        showDialog("", "This app needs $permName to work properly",
+                        context?.showDialog("", "This app needs $permName to work properly",
                             "Grant Permission"
                             , DialogInterface.OnClickListener { dialog, which ->
                                 dialog.dismiss()
@@ -535,7 +534,7 @@ class HomeFragment : Fragment() {
                             }
                             , false)
                     } else {
-                        showDialog("",
+                        context?.showDialog("",
                             "You have denied some permissions. Allow all permissions at [Setting] > Permission",
                             "Go to Settings"
                             ,
@@ -564,25 +563,6 @@ class HomeFragment : Fragment() {
         }
     }
 
-    //used to display alert dialog box
-    private fun showDialog(
-        title: String, msg: String, postiveLabel: String,
-        postiveOnClick: DialogInterface.OnClickListener,
-        negativeLabel: String, negativeOnClick: DialogInterface.OnClickListener,
-        isCancelable: Boolean
-    ): AlertDialog {
-
-        val builder = AlertDialog.Builder(requireContext())
-        builder.setTitle(title)
-        builder.setCancelable(isCancelable)
-        builder.setMessage(msg)
-        builder.setPositiveButton(postiveLabel, postiveOnClick)
-        builder.setNegativeButton(negativeLabel, negativeOnClick)
-        val alert = builder.create()
-        alert.show()
-        return alert;
-    }
-
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.main, menu)
@@ -592,7 +572,7 @@ class HomeFragment : Fragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.nav_logout -> {
-                showDialog("Logout", "Do you want to logout?",
+                context?.showDialog("Logout", "Do you want to logout?",
                     "Yes"
                     , DialogInterface.OnClickListener { dialog, _ ->
                         dialog.dismiss()
@@ -647,7 +627,7 @@ class HomeFragment : Fragment() {
                             message.receiver,
                             " ${smsFilter.date}  ${smsFilter.time}",
                             message.sender,
-                            sdf.format(Date(message.date)).toString(),
+                            Conversion.getFormattedDate(Date(message.date)),
                             smsFilter.mpesaType,
                             message.mpesaId
                         )
@@ -700,19 +680,7 @@ class HomeFragment : Fragment() {
     }
 
 
-    private fun sendToRabbitMQ(context: Context, data: Data) {
-        val constraints =
-            Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
-
-        val request: OneTimeWorkRequest = OneTimeWorkRequestBuilder<SendRabbitMqWorker>()
-            .setConstraints(constraints)
-            .setInputData(data)
-            .build()
-
-        WorkManager.getInstance(context).enqueue(request)
-    }
-
-   suspend fun getConnectionType()  {
+    suspend fun getConnectionType() {
         val connectionManager =
             context?.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         var connectionType = ""
@@ -741,7 +709,7 @@ class HomeFragment : Fragment() {
         }
 
         CoroutineScope(Main).launch {
-        text_view_connection_type.text=connectionType
+            text_view_connection_type.text = connectionType
         }
     }
 

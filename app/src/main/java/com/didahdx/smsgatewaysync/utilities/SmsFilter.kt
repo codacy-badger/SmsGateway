@@ -85,7 +85,7 @@ class SmsFilter() {
                 "******** END OF RECEIPT ******* \n\n."
     }
 
-
+    @AddTrace(name="SmsFilterExtractName")
     private fun extractName(message: String): String {
         var name: String = NOT_AVAILABLE
         val pattern = "^[0-9]{10}$"

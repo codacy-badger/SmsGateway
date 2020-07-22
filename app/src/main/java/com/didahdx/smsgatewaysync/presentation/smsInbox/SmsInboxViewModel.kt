@@ -15,6 +15,7 @@ import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
 import com.didahdx.smsgatewaysync.domain.SmsInboxInfo
 import com.didahdx.smsgatewaysync.domain.SmsInfo
 import com.didahdx.smsgatewaysync.utilities.*
+import com.google.firebase.perf.metrics.AddTrace
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
@@ -27,7 +28,6 @@ import kotlin.collections.ArrayList
 
 class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Application) : ViewModel() {
 
-    var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT, Locale.US)
     val app = application
     val database = dataSource
 
@@ -65,6 +65,7 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
     }
 
 
+    @AddTrace(name="SmsInboxViewModel_GetDbSmsMessages")
     fun getDbSmsMessages() {
         CoroutineScope(IO).launch {
         val cursor = app.contentResolver?.query(
@@ -128,6 +129,7 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
         }
     }
 
+    @AddTrace(name="SmsInboxViewModel_sortCursor")
     private fun sortCursor(rowNumbers: ArrayList<String>) {
         CoroutineScope(IO).launch {
         val smsInbox = ArrayList<SmsInboxInfo>()
@@ -163,7 +165,7 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
                                 SmsInboxInfo(
                                     messageId,
                                     it2,
-                                    sdf.format(Date(dateString.toLong()))
+                                   Conversion.getFormattedDate(Date(dateString.toLong()))
                                         .toString(),
                                     it,
                                     smsFilter.mpesaId,
@@ -228,7 +230,6 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
     class ImportAllDbMessageRunnable(dataSource: IncomingMessagesDao, application: Application):Runnable{
         val app=application
         val database=dataSource
-        var sdf: SimpleDateFormat = SimpleDateFormat(DATE_FORMAT, Locale.US)
         override fun run() {
             val threadHandler = Handler(Looper.getMainLooper())
             threadHandler.post {
@@ -265,7 +266,7 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
 
                         val message = MpesaMessageInfo(
                             messageBody,
-                            sdf.format(Date(dateString.toLong())),
+                           Conversion.getFormattedDate(Date(dateString.toLong())),
                             sender,
                             smsFilter.mpesaId,
                             smsFilter.phoneNumber,

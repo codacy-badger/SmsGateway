@@ -23,9 +23,7 @@ import java.util.concurrent.TimeoutException
 
 class SendApiWorker(appContext: Context, params: WorkerParameters) :
     CoroutineWorker(appContext, params) {
-
     val context=appContext
-    private val sdf = SimpleDateFormat(DATE_FORMAT, Locale.US)
 
     override suspend fun doWork(): Result {
         try {
@@ -69,7 +67,7 @@ class SendApiWorker(appContext: Context, params: WorkerParameters) :
                         smsInboxInfo.receiver,
                         " ${smsFilter.date}  ${smsFilter.time}",
                         smsInboxInfo.sender,
-                        sdf.format(Date(smsInboxInfo.date)).toString(),
+                        Conversion.getFormattedDate(Date(smsInboxInfo.date)),
                         smsFilter.mpesaType,
                         smsInboxInfo.mpesaId
                     )
