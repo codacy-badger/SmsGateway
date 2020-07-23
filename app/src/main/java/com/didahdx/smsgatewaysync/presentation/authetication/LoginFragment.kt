@@ -7,10 +7,8 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import com.didahdx.smsgatewaysync.R
-import com.didahdx.smsgatewaysync.utilities.ServiceState
-import com.didahdx.smsgatewaysync.utilities.Validation
-import com.didahdx.smsgatewaysync.utilities.setServiceState
-import com.didahdx.smsgatewaysync.utilities.toast
+import com.didahdx.smsgatewaysync.util.Validation
+import com.didahdx.smsgatewaysync.util.toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.android.synthetic.main.fragment_login.*
@@ -91,7 +89,6 @@ class LoginFragment : Fragment(R.layout.fragment_login), View.OnClickListener {
         if (user != null) {
             navController.navigate(R.id.action_loginFragment_to_mainActivity)
             requireActivity().onBackPressed()
-
         }
 
     }

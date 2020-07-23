@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.database.Cursor
 import android.os.Bundle
 import android.view.*
 import androidx.core.content.ContextCompat
@@ -21,8 +20,8 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
 import com.didahdx.smsgatewaysync.databinding.FragmentSmsInboxBinding
-import com.didahdx.smsgatewaysync.utilities.SMS_LOCAL_BROADCAST_RECEIVER
-import com.didahdx.smsgatewaysync.utilities.hide
+import com.didahdx.smsgatewaysync.util.SMS_LOCAL_BROADCAST_RECEIVER
+import com.didahdx.smsgatewaysync.util.hide
 import kotlinx.android.synthetic.main.fragment_sms_inbox.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO

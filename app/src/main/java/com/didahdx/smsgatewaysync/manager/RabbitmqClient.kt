@@ -2,7 +2,7 @@ package com.didahdx.smsgatewaysync.manager
 
 import android.content.Context
 import com.didahdx.smsgatewaysync.presentation.UiUpdaterInterface
-import com.didahdx.smsgatewaysync.utilities.*
+import com.didahdx.smsgatewaysync.util.*
 import com.google.firebase.perf.metrics.AddTrace
 import com.rabbitmq.client.*
 import kotlinx.coroutines.CoroutineScope

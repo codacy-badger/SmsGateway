@@ -1,7 +1,7 @@
 package com.didahdx.smsgatewaysync.printerlib.utils
 
 import android.content.Context
-import com.didahdx.smsgatewaysync.utilities.SpUtil
+import com.didahdx.smsgatewaysync.util.SpUtil
 import com.woosim.printer.WoosimCmd
 
 object PrefMng {

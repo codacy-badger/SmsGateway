@@ -13,7 +13,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import androidx.work.Data
 import com.didahdx.smsgatewaysync.domain.PhoneStatus
-import com.didahdx.smsgatewaysync.utilities.*
+import com.didahdx.smsgatewaysync.util.*
 import com.didahdx.smsgatewaysync.work.WorkerUtil.sendToRabbitMQ
 import com.google.firebase.auth.FirebaseAuth
 import com.google.gson.Gson

@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.content.ContextCompat
 import com.didahdx.smsgatewaysync.services.AppServices
-import com.didahdx.smsgatewaysync.utilities.*
+import com.didahdx.smsgatewaysync.util.*
 import com.google.firebase.auth.FirebaseAuth
 
 class BootReceiver : BroadcastReceiver() {

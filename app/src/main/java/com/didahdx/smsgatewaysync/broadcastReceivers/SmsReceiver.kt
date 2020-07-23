@@ -15,9 +15,7 @@ import com.didahdx.smsgatewaysync.printerlib.WoosimPrnMng
 import com.didahdx.smsgatewaysync.printerlib.utils.PrefMng
 import com.didahdx.smsgatewaysync.printerlib.utils.Tools
 import com.didahdx.smsgatewaysync.printerlib.utils.printerFactory
-import com.didahdx.smsgatewaysync.utilities.*
-import com.didahdx.smsgatewaysync.work.SendRabbitMqWorker
-import com.didahdx.smsgatewaysync.work.WorkerUtil
+import com.didahdx.smsgatewaysync.util.*
 import com.didahdx.smsgatewaysync.work.WorkerUtil.sendToRabbitMQ
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
@@ -25,7 +23,6 @@ import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import timber.log.Timber
-import java.text.SimpleDateFormat
 import java.util.*
 
 

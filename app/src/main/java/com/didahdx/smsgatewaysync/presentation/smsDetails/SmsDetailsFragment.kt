@@ -14,7 +14,7 @@ import com.didahdx.smsgatewaysync.printerlib.WoosimPrnMng
 import com.didahdx.smsgatewaysync.printerlib.utils.PrefMng
 import com.didahdx.smsgatewaysync.printerlib.utils.Tools
 import com.didahdx.smsgatewaysync.printerlib.utils.printerFactory
-import com.didahdx.smsgatewaysync.utilities.*
+import com.didahdx.smsgatewaysync.util.*
 import kotlinx.android.synthetic.main.fragment_sms_details.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO

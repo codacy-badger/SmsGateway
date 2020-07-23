@@ -1,9 +1,13 @@
 package com.didahdx.smsgatewaysync.data.db.entities
 
+import android.os.Parcel
+import android.os.Parcelable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.android.parcel.Parcelize
 import java.io.Serializable
 
+@Parcelize
 @Entity
 data class MpesaMessageInfo(
     val messageBody: String,
@@ -18,7 +22,7 @@ data class MpesaMessageInfo(
     val status: Boolean,
     val longitude: String,
     val latitude: String
-) : Serializable {
+) : Serializable,Parcelable {
     @PrimaryKey(autoGenerate = true)
     var id: Int = 0
 }

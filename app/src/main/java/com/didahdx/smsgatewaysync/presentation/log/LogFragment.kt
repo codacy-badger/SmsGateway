@@ -11,7 +11,6 @@ import androidx.lifecycle.ViewModelProvider
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
 import com.didahdx.smsgatewaysync.databinding.FragmentLogBinding
-import com.didahdx.smsgatewaysync.utilities.AppLog
 
 class LogFragment : Fragment() {
 

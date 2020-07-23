@@ -17,8 +17,8 @@ import androidx.preference.PreferenceManager
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.didahdx.smsgatewaysync.domain.MessageInfo
-import com.didahdx.smsgatewaysync.utilities.*
-import com.didahdx.smsgatewaysync.utilities.AppLog.logMessage
+import com.didahdx.smsgatewaysync.util.*
+import com.didahdx.smsgatewaysync.util.AppLog.logMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.launch

@@ -11,7 +11,7 @@ import android.location.LocationManager
 import android.os.Bundle
 import android.os.IBinder
 import androidx.core.app.ActivityCompat
-import com.didahdx.smsgatewaysync.utilities.*
+import com.didahdx.smsgatewaysync.util.*
 import com.google.firebase.perf.metrics.AddTrace
 import timber.log.Timber
 

@@ -9,14 +9,12 @@ import android.os.Build
 import android.os.IBinder
 import android.telecom.TelecomManager
 import android.telephony.TelephonyManager
-import android.util.Log
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.work.Data
 import com.didahdx.smsgatewaysync.domain.CallStatus
-import com.didahdx.smsgatewaysync.utilities.*
+import com.didahdx.smsgatewaysync.util.*
 import com.didahdx.smsgatewaysync.work.WorkerUtil
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.perf.metrics.AddTrace
 import com.google.gson.Gson
 import timber.log.Timber

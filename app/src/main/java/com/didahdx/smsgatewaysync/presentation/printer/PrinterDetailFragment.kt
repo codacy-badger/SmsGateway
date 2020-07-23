@@ -12,9 +12,9 @@ import androidx.fragment.app.Fragment
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.domain.PrinterInfo
 import com.didahdx.smsgatewaysync.printerlib.utils.PrefMng.saveDeviceAddr
-import com.didahdx.smsgatewaysync.utilities.PREF_PRINTER_NAME
-import com.didahdx.smsgatewaysync.utilities.SpUtil
-import com.didahdx.smsgatewaysync.utilities.show
+import com.didahdx.smsgatewaysync.util.PREF_PRINTER_NAME
+import com.didahdx.smsgatewaysync.util.SpUtil
+import com.didahdx.smsgatewaysync.util.show
 import kotlinx.android.synthetic.main.fragment_printer_detail.*
 import timber.log.Timber
 

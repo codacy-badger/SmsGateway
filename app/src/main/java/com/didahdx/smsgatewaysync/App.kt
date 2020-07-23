@@ -6,7 +6,7 @@ import android.content.Context
 import android.os.Build
 import androidx.multidex.MultiDex
 import androidx.multidex.MultiDexApplication
-import com.didahdx.smsgatewaysync.utilities.*
+import com.didahdx.smsgatewaysync.util.*
 import timber.log.Timber
 
 class App : MultiDexApplication() {

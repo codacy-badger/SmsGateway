@@ -7,8 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.didahdx.smsgatewaysync.databinding.SmsInboxContainerBinding
 import com.didahdx.smsgatewaysync.domain.SmsInboxInfo
 import com.didahdx.smsgatewaysync.presentation.smsInbox.SmsInboxCursorAdapter.SmsViewHolder.Companion.from
-import com.didahdx.smsgatewaysync.utilities.*
-import java.text.SimpleDateFormat
+import com.didahdx.smsgatewaysync.util.*
 import java.util.*
 
 class SmsInboxCursorAdapter(

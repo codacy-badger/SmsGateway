@@ -4,8 +4,6 @@ import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.didahdx.smsgatewaysync.data.db.LogInfoDao
-import com.didahdx.smsgatewaysync.data.db.entities.LogInfo
-import com.didahdx.smsgatewaysync.utilities.AppLog
 
 @Suppress("UNCHECKED_CAST")
 class LogViewModelFactory(

@@ -2,12 +2,13 @@ package com.didahdx.smsgatewaysync.work
 
 import android.content.Context
 import androidx.work.*
-import com.didahdx.smsgatewaysync.utilities.PREF_SERVICES_KEY
-import com.didahdx.smsgatewaysync.utilities.SpUtil
+import com.didahdx.smsgatewaysync.util.PREF_SERVICES_KEY
+import com.didahdx.smsgatewaysync.util.SpUtil
+import java.util.*
 
 object WorkerUtil {
 
-     fun sendToRabbitMQ(context: Context, data: Data) {
+     fun sendToRabbitMQ(context: Context, data: Data): UUID {
         val constraints =
             Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
 
@@ -18,6 +19,8 @@ object WorkerUtil {
         val isServiceOn = SpUtil.getPreferenceBoolean(context, PREF_SERVICES_KEY)
         if (isServiceOn)
             WorkManager.getInstance(context).enqueue(request)
+
+         return request.id
     }
 
      fun sendSms(data: Data,context: Context) {

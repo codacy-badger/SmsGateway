@@ -1,6 +1,6 @@
 package com.didahdx.smsgatewaysync.domain
 
-import com.didahdx.smsgatewaysync.utilities.ANDROID_PHONE
+import com.didahdx.smsgatewaysync.util.ANDROID_PHONE
 
 data class CallStatus(
     val call_type: String,

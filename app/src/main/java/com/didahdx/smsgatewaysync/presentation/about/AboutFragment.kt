@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.didahdx.smsgatewaysync.BuildConfig
 import com.didahdx.smsgatewaysync.R
-import com.didahdx.smsgatewaysync.utilities.APP_NAME
+import com.didahdx.smsgatewaysync.util.APP_NAME
 import kotlinx.android.synthetic.main.fragment_about.*
 import kotlinx.android.synthetic.main.fragment_about.view.*
 import kotlinx.android.synthetic.main.fragment_about.view.text_about_phone

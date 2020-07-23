@@ -1,7 +1,6 @@
 package com.didahdx.smsgatewaysync.presentation.phonestatus
 
 import android.Manifest
-import android.app.Activity
 import android.app.ActivityManager
 import android.content.*
 import android.content.Context.ACTIVITY_SERVICE
@@ -15,12 +14,11 @@ import android.telephony.TelephonyManager.UssdResponseCallback
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AlertDialog
 import androidx.core.content.PermissionChecker
 import androidx.core.content.PermissionChecker.checkSelfPermission
 import androidx.fragment.app.Fragment
 import com.didahdx.smsgatewaysync.R
-import com.didahdx.smsgatewaysync.utilities.*
+import com.didahdx.smsgatewaysync.util.*
 import kotlinx.android.synthetic.main.fragment_phone_status.*
 import timber.log.Timber
 import java.text.DecimalFormat

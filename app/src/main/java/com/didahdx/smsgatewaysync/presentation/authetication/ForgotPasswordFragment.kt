@@ -4,8 +4,8 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import com.didahdx.smsgatewaysync.R
-import com.didahdx.smsgatewaysync.utilities.Validation
-import com.didahdx.smsgatewaysync.utilities.toast
+import com.didahdx.smsgatewaysync.util.Validation
+import com.didahdx.smsgatewaysync.util.toast
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.fragment_forgot_password.*
 

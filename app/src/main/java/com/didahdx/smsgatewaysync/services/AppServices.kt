@@ -21,7 +21,7 @@ import com.didahdx.smsgatewaysync.presentation.UiUpdaterInterface
 import com.didahdx.smsgatewaysync.presentation.activities.MainActivity
 import com.didahdx.smsgatewaysync.printerlib.WoosimPrnMng
 import com.didahdx.smsgatewaysync.broadcastReceivers.ConnectionReceiver
-import com.didahdx.smsgatewaysync.utilities.*
+import com.didahdx.smsgatewaysync.util.*
 import com.didahdx.smsgatewaysync.work.SendRabbitMqWorker
 import com.didahdx.smsgatewaysync.work.WorkerUtil
 import com.google.firebase.auth.FirebaseAuth

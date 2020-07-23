@@ -14,7 +14,7 @@ import androidx.preference.PreferenceFragmentCompat
 import com.didahdx.smsgatewaysync.BuildConfig
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.services.AppServices
-import com.didahdx.smsgatewaysync.utilities.*
+import com.didahdx.smsgatewaysync.util.*
 import com.google.firebase.perf.metrics.AddTrace
 import timber.log.Timber
 

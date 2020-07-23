@@ -1,13 +1,9 @@
 package com.didahdx.smsgatewaysync.presentation.log
 
 import android.app.Application
-import android.text.format.DateUtils
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import com.didahdx.smsgatewaysync.data.db.LogInfoDao
-import com.didahdx.smsgatewaysync.utilities.AppLog
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
 import java.lang.StringBuilder

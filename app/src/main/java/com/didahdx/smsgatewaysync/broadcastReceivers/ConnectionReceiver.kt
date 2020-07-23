@@ -4,8 +4,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
-import com.didahdx.smsgatewaysync.utilities.AppLog
-import com.didahdx.smsgatewaysync.utilities.toast
+import com.didahdx.smsgatewaysync.util.AppLog
+import com.didahdx.smsgatewaysync.util.toast
 import timber.log.Timber
 
 /**

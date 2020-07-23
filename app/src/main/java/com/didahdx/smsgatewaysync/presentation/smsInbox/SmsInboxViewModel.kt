@@ -1,10 +1,7 @@
 package com.didahdx.smsgatewaysync.presentation.smsInbox
 
-import android.annotation.SuppressLint
 import android.app.Application
-import android.database.Cursor
 import android.net.Uri
-import android.os.Debug
 import android.os.Handler
 import android.os.Looper
 import androidx.lifecycle.LiveData
@@ -14,7 +11,7 @@ import com.didahdx.smsgatewaysync.data.db.IncomingMessagesDao
 import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
 import com.didahdx.smsgatewaysync.domain.SmsInboxInfo
 import com.didahdx.smsgatewaysync.domain.SmsInfo
-import com.didahdx.smsgatewaysync.utilities.*
+import com.didahdx.smsgatewaysync.util.*
 import com.google.firebase.perf.metrics.AddTrace
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
@@ -22,7 +19,6 @@ import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
 

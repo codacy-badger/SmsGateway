@@ -12,9 +12,9 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.printerlib.utils.PrefMng
-import com.didahdx.smsgatewaysync.utilities.PREF_PRINTER_NAME
-import com.didahdx.smsgatewaysync.utilities.SpUtil
-import com.didahdx.smsgatewaysync.utilities.toast
+import com.didahdx.smsgatewaysync.util.PREF_PRINTER_NAME
+import com.didahdx.smsgatewaysync.util.SpUtil
+import com.didahdx.smsgatewaysync.util.toast
 import kotlinx.android.synthetic.main.fragment_printer.*
 
 

@@ -7,17 +7,15 @@ import androidx.work.WorkerParameters
 import com.didahdx.smsgatewaysync.data.network.PostSms
 import com.didahdx.smsgatewaysync.data.network.SmsApi
 import com.didahdx.smsgatewaysync.domain.SmsInboxInfo
-import com.didahdx.smsgatewaysync.utilities.*
+import com.didahdx.smsgatewaysync.util.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.HttpException
 import retrofit2.Response
 import timber.log.Timber
-import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeoutException
 

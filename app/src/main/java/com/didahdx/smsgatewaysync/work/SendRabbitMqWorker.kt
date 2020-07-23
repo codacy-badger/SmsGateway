@@ -1,22 +1,18 @@
 package com.didahdx.smsgatewaysync.work
 
 import android.content.Context
-import androidx.work.CoroutineWorker
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.didahdx.smsgatewaysync.manager.RabbitMqConnector
-import com.didahdx.smsgatewaysync.utilities.*
-import com.didahdx.smsgatewaysync.utilities.AppLog.logMessage
+import com.didahdx.smsgatewaysync.util.*
+import com.didahdx.smsgatewaysync.util.AppLog.logMessage
 import com.google.firebase.perf.metrics.AddTrace
 import com.rabbitmq.client.AMQP
-import com.rabbitmq.client.AlreadyClosedException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.Main
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import timber.log.Timber
-import java.io.IOException
 import java.util.concurrent.TimeoutException
 
 
