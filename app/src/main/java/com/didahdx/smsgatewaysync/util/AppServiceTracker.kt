@@ -1,7 +1,6 @@
-package com.didahdx.smsgatewaysync.utilities
+package com.didahdx.smsgatewaysync.util
 
 import android.content.Context
-import android.content.SharedPreferences
 
 enum class ServiceState {
     STARTING,

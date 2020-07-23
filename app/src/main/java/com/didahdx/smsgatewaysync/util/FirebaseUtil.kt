@@ -1,4 +1,4 @@
-package com.didahdx.smsgatewaysync.utilities
+package com.didahdx.smsgatewaysync.util
 
 
 import android.app.ListActivity
@@ -6,8 +6,6 @@ import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuth.AuthStateListener
 import com.google.firebase.database.*
-import kotlin.collections.ArrayList
-import java.util.*
 
 
 object FirebaseUtil {

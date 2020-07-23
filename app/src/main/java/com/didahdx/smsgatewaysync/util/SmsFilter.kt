@@ -1,9 +1,6 @@
-package com.didahdx.smsgatewaysync.utilities
+package com.didahdx.smsgatewaysync.util
 
 import com.google.firebase.perf.metrics.AddTrace
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.launch
 import java.util.*
 import java.util.regex.Matcher
 import java.util.regex.Pattern

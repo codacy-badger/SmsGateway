@@ -1,12 +1,12 @@
-package com.didahdx.smsgatewaysync.utilities
+package com.didahdx.smsgatewaysync.util
 
 import android.content.Context
-import android.content.Context.MODE_APPEND
-import androidx.preference.PreferenceManager
 import androidx.work.Data
+import androidx.work.WorkManager
 import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
 import com.didahdx.smsgatewaysync.data.db.entities.LogInfo
 import com.didahdx.smsgatewaysync.domain.LogFormat
+import com.didahdx.smsgatewaysync.work.SendRabbitMqWorker
 import com.didahdx.smsgatewaysync.work.WorkerUtil
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.perf.metrics.AddTrace
@@ -14,8 +14,6 @@ import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
-import timber.log.Timber
-import java.io.*
 import java.util.*
 
 /**
@@ -55,9 +53,8 @@ object AppLog {
                     logFormat.isUploaded
                 )
             )
-            WorkerUtil.sendToRabbitMQ(context, data)
+            val uuid = WorkerUtil.sendToRabbitMQ(context, data)
+
         }
-
     }
-
 }

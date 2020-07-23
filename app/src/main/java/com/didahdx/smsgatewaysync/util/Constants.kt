@@ -1,4 +1,4 @@
-package com.didahdx.smsgatewaysync.utilities
+package com.didahdx.smsgatewaysync.util
 
 /**
  * Constants used throughout the app.

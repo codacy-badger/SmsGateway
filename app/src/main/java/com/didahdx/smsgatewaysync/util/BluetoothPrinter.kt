@@ -1,7 +1,6 @@
-package com.didahdx.smsgatewaysync.utilities
+package com.didahdx.smsgatewaysync.util
 
 import android.content.Context
-import android.widget.Toast
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.printerlib.IPrintToPrinter
 import com.didahdx.smsgatewaysync.printerlib.WoosimPrnMng
