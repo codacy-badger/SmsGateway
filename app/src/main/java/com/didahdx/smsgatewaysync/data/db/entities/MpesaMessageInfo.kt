@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 import kotlinx.android.parcel.Parcelize
 import java.io.Serializable
 
-@Parcelize
+
 @Entity
 data class MpesaMessageInfo(
     val messageBody: String,
@@ -22,7 +22,7 @@ data class MpesaMessageInfo(
     val status: Boolean,
     val longitude: String,
     val latitude: String
-) : Serializable,Parcelable {
+) : Serializable {
     @PrimaryKey(autoGenerate = true)
     var id: Int = 0
 }

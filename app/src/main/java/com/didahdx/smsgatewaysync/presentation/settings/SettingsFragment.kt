@@ -16,6 +16,9 @@ import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.util.*
 import com.google.firebase.perf.metrics.AddTrace
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 
@@ -29,7 +32,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
     lateinit var onSharedPreferenceChangeListener: SharedPreferences.OnSharedPreferenceChangeListener
     lateinit var onPreferenceClickListener: Preference.OnPreferenceClickListener
 
-    @AddTrace(name="SettingsFragmentOnCreate")
+    @AddTrace(name = "SettingsFragmentOnCreate")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         addPreferencesFromResource(R.xml.preferences)
@@ -99,6 +102,15 @@ class SettingsFragment : PreferenceFragmentCompat(),
                     )
             }
 
+            resources.getString(R.string.preference_reply_message) -> {
+                val replyMessage: Preference? = findPreference<Preference>(key)
+                replyMessage?.summary = preferenceScreen.sharedPreferences
+                    .getString(
+                        resources.getString(R.string.preference_reply_message),
+                        ""
+                    )
+            }
+
             PREF_FEEDBACK -> {
                 sendEmail()
             }
@@ -143,6 +155,14 @@ class SettingsFragment : PreferenceFragmentCompat(),
             PREF_PRINT_TYPE, "Types of mpesa transaction to be printed"
         )
 
+        val replyMessage = findPreference<Preference>(
+            resources
+                .getString(R.string.preference_reply_message)
+        )
+
+        replyMessage?.summary = preferenceScreen.sharedPreferences
+            .getString(resources.getString(R.string.preference_reply_message), " ")
+
         val importantSmsNotification = findPreference<Preference>(PREF_IMPORTANT_SMS_NOTIFICATION)
         importantSmsNotification?.summary =
             preferenceScreen.sharedPreferences.getString(PREF_IMPORTANT_SMS_NOTIFICATION, "None")
@@ -158,13 +178,13 @@ class SettingsFragment : PreferenceFragmentCompat(),
     @AddTrace(name = "SettingsFragmentStartService", enabled = true /* optional */)
     private fun startServices(input: String) {
         Debug.startMethodTracing("Settings-start-service.trace")
-        if (ServiceState.STOPPED == context?.let { getServiceState(it) }) {
-            context?.let { SpUtil.setPreferenceString(it, PREF_STATUS_MESSAGE, "$APP_NAME is running") }
+        CoroutineScope(IO).launch {
+            context?.let { SpUtil.setPreferenceString(it, PREF_STATUS_MESSAGE, input) }
             context?.let { SpUtil.setPreferenceString(it, PREF_STATUS_COLOR, GREEN_COLOR) }
             val serviceIntent = Intent(activity as Activity, AppServices::class.java)
             serviceIntent.action = AppServiceActions.START.name
             serviceIntent.putExtra(INPUT_EXTRAS, input)
-            context?.let {  setServiceState(it,ServiceState.STARTING)}
+            context?.let { setServiceState(it, ServiceState.STARTING) }
             ContextCompat.startForegroundService(activity as Activity, serviceIntent)
         }
         Debug.stopMethodTracing()
@@ -173,17 +193,24 @@ class SettingsFragment : PreferenceFragmentCompat(),
     @AddTrace(name = "SettingsFragmentStopService", enabled = true /* optional */)
     private fun stopServices() {
         Debug.startMethodTracing("Settings-stop-service.trace")
-        context?.let { SpUtil.setPreferenceString(it, PREF_STATUS_MESSAGE, "$APP_NAME is disabled") }
-        context?.let { SpUtil.setPreferenceString(it, PREF_STATUS_COLOR, RED_COLOR) }
-
+        CoroutineScope(IO).launch {
+            context?.let {
+                SpUtil.setPreferenceString(
+                    it, PREF_STATUS_MESSAGE,
+                    "$APP_NAME is disabled"
+                )
+            }
+            context?.let { SpUtil.setPreferenceString(it, PREF_STATUS_COLOR, RED_COLOR) }
 //        if (ServiceState.STOPPED != context?.let{ getServiceState(it)} ) {
-        val serviceIntent = Intent(activity as Activity, AppServices::class.java)
-        setRestartServiceState(activity as Activity, false)
-        serviceIntent.action = AppServiceActions.STOP.name
-        serviceIntent.putExtra(INPUT_EXTRAS, "$APP_NAME is stopped")
+            val serviceIntent = Intent(activity as Activity, AppServices::class.java)
+            setRestartServiceState(activity as Activity, false)
+            serviceIntent.action = AppServiceActions.STOP.name
+            serviceIntent.putExtra(INPUT_EXTRAS, "$APP_NAME is stopped")
 //            context?.stopService(serviceIntent)
-        ContextCompat.startForegroundService(activity as Activity, serviceIntent)
+            ContextCompat.startForegroundService(activity as Activity, serviceIntent)
 //        }
+        }
+
         Debug.stopMethodTracing()
     }
 

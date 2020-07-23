@@ -83,6 +83,8 @@
     <string name="cancel">Cancel</string>
     <string name="connect_printer">Connect Printer</string>
     <string name="action_import">Import all sms</string>
+    <string name="preference_hang_up_reply">hang_up_reply</string>
+    <string name="preference_reply_message">reply_message</string>
 
     <string name="connect_fail">Printer connection error</string>
     <string name="connect_lost">Disconnected</string>

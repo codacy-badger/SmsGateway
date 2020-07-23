@@ -11,10 +11,12 @@ import android.telecom.TelecomManager
 import android.telephony.TelephonyManager
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.work.Data
+import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.domain.CallStatus
 import com.didahdx.smsgatewaysync.util.*
 import com.didahdx.smsgatewaysync.work.WorkerUtil
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.perf.metrics.AddTrace
 import com.google.gson.Gson
 import timber.log.Timber
@@ -159,8 +161,11 @@ class PhoneCallReceiver : BroadcastReceiver() {
     ) {
 
         if (callType == "incomingCallReceived") {
-            hangUpCall(context)
-            AppLog.logMessage("$callType from $phoneNumber automatic call hangUp at time $startTime",context)
+            hangUpCall(context, phoneNumber)
+            AppLog.logMessage(
+                "$callType from $phoneNumber automatic call hangUp at time $startTime",
+                context
+            )
         }
         val phone = phoneNumber ?: " "
         val email = FirebaseAuth.getInstance().currentUser?.email ?: NOT_AVAILABLE
@@ -184,7 +189,7 @@ class PhoneCallReceiver : BroadcastReceiver() {
 
     }
 
-    private fun hangUpCall(context: Context) {
+    private fun hangUpCall(context: Context, phoneNumber: String?) {
         val hangup = SpUtil.getPreferenceBoolean(context, PREF_HANG_UP)
         if (hangup) {
             val tm = context.getSystemService(Context.TELECOM_SERVICE) as TelecomManager
@@ -193,9 +198,21 @@ class PhoneCallReceiver : BroadcastReceiver() {
             } else {
                 disconnectCall(context)
             }
+
+            if (phoneNumber != null && SpUtil.getPreferenceBoolean(context,context.getString(R.string.preference_hang_up_reply))) {
+                val data = Data.Builder()
+                    .putString(
+                        KEY_TASK_MESSAGE,
+                        SpUtil.getPreferenceString(
+                            context,
+                            context.getString(R.string.preference_reply_message),
+                            " "))
+                    .putString(KEY_PHONE_NUMBER, phoneNumber)
+                    .build()
+                WorkerUtil.sendSms(data, context)
+            }
         }
     }
-
 
     @SuppressLint("PrivateApi")
     private fun disconnectCall(context: Context) {

@@ -59,14 +59,12 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
                     consumeMessages()
                     uiUpdater?.logMessage("Channel is connected")
 
-                }else{
-                    uiUpdater?.logMessage("Channel is closed because ${RabbitMqConnector.channel.closeReason}")
                 }
                 setServiceState(context, ServiceState.RUNNING)
                 uiUpdater?.logMessage("Connected to server")
             } else {
-                uiUpdater?.logMessage("Connection is closed because ${RabbitMqConnector.connection.closeReason}")
-                setServiceState(context, ServiceState.STOPPED)
+//                uiUpdater?.logMessage("Connection is closed because ${RabbitMqConnector.connection.closeReason}")
+//                setServiceState(context, ServiceState.STOPPED)
             }
         } catch (e: Exception) {
             e.printStackTrace()

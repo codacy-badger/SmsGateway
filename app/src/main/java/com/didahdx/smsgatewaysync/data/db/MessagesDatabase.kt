@@ -11,7 +11,7 @@ import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
 
 @Database(
     entities = [MpesaMessageInfo::class,LogInfo::class], exportSchema = false,
-    version = 1
+    version = 2
 )
 abstract class MessagesDatabase : RoomDatabase() {
 
@@ -36,18 +36,16 @@ abstract class MessagesDatabase : RoomDatabase() {
         private fun buildDatabase(context: Context) = Room.databaseBuilder(
             context.applicationContext,
             MessagesDatabase::class.java, MESSAGE_DATABASE)
-//            .addMigrations(MIGRATION_1_2)
+            .addMigrations(MIGRATION_1_2)
             .build()
 
 
-//        private val MIGRATION_1_2 = object : Migration(1, 2){
-//            override fun migrate(database: SupportSQLiteDatabase) {
-//                database.execSQL("CREATE TABLE IF NOT EXISTS `LogInfo`" +
-//                        " (`id` INTEGER,`date` TEXT ,`type` TEXT, `log` TEXT," +
-//                        " `client_gateway_type` TEXT, `client_sender` TEXT, `isUserVisible` BOOLEAN," +
-//                        " `isUploaded`BOOLEAN, PRIMARY KEY(`id`))")
-//            }
-//        }
+        private val MIGRATION_1_2 = object : Migration(1, 2){
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE `LogInfo` RENAME COLUMN date TO dateString ")
+                database.execSQL("ALTER TABLE `LogInfo` ADD COLUMN date INTEGER NOT NULL ")
+            }
+        }
     }
 
 

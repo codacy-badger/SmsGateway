@@ -35,7 +35,6 @@
             app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
-
     <PreferenceCategory
         android:title="Messages"
         app:iconSpaceReserved="false">
@@ -123,12 +122,24 @@
             android:title="Hang up incoming calls"
             app:iconSpaceReserved="false" />
 
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="@string/preference_hang_up_reply"
+            android:summary="Add a message to send to auto hang up  calls"
+            android:title="Enable reply sms"
+            app:iconSpaceReserved="false" />
+
+        <EditTextPreference
+            android:dependency="@string/preference_hang_up_reply"
+            android:key="@string/preference_reply_message"
+            android:summary="Add your message"
+            android:title="Reply Message"
+            app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
     <PreferenceCategory
         android:title="Notification"
         app:iconSpaceReserved="false">
-
         <ListPreference
             android:defaultValue="None"
             android:entries="@array/mpesa_types_notification"
@@ -137,12 +148,10 @@
             android:summary="Types of mpesa transaction to receive notifications of"
             android:title="Mpesa type"
             app:iconSpaceReserved="false" />
-        
 
     </PreferenceCategory>
 
     <PreferenceCategory app:iconSpaceReserved="false">
-
         <Preference
             android:selectable="true"
             android:title="Send feedback"
@@ -151,6 +160,5 @@
             app:summary="Report technical issues or suggest new features" />
 
     </PreferenceCategory>
-
 
 </PreferenceScreen>

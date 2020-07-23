@@ -25,4 +25,10 @@ interface LogInfoDao {
 
     @Query("SELECT * FROM logInfo WHERE isUploaded=:isUploaded ORDER BY date DESC")
     fun getAllPendingLogs(isUploaded:Boolean): LiveData<List<LogInfo>>
+
+    @Query("SELECT * FROM logInfo  ORDER BY date DESC ")
+    fun getLastDate(): LiveData<List<LogInfo>>
+
+//    @Query("")
+//    suspend fun delete()
 }

@@ -44,6 +44,7 @@ object AppLog {
         CoroutineScope(IO).launch {
             MessagesDatabase(context).getLogInfoDao().addLogInfo(
                 LogInfo(
+                    Date().time,
                     logFormat.date,
                     logFormat.type,
                     logFormat.log,

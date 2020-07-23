@@ -6,7 +6,8 @@ import java.io.Serializable
 
 @Entity
 data class LogInfo(
-    val date: String,
+    val date: Long,
+    val dateString: String,
     val type: String,
     val log: String,
     val client_gateway_type: String,
@@ -18,6 +19,6 @@ data class LogInfo(
     var id: Int = 0
 
     override fun toString(): String {
-        return "\n$date\n$log\n"
+        return "\n$dateString\n$log\n"
     }
 }
