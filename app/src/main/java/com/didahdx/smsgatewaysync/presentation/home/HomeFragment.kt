@@ -14,8 +14,6 @@ import android.os.StatFs
 import android.provider.Settings
 import android.telephony.TelephonyManager
 import android.view.*
-import androidx.appcompat.app.AlertDialog
-import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.checkSelfPermission
@@ -38,13 +36,11 @@ import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
 import com.didahdx.smsgatewaysync.data.network.PostSms
 import com.didahdx.smsgatewaysync.data.network.SmsApi
 import com.didahdx.smsgatewaysync.databinding.FragmentHomeBinding
-import com.didahdx.smsgatewaysync.domain.MessageInfo
 import com.didahdx.smsgatewaysync.domain.PhoneStatus
 import com.didahdx.smsgatewaysync.services.AppServices
 import com.didahdx.smsgatewaysync.services.LocationGpsService
 import com.didahdx.smsgatewaysync.presentation.activities.LoginActivity
-import com.didahdx.smsgatewaysync.utilities.*
-import com.didahdx.smsgatewaysync.work.SendRabbitMqWorker
+import com.didahdx.smsgatewaysync.util.*
 import com.didahdx.smsgatewaysync.work.WorkerUtil.sendToRabbitMQ
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.perf.metrics.AddTrace
@@ -60,7 +56,6 @@ import retrofit2.Callback
 import retrofit2.Response
 import timber.log.Timber
 import java.text.DecimalFormat
-import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
 
