@@ -11,10 +11,12 @@ import androidx.lifecycle.ViewModel
 import com.didahdx.smsgatewaysync.data.db.IncomingMessagesDao
 import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
 import com.didahdx.smsgatewaysync.domain.SmsInfo
+import com.didahdx.smsgatewaysync.util.toast
 import com.google.firebase.perf.metrics.AddTrace
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.cancel
+import timber.log.Timber
 
 
 class HomeViewModel(
@@ -105,6 +107,8 @@ class HomeViewModel(
         when (msg.what) {
 
             FilterDataRunnable.FILTERED_DATA -> {
+                app.toast("Filtered data called")
+                Timber.d("Filtered data called")
 //                val list : ArrayList<MpesaMessageInfo>=msg.data.getParcelableArrayList(FilterDataRunnable.FILTERED_DATA_STRING)
                 val mpesaMessages: ArrayList<MpesaMessageInfo> = ArrayList<MpesaMessageInfo>(
                     msg.data.getParcelableArrayList(FilterDataRunnable.FILTERED_DATA_STRING)!!)
@@ -114,6 +118,7 @@ class HomeViewModel(
             }
 
             FilterDataRunnable.PROGRESS_COUNT_INT -> {
+                Timber.d("Filtered data count called")
                 setCount(msg.data.getInt(FilterDataRunnable.PROGRESS_COUNT_STRING))
             }
         }
