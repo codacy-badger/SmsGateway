@@ -32,11 +32,16 @@ class LogFragment : Fragment() {
         binding.lifecycleOwner = this
 
 
-        logViewModel.presentlog.observe(viewLifecycleOwner, Observer {
+        logViewModel.getLogs().observe(viewLifecycleOwner, Observer {
+
+        })
+
+        logViewModel.messageLogs.observe(viewLifecycleOwner, Observer {
             it?.let {
                 binding.textViewLog.text = it
             }
         })
+
 
         return binding.root
     }

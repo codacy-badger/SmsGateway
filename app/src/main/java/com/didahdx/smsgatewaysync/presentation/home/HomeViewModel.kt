@@ -81,12 +81,9 @@ class HomeViewModel(
                                 count++
                             }
                         }
-
                     }
                 }
-
                 _messageList.postValue(messagesFilled.toList())
-
                 messagesFilledNew.addAll(messagesFilled)
             }
             return@map messagesFilledNew.toList()
@@ -130,8 +127,6 @@ class HomeViewModel(
         super.onCleared()
         CoroutineScope(IO).cancel()
     }
-
-
 
 
 }

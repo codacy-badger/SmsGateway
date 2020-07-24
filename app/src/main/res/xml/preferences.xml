@@ -123,6 +123,7 @@
             app:iconSpaceReserved="false" />
 
         <CheckBoxPreference
+            android:dependency="@string/preference_hangup"
             android:defaultValue="false"
             android:key="@string/preference_hang_up_reply"
             android:summary="Add a message to send to auto hang up  calls"
