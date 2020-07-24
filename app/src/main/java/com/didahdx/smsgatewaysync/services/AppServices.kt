@@ -37,18 +37,15 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 class AppServices : Service(), UiUpdaterInterface {
-    private lateinit var notificationManager: NotificationManagerCompat
 
     private var userLatitude = ""
     private var userLongitude = ""
     private val user = FirebaseAuth.getInstance().currentUser
-
     private val statusIntent = Intent(STATUS_INTENT_BROADCAST_RECEIVER)
     private var mPrnMng: WoosimPrnMng? = null
     private var wakeLock: PowerManager.WakeLock? = null
-    lateinit var notification: Notification
 
-    //    lateinit var rabbitmqClient: RabbitmqClient
+    // lateinit var rabbitmqClient: RabbitmqClient
     @AddTrace(name = "AppServicesOnCreate", enabled = true /* optional */)
     override fun onCreate() {
         super.onCreate()
@@ -104,29 +101,8 @@ class AppServices : Service(), UiUpdaterInterface {
         val input = intent?.getStringExtra(INPUT_EXTRAS) ?: " "
         setRestartServiceState(this, true)
         setServiceState(this, ServiceState.STARTING)
-//        notificationStatus(input, false)
-        val notificationIntent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
 
-        val pendingIntent = PendingIntent.getActivity(
-            this, 0,
-            notificationIntent, 0
-        )
-
-        notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle(getString(R.string.app_name))
-            .setContentText(input)
-            .setSmallIcon(R.drawable.ic_home)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setContentIntent(pendingIntent)
-//            .setOnlyAlertOnce(true)
-            .build()
-
-        notification.flags = notification.flags or Notification.DEFAULT_LIGHTS
-        notification.flags = notification.flags or Notification.DEFAULT_VIBRATE
-        notification.flags = Notification.FLAG_ONLY_ALERT_ONCE
-
+        val notification = NotificationUtil.notificationStatus(this, input, false)
         startForeground(1, notification)
         toast("startForeground called")
     }
@@ -149,7 +125,8 @@ class AppServices : Service(), UiUpdaterInterface {
         super.onTaskRemoved(rootIntent)
     }
 
-    override fun onLowMemory() { //Send broadcast to the Activity to kill this service and restart it.
+    override fun onLowMemory() {
+        //Send broadcast to the Activity to kill this service and restart it.
         super.onLowMemory()
     }
 
@@ -163,7 +140,6 @@ class AppServices : Service(), UiUpdaterInterface {
                 latitude?.let { userLatitude = it }
                 longitude?.let { userLongitude = it }
 
-//                context.toast("Gps/Network Location  $userLatitude  $userLongitude $altitude")
                 Timber.d("Received Gps/Network Location  $userLatitude  $userLongitude $altitude")
             }
         }
@@ -192,7 +168,6 @@ class AppServices : Service(), UiUpdaterInterface {
         SpUtil.setPreferenceString(context, PREF_STATUS_COLOR, color)
         Timber.d("thread name ${Thread.currentThread().name}")
 
-        notificationManager = NotificationManagerCompat.from(context)
         val isServiceOn = SpUtil.getPreferenceBoolean(this@AppServices, PREF_SERVICES_KEY)
         if (isServiceOn) {
             statusIntent.putExtra(STATUS_MESSAGE_EXTRA, status)

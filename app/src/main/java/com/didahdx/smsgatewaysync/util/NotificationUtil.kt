@@ -100,8 +100,10 @@ object NotificationUtil {
             .build()
 
         notification.flags = Notification.FLAG_ONLY_ALERT_ONCE
-        notification.flags = Notification.FLAG_ONGOING_EVENT
         notification.flags = Notification.FLAG_AUTO_CANCEL
+        notification.flags = notification.flags or Notification.DEFAULT_LIGHTS
+        notification.flags = notification.flags or Notification.DEFAULT_VIBRATE
+
         return notification
     }
 

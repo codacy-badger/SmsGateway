@@ -36,6 +36,7 @@ abstract class MessagesDatabase : RoomDatabase() {
         private fun buildDatabase(context: Context) = Room.databaseBuilder(
             context.applicationContext,
             MessagesDatabase::class.java, MESSAGE_DATABASE)
+            .fallbackToDestructiveMigration()
 //            .addMigrations(MIGRATION_1_2)
             .build()
 
