@@ -11,18 +11,21 @@ import androidx.lifecycle.ViewModel
 import com.didahdx.smsgatewaysync.data.db.IncomingMessagesDao
 import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
 import com.didahdx.smsgatewaysync.domain.SmsInfo
-import com.didahdx.smsgatewaysync.util.*
+import com.didahdx.smsgatewaysync.util.toast
 import com.google.firebase.perf.metrics.AddTrace
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import timber.log.Timber
 
 
 class HomeViewModel(
     dataSource: IncomingMessagesDao,
     application: Application
-) : ViewModel() {
+) : ViewModel(), Handler.Callback {
+
+    private var mHandlerThread: HandlerThread = HandlerThread("HomeViewModel HandlerThread")
+    private var mMainThreadHandler: Handler = Handler(this)
 
     //data to be passed to next screen
     private val _messageCount = MutableLiveData<Int>()
@@ -40,52 +43,23 @@ class HomeViewModel(
     private val app = application
     private var incomingMessages = database.getAllMessages()
 
+    init {
+        mHandlerThread.start()
+    }
 
     @AddTrace(name = "HomeViewModelGetFilteredData")
     fun getFilteredData(): LiveData<List<MpesaMessageInfo>> {
 
         return Transformations.map(incomingMessages) {
             val messagesFilledNew = ArrayList<MpesaMessageInfo>()
-            CoroutineScope(IO).launch {
-                val messagesFilled = ArrayList<MpesaMessageInfo>()
-                it?.let {
-                    val mpesaType = SpUtil.getPreferenceString(app, PREF_MPESA_TYPE, DIRECT_MPESA)
-                    var count = 0
-                    val maskedPhoneNumber = SpUtil.getPreferenceBoolean(app, PREF_MASKED_NUMBER)
-                    for (i in it.indices) {
-                        val smsFilter = SmsFilter(it[i].messageBody, maskedPhoneNumber)
-                        setCount(count)
-                        when (mpesaType) {
-                            PAY_BILL -> {
-                                if (smsFilter.mpesaType == PAY_BILL) {
-                                    messagesFilled.add(it[i])
-                                    count++
-                                }
-                            }
+            val backgroundHandler = Handler(mHandlerThread.looper)
+            backgroundHandler.post(
+                FilterDataRunnable(
+                    app, mMainThreadHandler,
+                    it as ArrayList<MpesaMessageInfo>
+                )
+            )
 
-                            DIRECT_MPESA -> {
-                                if (smsFilter.mpesaType == DIRECT_MPESA) {
-                                    messagesFilled.add(it[i])
-                                    count++
-                                }
-                            }
-
-                            BUY_GOODS_AND_SERVICES -> {
-                                if (smsFilter.mpesaType == BUY_GOODS_AND_SERVICES) {
-                                    messagesFilled.add(it[i])
-                                    count++
-                                }
-                            }
-                            else -> {
-                                messagesFilled.add(it[i])
-                                count++
-                            }
-                        }
-                    }
-                }
-                _messageList.postValue(messagesFilled.toList())
-                messagesFilledNew.addAll(messagesFilled)
-            }
             return@map messagesFilledNew.toList()
         }
     }
@@ -126,6 +100,28 @@ class HomeViewModel(
     override fun onCleared() {
         super.onCleared()
         CoroutineScope(IO).cancel()
+        mHandlerThread.quitSafely()
+    }
+
+    override fun handleMessage(msg: Message): Boolean {
+        when (msg.what) {
+
+            FilterDataRunnable.FILTERED_DATA -> {
+                app.toast("Filtered data called")
+                Timber.d("Filtered data called")
+                val mpesaMessages: ArrayList<MpesaMessageInfo> = ArrayList<MpesaMessageInfo>(
+                    msg.data.getParcelableArrayList(FilterDataRunnable.FILTERED_DATA_STRING)!!
+                )
+                _messageList.postValue(mpesaMessages.toList())
+            }
+
+            FilterDataRunnable.PROGRESS_COUNT_INT -> {
+                Timber.d("Filtered data count called")
+                setCount(msg.data.getInt(FilterDataRunnable.PROGRESS_COUNT_STRING))
+            }
+        }
+
+        return true
     }
 
 

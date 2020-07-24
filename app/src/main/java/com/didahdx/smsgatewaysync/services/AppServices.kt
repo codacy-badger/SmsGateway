@@ -16,7 +16,7 @@ import androidx.core.content.ContextCompat
 import androidx.work.*
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.domain.LogFormat
-import com.didahdx.smsgatewaysync.manager.RabbitMqRunnable
+import com.didahdx.smsgatewaysync.rabbitMq.RabbitMqRunnable
 import com.didahdx.smsgatewaysync.presentation.UiUpdaterInterface
 import com.didahdx.smsgatewaysync.presentation.activities.MainActivity
 import com.didahdx.smsgatewaysync.printerlib.WoosimPrnMng
@@ -55,16 +55,9 @@ class AppServices : Service(), UiUpdaterInterface {
         toast("Service started")
         val notification = NotificationUtil.notificationStatus(this, "Service starting", false)
         startForeground(1, notification)
-        AppLog.logMessage("Sms Service started", this,true)
-
 
         val rabbitMqRunnable = user?.email?.let { RabbitMqRunnable(this, it, this) }
         Thread(rabbitMqRunnable).start()
-
-        CoroutineScope(IO).launch {
-            cancelPing()
-            setupRabbitMqPing()
-        }
 
         registerReceiver(
             ConnectionReceiver(),
@@ -73,11 +66,9 @@ class AppServices : Service(), UiUpdaterInterface {
 
         registerReceiver(locationBroadcastReceiver, IntentFilter(LOCATION_UPDATE_INTENT))
 
-        wakeLock = (getSystemService(Context.POWER_SERVICE) as PowerManager).run {
-            newWakeLock(
-                PowerManager.PARTIAL_WAKE_LOCK,
-                AppServices::class.java.simpleName
-            ).apply {
+        wakeLock = (getSystemService(Context.POWER_SERVICE) as PowerManager)
+            .run { newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                AppServices::class.java.simpleName).apply {
                 acquire(10 * 60 * 1000L /*4 minutes*/)
             }
         }
@@ -246,42 +237,8 @@ class AppServices : Service(), UiUpdaterInterface {
 //        CoroutineScope(IO).launch {
 //            rabbitmqClient.disconnect()
 //        }
-
         toast("Service destroyed")
         CoroutineScope(IO).cancel()
-    }
-
-    @AddTrace(name="AppServicesSetupRabbitMqPing")
-    private fun setupRabbitMqPing() {
-        val email = FirebaseAuth.getInstance().currentUser?.email ?: NOT_AVAILABLE
-        val logFormat = LogFormat(
-            date = Date().toString(),
-            type = "logs",
-            client_gateway_type = ANDROID_PHONE,
-            log = "ping",
-            client_sender = email,
-            isUserVisible = true,
-            isUploaded =true
-        )
-
-        val data = Data.Builder()
-            .putString(KEY_TASK_MESSAGE, Gson().toJson(logFormat))
-            .putString(KEY_EMAIL, user?.email)
-            .build()
-        val constraints = Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.CONNECTED)
-            .build()
-
-        val repeatingRequest = PeriodicWorkRequestBuilder<SendRabbitMqWorker>(18, TimeUnit.MINUTES)
-            .setConstraints(constraints)
-            .setInputData(data)
-            .build()
-        Timber.d("WorkManager: Periodic Work request for sync is scheduled")
-        val isServiceOn = SpUtil.getPreferenceBoolean(this, PREF_SERVICES_KEY)
-        if (isServiceOn)
-            WorkManager.getInstance(this).enqueueUniquePeriodicWork(SendRabbitMqWorker.PING_WORK_NAME,
-                ExistingPeriodicWorkPolicy.KEEP,
-                repeatingRequest)
     }
 
     private fun cancelPing() {

@@ -11,7 +11,7 @@ import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
 
 @Database(
     entities = [MpesaMessageInfo::class,LogInfo::class], exportSchema = false,
-    version = 2
+    version = 1
 )
 abstract class MessagesDatabase : RoomDatabase() {
 
@@ -36,7 +36,7 @@ abstract class MessagesDatabase : RoomDatabase() {
         private fun buildDatabase(context: Context) = Room.databaseBuilder(
             context.applicationContext,
             MessagesDatabase::class.java, MESSAGE_DATABASE)
-            .addMigrations(MIGRATION_1_2)
+//            .addMigrations(MIGRATION_1_2)
             .build()
 
 

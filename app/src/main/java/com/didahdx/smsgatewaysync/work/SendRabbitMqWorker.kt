@@ -3,7 +3,7 @@ package com.didahdx.smsgatewaysync.work
 import android.content.Context
 import androidx.work.Worker
 import androidx.work.WorkerParameters
-import com.didahdx.smsgatewaysync.manager.RabbitMqConnector
+import com.didahdx.smsgatewaysync.rabbitMq.RabbitMqConnector
 import com.didahdx.smsgatewaysync.util.*
 import com.didahdx.smsgatewaysync.util.AppLog.logMessage
 import com.google.firebase.perf.metrics.AddTrace

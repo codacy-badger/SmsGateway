@@ -1,5 +1,9 @@
 package com.didahdx.smsgatewaysync.domain
 
+import android.os.Parcelable
+import kotlinx.android.parcel.Parcelize
+
+@Parcelize
 data class SmsInboxInfo(
     val id: Int,
     val messageBody: String,
@@ -14,4 +18,6 @@ data class SmsInboxInfo(
     val status: Boolean,
     val longitude: String,
     val latitude: String
-)
+):Parcelable{
+
+}
