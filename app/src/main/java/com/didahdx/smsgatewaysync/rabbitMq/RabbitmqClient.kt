@@ -1,4 +1,4 @@
-package com.didahdx.smsgatewaysync.manager
+package com.didahdx.smsgatewaysync.rabbitMq
 
 import android.content.Context
 import com.didahdx.smsgatewaysync.presentation.UiUpdaterInterface

@@ -1,4 +1,4 @@
-package com.didahdx.smsgatewaysync.manager
+package com.didahdx.smsgatewaysync.rabbitMq
 
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
