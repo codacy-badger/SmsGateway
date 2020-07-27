@@ -118,13 +118,14 @@ class SettingsFragment : PreferenceFragmentCompat(),
     }
 
     override fun onPreferenceClick(preference: Preference?): Boolean {
-        val feedBack = findPreference(PREF_FEEDBACK) as Preference?
-        when (preference) {
-            feedBack -> {
-                sendEmail()
-            }
-        }
-        return false
+//        val feedBack = findPreference(PREF_FEEDBACK) as Preference?
+//        when (preference) {
+//            feedBack -> {
+//                sendEmail()
+//            }
+//        }
+        sendEmail()
+        return true
     }
 
     override fun onResume() {
@@ -224,7 +225,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
         val emailIntent: Intent = Intent(Intent.ACTION_SEND)
         emailIntent.type = "message/rfc822"
-        emailIntent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.email_subject, versionName))
+        emailIntent.putExtra(Intent.EXTRA_SUBJECT,  getString(R.string.email_subject, versionName))
         emailIntent.putExtra(Intent.EXTRA_EMAIL, getString(R.string.email_to))
 //        emailIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file))
 //        emailIntent.putExtra(Intent.EXTRA_TEXT, BODY_EMAIL)

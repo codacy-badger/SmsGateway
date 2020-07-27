@@ -2,11 +2,13 @@ package com.didahdx.smsgatewaysync.presentation.activities
 
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -18,8 +20,10 @@ import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
 import androidx.preference.PreferenceManager
 import com.didahdx.smsgatewaysync.R
-import com.didahdx.smsgatewaysync.broadcastReceivers.*
-import com.didahdx.smsgatewaysync.util.*
+import com.didahdx.smsgatewaysync.broadcastReceivers.BatteryReceiver
+import com.didahdx.smsgatewaysync.broadcastReceivers.MmsReceiver
+import com.didahdx.smsgatewaysync.util.ACTION_MMS_RECEIVED
+import com.didahdx.smsgatewaysync.util.PERMISSION_FOREGROUND_SERVICES_CODE
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.perf.metrics.AddTrace
@@ -32,8 +36,9 @@ class MainActivity : AppCompatActivity() {
 
     private var mFirebaseAnalytics: FirebaseAnalytics? = null
     lateinit var navController: NavController
+    private var wakeLock: PowerManager.WakeLock? = null
 
-    @AddTrace(name="MainActivityOnCreate")
+    @AddTrace(name = "MainActivityOnCreate")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -61,11 +66,32 @@ class MainActivity : AppCompatActivity() {
         if (firebaseUser != null) {
             navUser.text = firebaseUser.email
         }
+
         checkForegroundPermission()
+        wakeLock = (getSystemService(Context.POWER_SERVICE) as PowerManager)
+            .run {
+                newWakeLock(
+                    PowerManager.PARTIAL_WAKE_LOCK,
+                    MainActivity::class.java.simpleName
+                ).apply {
+                    acquire(10 * 60 * 1000L /*4 minutes*/)
+                }
+            }
+
+    }
+
+
+    override fun onDestroy() {
+        super.onDestroy()
+        wakeLock?.let {
+            if (it.isHeld) {
+                it.release()
+            }
+        }
     }
 
     //used to check foreground services permission on android 9+
-    @AddTrace(name="MainActivityCheckForegroundPermission")
+    @AddTrace(name = "MainActivityCheckForegroundPermission")
     private fun checkForegroundPermission() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE)
             != PackageManager.PERMISSION_GRANTED
@@ -118,5 +144,4 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
 }

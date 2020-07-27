@@ -11,6 +11,8 @@ import androidx.lifecycle.ViewModelProvider
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
 import com.didahdx.smsgatewaysync.databinding.FragmentLogBinding
+import com.didahdx.smsgatewaysync.util.toast
+
 
 class LogFragment : Fragment() {
 
@@ -22,7 +24,7 @@ class LogFragment : Fragment() {
     ): View? {
         // Inflate the layout for this fragment
         val binding: FragmentLogBinding =
-            DataBindingUtil.inflate(inflater,R.layout.fragment_log, container, false)
+            DataBindingUtil.inflate(inflater, R.layout.fragment_log, container, false)
 
         val application = requireNotNull(this.activity).application
         val database = MessagesDatabase(application).getLogInfoDao()
@@ -36,9 +38,13 @@ class LogFragment : Fragment() {
 
         })
 
+
+
         logViewModel.messageLogs.observe(viewLifecycleOwner, Observer {
             it?.let {
-                binding.textViewLog.text = it
+//                binding.textViewLog.loadDataWithBaseURL("", it, "text/html", "UTF-8", "")
+                binding.textViewLog.text=it
+                context?.toast("logs loaded")
             }
         })
 

@@ -9,11 +9,15 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import com.didahdx.smsgatewaysync.data.db.LogInfoDao
+import com.didahdx.smsgatewaysync.util.IOExecutor
+import com.didahdx.smsgatewaysync.util.NOT_AVAILABLE
 import com.google.firebase.perf.metrics.AddTrace
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.lang.StringBuilder
+
 
 class LogViewModel(application: Application, dbLogs: LogInfoDao) : ViewModel(), Handler.Callback {
 
@@ -35,7 +39,7 @@ class LogViewModel(application: Application, dbLogs: LogInfoDao) : ViewModel(), 
     fun getLogs(): LiveData<String> {
         return Transformations.map(logs) {
             val backgroundHandler = Handler(mHandlerThread.looper)
-            backgroundHandler.post(GetLogsRunnable(mMainThreadHandler ,it))
+            backgroundHandler.post(GetLogsRunnable(mMainThreadHandler, it))
             val allLogsempyt = StringBuilder()
             return@map allLogsempyt.toString()
         }
@@ -47,18 +51,22 @@ class LogViewModel(application: Application, dbLogs: LogInfoDao) : ViewModel(), 
         mHandlerThread.quitSafely()
     }
 
+    fun setLog(messageLogs: String) {
+        _messageLogs.postValue(messageLogs)
+    }
+
     override fun handleMessage(msg: Message): Boolean {
         when (msg.what) {
-
             GetLogsRunnable.FILTERED_DATA -> {
                 Timber.d("Filtered data called")
-                val messageLogs= msg.data.getString(GetLogsRunnable.FILTERED_DATA_STRING)!!
-                _messageLogs.postValue(messageLogs)
+                val messageLogs = msg.data.getString(GetLogsRunnable.FILTERED_DATA_STRING) ?: NOT_AVAILABLE
+                CoroutineScope(IO).launch {
+                    setLog(messageLogs)
+                }
             }
 
             GetLogsRunnable.PROGRESS_COUNT_INT -> {
                 Timber.d("Filtered data count called")
-//                setCount(msg.data.getInt(GetLogsRunnable.PROGRESS_COUNT_STRING))
             }
         }
         return true

@@ -84,7 +84,6 @@ class HomeFragment : Fragment() {
         Manifest.permission.ANSWER_PHONE_CALLS
     )
 
-    lateinit var notificationManager: NotificationManagerCompat
     var userLongitude: String = " "
     var userLatitude: String = " "
     val user = FirebaseAuth.getInstance().currentUser
@@ -120,7 +119,6 @@ class HomeFragment : Fragment() {
         val database = MessagesDatabase(application).getIncomingMessageDao()
         val factory = HomeViewModelFactory(database, application)
         mHomeViewModel = ViewModelProvider(this, factory).get(HomeViewModel::class.java)
-
 
         binding.homeViewModel = mHomeViewModel
         val adapter =
@@ -163,13 +161,11 @@ class HomeFragment : Fragment() {
             }
         })
 
-
         binding.refreshLayoutHome.setOnRefreshListener {
             binding.refreshLayoutHome.isRefreshing = true
             mHomeViewModel.refreshIncomingDatabase()
             binding.refreshLayoutHome.isRefreshing = false
         }
-
 
         val email = FirebaseAuth.getInstance().currentUser?.email ?: "email not available "
         context?.let { SpUtil.setPreferenceString(it, PREF_USER_EMAIL, email) }
@@ -208,7 +204,6 @@ class HomeFragment : Fragment() {
             binding.textViewStatus.text = "$APP_NAME is disabled"
         }
 
-
         // Inflate the layout for this fragment
         return binding.root
     }
@@ -234,19 +229,15 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val isServiceOn =
-            context?.let { SpUtil.getPreferenceBoolean(it, PREF_SERVICES_KEY) } ?: true
-        notificationManager = NotificationManagerCompat.from(requireContext())
-
-        if (isServiceOn && ServiceState.STOPPED == context?.let { getServiceState(it) }) {
+        val isServiceOn = context?.let {
+            SpUtil.getPreferenceBoolean(it, PREF_SERVICES_KEY) } ?: true
+        if (isServiceOn) {
             startServices()
-            context?.toast(" Service started home ${context?.let { getServiceState(it) }}")
         }
 
         checkAndRequestPermissions()
         navController = Navigation.findNavController(view)
     }
-
 
     //appServices for showing notification bar
     private fun startServices() {

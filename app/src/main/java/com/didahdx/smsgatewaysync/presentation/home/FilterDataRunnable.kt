@@ -39,7 +39,7 @@ class FilterDataRunnable(
         Timber.d("passed data ${Thread.currentThread().name}")
         val messagesFilled = ArrayList<MpesaMessageInfo>()
 
-        filterData?.let {
+        filterData.let {
             val mpesaType = SpUtil.getPreferenceString(app, PREF_MPESA_TYPE, DIRECT_MPESA)
             var count = 0
             val maskedPhoneNumber = SpUtil.getPreferenceBoolean(app, PREF_MASKED_NUMBER)

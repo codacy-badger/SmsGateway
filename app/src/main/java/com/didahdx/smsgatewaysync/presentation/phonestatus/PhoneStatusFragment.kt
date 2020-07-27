@@ -246,7 +246,7 @@ class PhoneStatusFragment : Fragment() {
 
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                checkBalance()
+//                checkBalance()
             }
             networkUsage()
 
