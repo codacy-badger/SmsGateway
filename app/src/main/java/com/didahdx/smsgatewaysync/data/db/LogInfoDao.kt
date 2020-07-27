@@ -24,11 +24,17 @@ interface LogInfoDao {
     fun getAllLogsByUserVisibility(isUserVisible: Boolean): LiveData<List<LogInfo>>
 
     @Query("SELECT * FROM logInfo WHERE isUploaded=:isUploaded ORDER BY date DESC")
-    fun getAllPendingLogs(isUploaded:Boolean): LiveData<List<LogInfo>>
+    fun getAllPendingLogs(isUploaded: Boolean): LiveData<List<LogInfo>>
 
     @Query("SELECT * FROM logInfo  ORDER BY date DESC ")
     fun getLastDate(): LiveData<List<LogInfo>>
 
-//    @Query("")
-//    suspend fun delete()
+    @Query("SELECT * FROM logInfo WHERE id = ( SELECT MAX( id ) FROM logInfo )")
+    fun getHighestId(): List<LogInfo>
+
+    @Query("SELECT * FROM logInfo WHERE id = ( SELECT MIN( id ) FROM logInfo )")
+    fun getLowestId(): List<LogInfo>
+
+    @Query("DELETE FROM logInfo WHERE id >=:lowerId and id <=:higherId")
+    suspend fun delete(lowerId: Int, higherId: Int)
 }

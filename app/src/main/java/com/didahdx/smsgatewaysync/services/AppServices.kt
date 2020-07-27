@@ -1,7 +1,5 @@
 package com.didahdx.smsgatewaysync.services
 
-import android.app.Notification
-import android.app.PendingIntent
 import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -10,31 +8,24 @@ import android.content.IntentFilter
 import android.net.ConnectivityManager
 import android.os.IBinder
 import android.os.PowerManager
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import androidx.work.*
-import com.didahdx.smsgatewaysync.R
-import com.didahdx.smsgatewaysync.domain.LogFormat
-import com.didahdx.smsgatewaysync.rabbitMq.RabbitMqRunnable
-import com.didahdx.smsgatewaysync.presentation.UiUpdaterInterface
-import com.didahdx.smsgatewaysync.presentation.activities.MainActivity
-import com.didahdx.smsgatewaysync.printerlib.WoosimPrnMng
+import androidx.work.Data
+import androidx.work.WorkManager
 import com.didahdx.smsgatewaysync.broadcastReceivers.ConnectionReceiver
+import com.didahdx.smsgatewaysync.presentation.UiUpdaterInterface
+import com.didahdx.smsgatewaysync.printerlib.WoosimPrnMng
+import com.didahdx.smsgatewaysync.rabbitMq.RabbitMqRunnable
 import com.didahdx.smsgatewaysync.util.*
 import com.didahdx.smsgatewaysync.work.SendRabbitMqWorker
 import com.didahdx.smsgatewaysync.work.WorkerUtil
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.perf.metrics.AddTrace
-import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.util.*
-import java.util.concurrent.TimeUnit
 
 class AppServices : Service(), UiUpdaterInterface {
 
@@ -43,7 +34,6 @@ class AppServices : Service(), UiUpdaterInterface {
     private val user = FirebaseAuth.getInstance().currentUser
     private val statusIntent = Intent(STATUS_INTENT_BROADCAST_RECEIVER)
     private var mPrnMng: WoosimPrnMng? = null
-    private var wakeLock: PowerManager.WakeLock? = null
 
     // lateinit var rabbitmqClient: RabbitmqClient
     @AddTrace(name = "AppServicesOnCreate", enabled = true /* optional */)
@@ -62,13 +52,6 @@ class AppServices : Service(), UiUpdaterInterface {
         )
 
         registerReceiver(locationBroadcastReceiver, IntentFilter(LOCATION_UPDATE_INTENT))
-
-        wakeLock = (getSystemService(Context.POWER_SERVICE) as PowerManager)
-            .run { newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
-                AppServices::class.java.simpleName).apply {
-                acquire(10 * 60 * 1000L /*4 minutes*/)
-            }
-        }
     }
 
     @AddTrace(name = "AppServiceStartCommand", enabled = true /* optional */)
@@ -201,11 +184,6 @@ class AppServices : Service(), UiUpdaterInterface {
         mPrnMng?.releaseAllocatoins()
         super.onDestroy()
         setServiceState(this, ServiceState.STOPPED)
-        wakeLock?.let {
-            if (it.isHeld) {
-                it.release()
-            }
-        }
 
         cancelPing()
         AppLog.logMessage("Sms Service stopped", this)

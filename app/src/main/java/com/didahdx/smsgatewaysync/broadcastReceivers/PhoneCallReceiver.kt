@@ -37,36 +37,38 @@ class PhoneCallReceiver : BroadcastReceiver() {
 
     @AddTrace(name = "PhoneCallOnReceive", enabled = true /* optional */)
     override fun onReceive(context: Context, intent: Intent) {
+        if (SpUtil.getPreferenceBoolean(context,
+                context.getString(R.string.preference_call_forwarding))) {
+            if (intent.action.equals("android.intent.action.NEW_OUTGOING_CALL")) {
+                savedNumber = intent.extras!!.getString("android.intent.extra.PHONE_NUMBER")
 
-        if (intent.action.equals("android.intent.action.NEW_OUTGOING_CALL")) {
-            savedNumber = intent.extras!!.getString("android.intent.extra.PHONE_NUMBER")
+            } else {
 
-        } else {
+                val stateStr =
+                    intent.extras!!.getString(TelephonyManager.EXTRA_STATE)
+                val number =
+                    intent.extras!!.getString(TelephonyManager.EXTRA_INCOMING_NUMBER)
+                var state = 0
+                if (stateStr == TelephonyManager.EXTRA_STATE_IDLE) {
+                    state = TelephonyManager.CALL_STATE_IDLE
+                } else if (stateStr == TelephonyManager.EXTRA_STATE_OFFHOOK) {
+                    state = TelephonyManager.CALL_STATE_OFFHOOK
+                } else if (stateStr == TelephonyManager.EXTRA_STATE_RINGING) {
+                    state = TelephonyManager.CALL_STATE_RINGING
+                }
 
-            val stateStr =
-                intent.extras!!.getString(TelephonyManager.EXTRA_STATE)
-            val number =
-                intent.extras!!.getString(TelephonyManager.EXTRA_INCOMING_NUMBER)
-            var state = 0
-            if (stateStr == TelephonyManager.EXTRA_STATE_IDLE) {
-                state = TelephonyManager.CALL_STATE_IDLE
-            } else if (stateStr == TelephonyManager.EXTRA_STATE_OFFHOOK) {
-                state = TelephonyManager.CALL_STATE_OFFHOOK
-            } else if (stateStr == TelephonyManager.EXTRA_STATE_RINGING) {
-                state = TelephonyManager.CALL_STATE_RINGING
+                Timber.d("phone receiver called $number")
+                context.toast("phone receiver called $number")
+                onCallStateChanged(context, state, number)
+
             }
-
-            Timber.d("phone receiver called $number")
-            context.toast("phone receiver called $number")
-            onCallStateChanged(context, state, number)
-
         }
     }
 
     //Deals with actual events
     //Incoming call-  goes from IDLE to RINGING when it rings, to OFFHOOK when it's answered, to IDLE when its hung up
     //Outgoing call-  goes from IDLE to OFFHOOK when it dials out, to IDLE when hung up
-    private fun onCallStateChanged(context: Context?, state: Int, number: String?) {
+    private fun onCallStateChanged(context: Context, state: Int, number: String?) {
 
         if (lastState == state) {
             //No change, debounce extras
@@ -199,14 +201,20 @@ class PhoneCallReceiver : BroadcastReceiver() {
                 disconnectCall(context)
             }
 
-            if (phoneNumber != null && SpUtil.getPreferenceBoolean(context,context.getString(R.string.preference_hang_up_reply))) {
+            if (phoneNumber != null && SpUtil.getPreferenceBoolean(
+                    context,
+                    context.getString(R.string.preference_hang_up_reply)
+                )
+            ) {
                 val data = Data.Builder()
                     .putString(
                         KEY_TASK_MESSAGE,
                         SpUtil.getPreferenceString(
                             context,
                             context.getString(R.string.preference_reply_message),
-                            " "))
+                            " "
+                        )
+                    )
                     .putString(KEY_PHONE_NUMBER, phoneNumber)
                     .build()
                 WorkerUtil.sendSms(data, context)

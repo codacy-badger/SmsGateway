@@ -20,5 +20,6 @@ data class LogInfo(
 
     override fun toString(): String {
         return "\n$dateString\n$log\n"
+//        return "<br>$dateString<br>$log<br>"
     }
 }
