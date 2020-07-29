@@ -8,6 +8,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import com.didahdx.smsgatewaysync.R;
+import com.didahdx.smsgatewaysync.util.SpUtil;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;

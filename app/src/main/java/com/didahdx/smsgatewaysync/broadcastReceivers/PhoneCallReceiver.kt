@@ -37,32 +37,31 @@ class PhoneCallReceiver : BroadcastReceiver() {
 
     @AddTrace(name = "PhoneCallOnReceive", enabled = true /* optional */)
     override fun onReceive(context: Context, intent: Intent) {
-        if (SpUtil.getPreferenceBoolean(context,
-                context.getString(R.string.preference_call_forwarding))) {
-            if (intent.action.equals("android.intent.action.NEW_OUTGOING_CALL")) {
-                savedNumber = intent.extras!!.getString("android.intent.extra.PHONE_NUMBER")
 
-            } else {
+        if (intent.action.equals("android.intent.action.NEW_OUTGOING_CALL")) {
+            savedNumber = intent.extras!!.getString("android.intent.extra.PHONE_NUMBER")
 
-                val stateStr =
-                    intent.extras!!.getString(TelephonyManager.EXTRA_STATE)
-                val number =
-                    intent.extras!!.getString(TelephonyManager.EXTRA_INCOMING_NUMBER)
-                var state = 0
-                if (stateStr == TelephonyManager.EXTRA_STATE_IDLE) {
-                    state = TelephonyManager.CALL_STATE_IDLE
-                } else if (stateStr == TelephonyManager.EXTRA_STATE_OFFHOOK) {
-                    state = TelephonyManager.CALL_STATE_OFFHOOK
-                } else if (stateStr == TelephonyManager.EXTRA_STATE_RINGING) {
-                    state = TelephonyManager.CALL_STATE_RINGING
-                }
+        } else {
 
-                Timber.d("phone receiver called $number")
-                context.toast("phone receiver called $number")
-                onCallStateChanged(context, state, number)
-
+            val stateStr =
+                intent.extras!!.getString(TelephonyManager.EXTRA_STATE)
+            val number =
+                intent.extras!!.getString(TelephonyManager.EXTRA_INCOMING_NUMBER)
+            var state = 0
+            if (stateStr == TelephonyManager.EXTRA_STATE_IDLE) {
+                state = TelephonyManager.CALL_STATE_IDLE
+            } else if (stateStr == TelephonyManager.EXTRA_STATE_OFFHOOK) {
+                state = TelephonyManager.CALL_STATE_OFFHOOK
+            } else if (stateStr == TelephonyManager.EXTRA_STATE_RINGING) {
+                state = TelephonyManager.CALL_STATE_RINGING
             }
+
+            Timber.d("phone receiver called $number")
+            context.toast("phone receiver called $number")
+            onCallStateChanged(context, state, number)
+
         }
+
     }
 
     //Deals with actual events
@@ -163,32 +162,41 @@ class PhoneCallReceiver : BroadcastReceiver() {
     ) {
 
         if (callType == "incomingCallReceived") {
-            hangUpCall(context, phoneNumber)
-            AppLog.logMessage(
-                "$callType from $phoneNumber automatic call hangUp at time $startTime",
-                context
-            )
+            val hangup = SpUtil.getPreferenceBoolean(context, PREF_HANG_UP)
+            if (hangup) {
+                hangUpCall(context, phoneNumber)
+                AppLog.logMessage(
+                        "$callType from $phoneNumber automatic call hangUp at time $startTime",
+                    context
+                )
+            }
         }
-        val phone = phoneNumber ?: " "
-        val email = FirebaseAuth.getInstance().currentUser?.email ?: NOT_AVAILABLE
 
-        val callStatus = CallStatus(
-            type = "calls",
-            longitude = SpUtil.getPreferenceString(context, PREF_LONGITUDE, " "),
-            latitude = SpUtil.getPreferenceString(context, PREF_LATITUDE, " "),
-            client_sender = email,
-            call_type = callType,
-            phone_number = phone,
-            start_time = startTime,
-            end_time = endTime
-        )
+        if (SpUtil.getPreferenceBoolean(
+                context,
+                context.getString(R.string.preference_call_forwarding)
+            )
+        ) {
+            val phone = phoneNumber ?: " "
+            val email = FirebaseAuth.getInstance().currentUser?.email ?: NOT_AVAILABLE
 
-        val data = Data.Builder()
-            .putString(KEY_TASK_MESSAGE, Gson().toJson(callStatus))
-            .putString(KEY_EMAIL, FirebaseAuth.getInstance().currentUser?.email)
-            .build()
-        WorkerUtil.sendToRabbitMQ(context, data)
+            val callStatus = CallStatus(
+                type = "calls",
+                longitude = SpUtil.getPreferenceString(context, PREF_LONGITUDE, " "),
+                latitude = SpUtil.getPreferenceString(context, PREF_LATITUDE, " "),
+                client_sender = email,
+                call_type = callType,
+                phone_number = phone,
+                start_time = startTime,
+                end_time = endTime
+            )
 
+            val data = Data.Builder()
+                .putString(KEY_TASK_MESSAGE, Gson().toJson(callStatus))
+                .putString(KEY_EMAIL, FirebaseAuth.getInstance().currentUser?.email)
+                .build()
+            WorkerUtil.sendToRabbitMQ(context, data)
+        }
     }
 
     private fun hangUpCall(context: Context, phoneNumber: String?) {

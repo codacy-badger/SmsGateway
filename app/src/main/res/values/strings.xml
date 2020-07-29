@@ -11,6 +11,7 @@
     <string name="action_saved_sms">Load Inbox Sms</string>
     <string name="action_print">Print</string>
     <string name="action_forward_sms">Forward sms</string>
+    <string name="action_share_logs">Share Logs</string>
     <string name="action_save_phone_number">Save phone number</string>
 
     <string name="menu_home">Home</string>
@@ -111,4 +112,12 @@
     <string name="choose_printer">Choose your printer brand</string>
     <string name="remove_printer">Remove Printer</string>
     <string name="preference_call_forwarding">call_forwarding</string>
+    <string name="preference_wifi_only">wifi_only</string>
+    <string name="is_printer_connected">isPrinterConnected</string>
+
+    <!-- Connection types -->
+    <string name="Wifi">Connected to WIFI</string>
+    <string name="mobile_data">Connected to MOBILE DATA</string>
+    <string name="connection_lost">No Connection</string>
+
 </resources>

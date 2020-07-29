@@ -14,7 +14,6 @@ import android.os.StatFs
 import android.provider.Settings
 import android.telephony.TelephonyManager
 import android.view.*
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.core.content.PermissionChecker
@@ -48,7 +47,6 @@ import com.google.gson.Gson
 import kotlinx.android.synthetic.main.fragment_home.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import retrofit2.Call
@@ -172,9 +170,8 @@ class HomeFragment : Fragment() {
         val isServiceOn =
             context?.let { SpUtil.getPreferenceBoolean(it, PREF_SERVICES_KEY) } ?: true
 
-        CoroutineScope(IO).launch {
-            getConnectionType()
-        }
+            binding.textViewConnectionType.text = context?.let { Connectivity.getConnectionType(it) }
+
         if (isServiceOn) {
             val color =
                 context?.let { SpUtil.getPreferenceString(it, PREF_STATUS_COLOR, RED_COLOR) }
@@ -382,11 +379,10 @@ class HomeFragment : Fragment() {
                     when (type) {
                         ConnectivityManager.TYPE_WIFI -> {
                             isWifiConn = isWifiConn or isConnected
-                            text_view_connection_type?.text = "Connected to Wifi"
+//                            text_view_connection_type?.text = "Connected to Wifi"
                         }
                         ConnectivityManager.TYPE_MOBILE -> {
-                            text_view_connection_type?.text = "Connected to Mobile data"
-                            context.toast(" Connected to Mobile data")
+//                            text_view_connection_type?.text = "Connected to Mobile data"
                             isMobileConn = isMobileConn or isConnected
                         }
                     }
@@ -396,7 +392,7 @@ class HomeFragment : Fragment() {
                             postMessage()
                         }
                     } else {
-                        text_view_connection_type?.text = "Connection lost"
+//                        text_view_connection_type?.text = "Connection lost"
                     }
                 }
             }
@@ -665,38 +661,5 @@ class HomeFragment : Fragment() {
 
     }
 
-
-    suspend fun getConnectionType() {
-        val connectionManager =
-            context?.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        var connectionType = ""
-        var isConnected = false
-        var isWifiConn = false
-        var isMobileConn = false
-        connectionManager.allNetworks.forEach { network ->
-            connectionManager.getNetworkInfo(network)?.apply {
-                when (type) {
-                    ConnectivityManager.TYPE_WIFI -> {
-                        isWifiConn = isWifiConn or isConnected
-                        connectionType = "Connected to Wifi"
-                    }
-
-                    ConnectivityManager.TYPE_MOBILE -> {
-                        isMobileConn = isMobileConn or isConnected
-                        connectionType = "Connected to Mobile Data"
-                    }
-                }
-                val activeNetwork = connectionManager.activeNetworkInfo
-                if (!(activeNetwork != null && activeNetwork.isConnectedOrConnecting)) {
-
-                    connectionType = "Connection lost"
-                }
-            }
-        }
-
-        CoroutineScope(Main).launch {
-            text_view_connection_type.text = connectionType
-        }
-    }
 
 }

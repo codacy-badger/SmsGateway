@@ -2,6 +2,7 @@ package com.didahdx.smsgatewaysync.rabbitMq
 
 import android.content.Context
 import androidx.work.*
+import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.domain.LogFormat
 import com.didahdx.smsgatewaysync.presentation.UiUpdaterInterface
 import com.didahdx.smsgatewaysync.util.*
@@ -19,11 +20,22 @@ class RabbitMqRunnable(context: Context, email: String, uiUpdaterInterface: UiUp
     private val mEmail = email
     private val updaterInterface = uiUpdaterInterface
 
-    @AddTrace(name="RabbitMqRunnable_run")
+    @AddTrace(name = "RabbitMqRunnable_run")
     override fun run() {
-        AppLog.logMessage("Sms Service started", mContext,true)
-
         Timber.d(" ${Thread.currentThread().name} ")
+        val isWifiOnly =
+            SpUtil.getPreferenceBoolean(mContext, mContext.getString(R.string.preference_wifi_only))
+        if (isWifiOnly) {
+            if (Connectivity.getConnectionType(mContext) == mContext.getString(R.string.Wifi)) {
+                setUpConnection()
+            }
+        } else {
+            setUpConnection()
+        }
+    }
+
+    private fun setUpConnection() {
+        AppLog.logMessage("Sms Service started", mContext, true)
         val rabbitMqClient = RabbitmqClient(updaterInterface, mEmail)
         val urlEnabled = SpUtil.getPreferenceBoolean(mContext, PREF_HOST_URL_ENABLED)
         val isServiceOn = SpUtil.getPreferenceBoolean(mContext, PREF_SERVICES_KEY)
@@ -37,7 +49,7 @@ class RabbitMqRunnable(context: Context, email: String, uiUpdaterInterface: UiUp
     }
 
 
-    @AddTrace(name="AppServicesSetupRabbitMqPing")
+    @AddTrace(name = "AppServicesSetupRabbitMqPing")
     private fun setupRabbitMqPing() {
         val email = FirebaseAuth.getInstance().currentUser?.email ?: NOT_AVAILABLE
         val logFormat = LogFormat(
@@ -47,7 +59,7 @@ class RabbitMqRunnable(context: Context, email: String, uiUpdaterInterface: UiUp
             log = "ping",
             client_sender = email,
             isUserVisible = true,
-            isUploaded =true
+            isUploaded = true
         )
 
         val data = Data.Builder()
@@ -68,7 +80,8 @@ class RabbitMqRunnable(context: Context, email: String, uiUpdaterInterface: UiUp
             WorkManager.getInstance(mContext).enqueueUniquePeriodicWork(
                 SendRabbitMqWorker.PING_WORK_NAME,
                 ExistingPeriodicWorkPolicy.KEEP,
-                repeatingRequest)
+                repeatingRequest
+            )
     }
 
     private fun cancelPing() {

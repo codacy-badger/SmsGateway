@@ -40,6 +40,7 @@ object SpUtil {
         editor.apply()
     }
 
+    @JvmStatic
     fun setPreferenceInt(context: Context, key: String, value: Int) {
         val editor = getPrefs(context).edit()
         editor.putInt(key, value)

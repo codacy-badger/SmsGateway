@@ -14,6 +14,14 @@
             app:defaultValue="true"
             app:iconSpaceReserved="false" />
 
+        <CheckBoxPreference
+            android:key="@string/preference_wifi_only"
+            android:summary="Use wifi only to connect to server"
+            android:title="Use wifi only"
+            app:defaultValue="false"
+            app:iconSpaceReserved="false" />
+
+
     </PreferenceCategory>
 
     <PreferenceCategory
@@ -130,8 +138,8 @@
             app:iconSpaceReserved="false" />
 
         <CheckBoxPreference
-            android:dependency="@string/preference_hangup"
             android:defaultValue="false"
+            android:dependency="@string/preference_hangup"
             android:key="@string/preference_hang_up_reply"
             android:summary="Add a message to send to auto hang up  calls"
             android:title="Enable reply sms"
