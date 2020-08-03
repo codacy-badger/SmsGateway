@@ -23,13 +23,12 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 
-
 class SmsReceiver : BroadcastReceiver() {
 
 
     override fun onReceive(context: Context, intent: Intent) {
 
-        if (SMS_RECEIVED==intent.action) {
+        if (SMS_RECEIVED == intent.action) {
 
             val extras = intent.extras
 
@@ -48,21 +47,28 @@ class SmsReceiver : BroadcastReceiver() {
 
                     val phoneNumber = smsMessage.originatingAddress
                     val messageText = smsMessage.messageBody.toString()
-                    val sms=smsMessage.displayMessageBody
+                    val sms = smsMessage.displayMessageBody
 
 
                     val newIntent = Intent(SMS_RECEIVED)
                     newIntent.putExtra("phoneNumber", phoneNumber)
                     newIntent.putExtra("messageText", messageText)
 
-                    Toast.makeText(context,"display $sms",Toast.LENGTH_LONG).show()
-                    val printer= bluetoothPrinter()
-                    val smsFilter=SmsFilter()
-                    if (Printooth.hasPairedPrinter()){
-                        val printMessage=smsFilter.checkSmsType(messageText)
-                        printer.printText(printMessage,context, APP_NAME)
-                    }else{
-                        Toast.makeText(context,"Printer not connected",Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, "display $sms", Toast.LENGTH_LONG).show()
+                    val printer = bluetoothPrinter()
+                    val smsFilter = SmsFilter()
+                    if (Printooth.hasPairedPrinter()) {
+                        val printMessage = smsFilter.checkSmsType(messageText)
+                        BarcodeGenerator.getBarcode(printMessage)?.let {
+                            printer.printText(
+                                printMessage,
+                                context,
+                                APP_NAME,
+                                it
+                            )
+                        }
+                    } else {
+                        Toast.makeText(context, "Printer not connected", Toast.LENGTH_LONG).show()
                     }
                     LocalBroadcastManager.getInstance(context).sendBroadcast(newIntent)
 
@@ -71,7 +77,6 @@ class SmsReceiver : BroadcastReceiver() {
             }
         }
     }
-
 
 
 }

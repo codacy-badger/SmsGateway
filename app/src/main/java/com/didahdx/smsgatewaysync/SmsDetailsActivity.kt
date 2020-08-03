@@ -221,10 +221,13 @@ class SmsDetailsActivity : AppCompatActivity(), PrintingCallback {
                     , ScanningActivity.SCANNING_FOR_PRINTER
                 )
             } else {
-                bluetoothPrinter.printText(
-                    smsprint,
-                    this, getString(R.string.app_name)
-                )
+                BarcodeGenerator.getBarcode(smsprint)?.let {
+                    bluetoothPrinter.printText(
+                        smsprint,
+                        this, getString(R.string.app_name),
+                        it
+                    )
+                }
 
             }
         }

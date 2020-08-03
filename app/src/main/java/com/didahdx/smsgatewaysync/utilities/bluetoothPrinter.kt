@@ -45,7 +45,9 @@ class bluetoothPrinter : PrintingCallback {
                 .build()
         )
         printables.add(
-            ImagePrintable.Builder(image).build()
+            ImagePrintable.Builder(image)
+                .setAlignment(DefaultPrinter.ALIGNMENT_CENTER)
+                .build()
 //               .setText(message)
 //                .setLineSpacing(DefaultPrinter.LINE_SPACING_60)
 //                .setAlignment(DefaultPrinter.ALIGNMENT_LEFT)
