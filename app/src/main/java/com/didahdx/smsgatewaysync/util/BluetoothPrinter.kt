@@ -12,7 +12,7 @@ class BluetoothPrinter(private val context: Context,message:String) : IPrintToPr
     val message=message
     override fun printContent(prnMng: WoosimPrnMng) {
         val wordMng: printerWordMng = printerFactory.createPaperMng(context)
-        prnMng.printStr(message, 1, WoosimCmd.ALIGN_CENTER)
+        prnMng.printStr(message, 1, WoosimCmd.ALIGN_LEFT)
 //        prnMng.printStr("1-First line", 1, WoosimCmd.ALIGN_LEFT)
 //        prnMng.printStr(wordMng.horizontalUnderline)
 //        prnMng.printStr(

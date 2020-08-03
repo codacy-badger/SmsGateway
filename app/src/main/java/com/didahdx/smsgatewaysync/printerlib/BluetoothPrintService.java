@@ -18,6 +18,8 @@ import java.util.UUID;
 
 import timber.log.Timber;
 
+import static com.didahdx.smsgatewaysync.util.ConstantsKt.PREF_PRINTER_STATUS;
+
 /**
  * This class does all the work for setting up and managing Bluetooth connections with printers.
  * It has a thread for connecting with a printer, and a thread for performing data transmissions when connected.
@@ -42,7 +44,8 @@ public class BluetoothPrintService {
     public static final int STATE_LISTEN = 1;     // now listening for incoming connections
     public static final int STATE_CONNECTING = 2; // now initiating an outgoing connection
     public static final int STATE_CONNECTED = 3;  // now connected to a remote device
-    
+
+    Context context;
     
     /**
      * Constructor. Prepares a new Bluetooth session.
@@ -53,6 +56,7 @@ public class BluetoothPrintService {
         mAdapter = BluetoothAdapter.getDefaultAdapter();
         mState = STATE_NONE;
         mHandler = handler;
+        this.context=context;
     }
 
     /**
@@ -62,6 +66,7 @@ public class BluetoothPrintService {
     private synchronized void setState(int state) {
         if (D) Timber.d("setState() " + mState + " -> " + state);
         mState = state;
+        SpUtil.setPreferenceInt(context,PREF_PRINTER_STATUS,state);
     }
 
     /**

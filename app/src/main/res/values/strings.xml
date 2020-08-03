@@ -89,6 +89,7 @@
 
     <string name="connect_fail">Printer connection error</string>
     <string name="connect_lost">Disconnected</string>
+    <string name="not_available">N/A</string>
     <string name="not_connected">Connection is not established</string>
     <string name="title_paired_devices">Paired devices</string>
     <string name="title_other_devices">Other devices</string>

@@ -12,9 +12,7 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.printerlib.utils.PrefMng
-import com.didahdx.smsgatewaysync.util.PREF_PRINTER_NAME
-import com.didahdx.smsgatewaysync.util.SpUtil
-import com.didahdx.smsgatewaysync.util.toast
+import com.didahdx.smsgatewaysync.util.*
 import kotlinx.android.synthetic.main.fragment_printer.*
 
 
@@ -38,8 +36,29 @@ class PrinterFragment : Fragment(R.layout.fragment_printer), View.OnClickListene
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         connectPrinterButton.setOnClickListener(this)
+        printerConnected.text = context?.let {
+            getString(SpUtil.getPreferenceInt(it, PREF_PRINTER_STATUS_MESSAGE, R.string.not_available))
+        }
+
+//        printerConnected.text = when (context?.let { SpUtil.getPreferenceInt(it, PREF_PRINTER_STATUS, 0) }) {
+//            0 -> {
+//                " "
+//            }
+//            1 -> {
+//                "Waiting for incoming connections"
+//            }
+//            2 -> {
+//                "now initiating an outgoing connection"
+//            }
+//            3 -> {
+//                "now connected to a remote device"
+//            }
+//
+//            else -> {
+//               " "
+//            }
+//        }
         getCheckedPrinter()
-//        printerConnected.text = "Printer Connected: No"
     }
 
 
@@ -50,7 +69,7 @@ class PrinterFragment : Fragment(R.layout.fragment_printer), View.OnClickListene
                 val mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
                 if (mBluetoothAdapter != null) {
                     if (mBluetoothAdapter.isEnabled) {
-                        if (saveSelectedPrinterBrand()){
+                        if (saveSelectedPrinterBrand()) {
                             this.findNavController()
                                 .navigate(R.id.action_printerFragment_to_printerDetailFragment)
                         }
@@ -64,7 +83,7 @@ class PrinterFragment : Fragment(R.layout.fragment_printer), View.OnClickListene
                 }
             }
 
-            removePrinter ->{
+            removePrinter -> {
                 context?.let { PrefMng.saveDeviceAddr(it, "") }
             }
 
@@ -83,7 +102,7 @@ class PrinterFragment : Fragment(R.layout.fragment_printer), View.OnClickListene
             } else if (BluetoothDevice.ACTION_ACL_CONNECTED == action) {
                 context.toast("Printer connected")
                 //Device is now connected
-                printerConnected?.text = "Printer Connected: Yes"
+                printerConnected?.text = "Printer Connected"
             } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED == action) {
                 context.toast("Printer discovery finished")
                 //Done searching
@@ -93,7 +112,7 @@ class PrinterFragment : Fragment(R.layout.fragment_printer), View.OnClickListene
             } else if (BluetoothDevice.ACTION_ACL_DISCONNECTED == action) {
                 context.toast("Printer is disconnect")
                 //Device has disconnected
-                printerConnected?.text = "Printer Connected: No"
+                printerConnected?.text = "Printer is disconnect"
             }
         }
     }
@@ -118,7 +137,7 @@ class PrinterFragment : Fragment(R.layout.fragment_printer), View.OnClickListene
             context?.let { PrefMng.saveActivePrinter(it, PrefMng.PRN_OTHER_PRINTERS_SELECTED) }
             return true
         }
-        context?.toast( R.string.choose_printer)
+        context?.toast(R.string.choose_printer)
         return false
     }
 
@@ -139,8 +158,8 @@ class PrinterFragment : Fragment(R.layout.fragment_printer), View.OnClickListene
             }
         }
 
-        val printerName=context?.let { SpUtil.getPreferenceString(it,PREF_PRINTER_NAME," ") }
-        printerConnected?.text="Connected to $printerName"
+        val printerNam = context?.let { SpUtil.getPreferenceString(it, PREF_PRINTER_NAME, " ") }
+        printerName?.text = "\n Printer Name : $printerNam"
     }
 
     override fun onDestroy() {

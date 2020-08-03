@@ -34,6 +34,7 @@ object SpUtil {
         return getPrefs(context).getBoolean(key, false)
     }
 
+    @JvmStatic
     fun setPreferenceString(context: Context, key: String, value: String) {
         val editor = getPrefs(context).edit()
         editor.putString(key, value)

@@ -2,17 +2,11 @@ package com.didahdx.smsgatewaysync.util
 
 import android.content.Context
 import android.content.DialogInterface
-import android.net.ConnectivityManager
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import com.didahdx.smsgatewaysync.R
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.android.synthetic.main.fragment_home.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import timber.log.Timber
 
 
 fun Context.toast(message: String) {
@@ -69,7 +63,7 @@ fun Context.showDialog(
     builder.setNegativeButton(negativeLabel, negativeOnClick)
     val alert = builder.create()
     alert.show()
-    return alert;
+    return alert
 }
 
 

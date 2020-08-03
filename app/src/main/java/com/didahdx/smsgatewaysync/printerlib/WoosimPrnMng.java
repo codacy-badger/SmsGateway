@@ -10,6 +10,7 @@ import android.widget.Toast;
 
 import com.didahdx.smsgatewaysync.R;
 import com.didahdx.smsgatewaysync.printerlib.utils.PrefMng;
+import com.didahdx.smsgatewaysync.util.SpUtil;
 import com.woosim.printer.WoosimCmd;
 import com.woosim.printer.WoosimImage;
 import com.woosim.printer.WoosimService;
@@ -19,6 +20,11 @@ import  com.didahdx.smsgatewaysync.printerlib.utils.ImageGallaryMng;
 import  com.didahdx.smsgatewaysync.printerlib.utils.printerFactory;
 
 import java.util.ArrayList;
+
+import timber.log.Timber;
+
+import static com.didahdx.smsgatewaysync.util.ConstantsKt.PREF_PRINTER_STATUS;
+import static com.didahdx.smsgatewaysync.util.ConstantsKt.PREF_PRINTER_STATUS_MESSAGE;
 
 
 public class WoosimPrnMng{
@@ -164,10 +170,12 @@ public class WoosimPrnMng{
             case MESSAGE_DEVICE_NAME:
                 String mConnectedDeviceName = msg.getData().getString(DEVICE_NAME);
                 Toast.makeText(contx, contx.getString(R.string.connected) + mConnectedDeviceName, Toast.LENGTH_SHORT).show();
+              Timber.d("Connect to "+ mConnectedDeviceName);
                 printInfo();
                 break;
             case MESSAGE_TOAST:
                 Toast.makeText(contx, msg.getData().getInt(TOAST), Toast.LENGTH_SHORT).show();
+				SpUtil.setPreferenceInt(contx,PREF_PRINTER_STATUS_MESSAGE,msg.getData().getInt(TOAST));
                 break;
             case MESSAGE_READ:
                 mWoosim.processRcvData((byte[])msg.obj, msg.arg1);
