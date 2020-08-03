@@ -1,12 +1,14 @@
 package com.didahdx.smsgatewaysync.utilities
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.widget.Toast
 import com.didahdx.smsgatewaysync.R
 import com.mazenrashed.printooth.Printooth
 import com.mazenrashed.printooth.data.printable.Printable
 import com.mazenrashed.printooth.data.printable.RawPrintable
 import com.mazenrashed.printooth.data.printable.TextPrintable
+import com.mazenrashed.printooth.data.printable.ImagePrintable
 import com.mazenrashed.printooth.data.printer.DefaultPrinter
 import com.mazenrashed.printooth.utilities.Printing
 import com.mazenrashed.printooth.utilities.PrintingCallback
@@ -16,7 +18,7 @@ class bluetoothPrinter : PrintingCallback {
     var printing: Printing? = null
 
 
-    fun printText(message: String,context : Context, appName:String) {
+    fun printText(message: String,context : Context, appName:String,image: Bitmap) {
         this.context=context
         initPrinter()
         val printables = ArrayList<Printable>()
@@ -41,6 +43,14 @@ class bluetoothPrinter : PrintingCallback {
                 .setAlignment(DefaultPrinter.ALIGNMENT_LEFT)
                 .setFontSize(DefaultPrinter.FONT_SIZE_NORMAL)
                 .build()
+        )
+        printables.add(
+            ImagePrintable.Builder(image).build()
+//               .setText(message)
+//                .setLineSpacing(DefaultPrinter.LINE_SPACING_60)
+//                .setAlignment(DefaultPrinter.ALIGNMENT_LEFT)
+//                .setFontSize(DefaultPrinter.FONT_SIZE_NORMAL)
+//                .build()
         )
 
 
