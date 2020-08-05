@@ -2,9 +2,14 @@ package com.didahdx.smsgatewaysync.util
 
 import android.content.Context
 import android.content.DialogInterface
+import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.annotation.IdRes
 import androidx.appcompat.app.AlertDialog
+import androidx.navigation.NavController
+import androidx.navigation.NavOptions
+import androidx.navigation.Navigator
 import com.didahdx.smsgatewaysync.R
 import com.google.android.material.snackbar.Snackbar
 
@@ -74,4 +79,16 @@ fun View.snackBar(message: String) {
         }
     }.show()
 
+}
+
+fun NavController.navigateSafe(
+    @IdRes resId: Int,
+    args: Bundle? = null,
+    navOptions: NavOptions? = null,
+    navExtras: Navigator.Extras? = null
+) {
+    val action = currentDestination?.getAction(resId)
+    if (action != null && currentDestination?.id != action.destinationId) {
+        navigate(resId, args, navOptions, navExtras)
+    }
 }

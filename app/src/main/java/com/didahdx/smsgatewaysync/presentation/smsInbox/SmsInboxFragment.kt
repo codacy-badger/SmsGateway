@@ -22,6 +22,7 @@ import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
 import com.didahdx.smsgatewaysync.databinding.FragmentSmsInboxBinding
 import com.didahdx.smsgatewaysync.util.SMS_LOCAL_BROADCAST_RECEIVER
 import com.didahdx.smsgatewaysync.util.hide
+import com.didahdx.smsgatewaysync.util.navigateSafe
 import kotlinx.android.synthetic.main.fragment_sms_inbox.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
@@ -86,7 +87,7 @@ class SmsInboxFragment : Fragment() {
             it?.let {
                 val bundle = bundleOf("SmsInfo" to smsInboxViewModel.setUpSmsInfo(it))
                 this.findNavController()
-                    .navigate(R.id.action_smsInboxFragment_to_smsDetailsFragment, bundle)
+                    .navigateSafe(R.id.action_smsInboxFragment_to_smsDetailsFragment, bundle)
                 smsInboxViewModel.onMessageDetailNavigated()
             }
         })

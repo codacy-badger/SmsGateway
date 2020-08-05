@@ -148,13 +148,13 @@ class LocationGpsService : Service() {
             locationManager.requestLocationUpdates(
                 LocationManager.GPS_PROVIDER, MINIMUM_LOCATION_TIME,
                 MINIMUM_LOCATION_DISTANCE,
-                locationListener
+                locationListener as LocationListener
             )
 
             locationManager.requestLocationUpdates(
                 LocationManager.NETWORK_PROVIDER, MINIMUM_LOCATION_TIME,
                 MINIMUM_LOCATION_DISTANCE,
-                locationListener
+                locationListener as LocationListener
             )
 
             if (!isGPSEnabled && !isNetworkEnabled) {
@@ -167,7 +167,7 @@ class LocationGpsService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        locationManager?.removeUpdates(locationListener)
+        locationListener?.let { locationManager?.removeUpdates(it) }
     }
 
 }

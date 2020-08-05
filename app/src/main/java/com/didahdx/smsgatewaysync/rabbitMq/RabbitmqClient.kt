@@ -29,8 +29,9 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
     fun connection(context: Context) {
         try {
             connection = RabbitMqConnector.connection
-
+            Timber.d("Connection called 1 ${connection?.closeReason}")
             if (null != connection && connection?.isOpen!!) {
+                Timber.d("Connection called 2 ${connection?.closeReason}")
 
                 channel = RabbitMqConnector.channel
                 (connection as RecoverableConnection).addRecoveryListener(this)
@@ -62,9 +63,6 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
                 }
                 setServiceState(context, ServiceState.RUNNING)
                 uiUpdater?.logMessage("Connected to server")
-            } else {
-//                uiUpdater?.logMessage("Connection is closed because ${RabbitMqConnector.connection.closeReason}")
-//                setServiceState(context, ServiceState.STOPPED)
             }
         } catch (e: Exception) {
             e.printStackTrace()

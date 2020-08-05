@@ -107,7 +107,6 @@ class HomeViewModel(
         when (msg.what) {
 
             FilterDataRunnable.FILTERED_DATA -> {
-                app.toast("Filtered data called")
                 Timber.d("Filtered data called")
                 val mpesaMessages: ArrayList<MpesaMessageInfo> = ArrayList<MpesaMessageInfo>(
                     msg.data.getParcelableArrayList(FilterDataRunnable.FILTERED_DATA_STRING)!!

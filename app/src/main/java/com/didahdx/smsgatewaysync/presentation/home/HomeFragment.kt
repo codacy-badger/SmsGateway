@@ -148,7 +148,7 @@ class HomeFragment : Fragment() {
             it?.let {
                 val bundle = bundleOf("SmsInfo" to mHomeViewModel.setUpSmsInfo(it))
                 this.findNavController()
-                    .navigate(R.id.action_homeFragment_to_smsDetailsFragment, bundle)
+                    .navigateSafe(R.id.action_homeFragment_to_smsDetailsFragment, bundle)
                 mHomeViewModel.onMessageDetailNavigated()
             }
         })

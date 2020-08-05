@@ -15,6 +15,7 @@ import com.didahdx.smsgatewaysync.broadcastReceivers.ConnectionReceiver
 import com.didahdx.smsgatewaysync.presentation.UiUpdaterInterface
 import com.didahdx.smsgatewaysync.printerlib.WoosimPrnMng
 import com.didahdx.smsgatewaysync.rabbitMq.RabbitMqRunnable
+import com.didahdx.smsgatewaysync.rabbitMq.RabbitmqClient
 import com.didahdx.smsgatewaysync.util.*
 import com.didahdx.smsgatewaysync.work.SendRabbitMqWorker
 import com.didahdx.smsgatewaysync.work.WorkerUtil
@@ -35,22 +36,22 @@ class AppServices : Service(), UiUpdaterInterface {
     private val statusIntent = Intent(STATUS_INTENT_BROADCAST_RECEIVER)
     private var mPrnMng: WoosimPrnMng? = null
 
-    // lateinit var rabbitmqClient: RabbitmqClient
+     lateinit var rabbitmqClient: RabbitmqClient
     @AddTrace(name = "AppServicesOnCreate", enabled = true /* optional */)
     override fun onCreate() {
         super.onCreate()
         toast("Service started")
+        val email=user?.email ?: NOT_AVAILABLE
+       rabbitmqClient=RabbitmqClient(this, email)
+
         val notification = NotificationUtil.notificationStatus(this, "Service starting", false)
         startForeground(1, notification)
-
-        val rabbitMqRunnable = user?.email?.let { RabbitMqRunnable(this, it, this) }
-        Thread(rabbitMqRunnable).start()
-
+//        val rabbitMqRunnable = user?.email?.let { RabbitMqRunnable(this, it, this,true) }
+//        Thread(rabbitMqRunnable).start()
         registerReceiver(
             ConnectionReceiver(),
             IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
         )
-
         registerReceiver(locationBroadcastReceiver, IntentFilter(LOCATION_UPDATE_INTENT))
     }
 
@@ -81,10 +82,12 @@ class AppServices : Service(), UiUpdaterInterface {
     }
 
     private fun startAppService(intent: Intent?) {
-        val input = intent?.getStringExtra(INPUT_EXTRAS) ?: " "
+        val input = intent?.getStringExtra(INPUT_EXTRAS) ?:"Initializing service"
         setRestartServiceState(this, true)
         setServiceState(this, ServiceState.STARTING)
-
+        val rabbitMqRunnable = user?.email?.let { RabbitMqRunnable( rabbitmqClient,
+            this, it, this,true) }
+        Thread(rabbitMqRunnable).start()
         val notification = NotificationUtil.notificationStatus(this, input, false)
         startForeground(1, notification)
         toast("startForeground called")
@@ -99,9 +102,12 @@ class AppServices : Service(), UiUpdaterInterface {
         if (getRestartServiceState(this) && isServiceOn) {
             toast("Restart service state ${getRestartServiceState(this)}")
             setServiceState(this, ServiceState.STARTING)
+            val status= SpUtil.getPreferenceString(this, PREF_STATUS_MESSAGE, ERROR_CONNECTING_TO_SERVER)
+                ?: ERROR_CONNECTING_TO_SERVER
             Intent(applicationContext, this.javaClass).also {
                 it.action = AppServiceActions.START.name
                 it.setPackage(packageName)
+                it.putExtra(INPUT_EXTRAS, status)
                 ContextCompat.startForegroundService(this, it)
             }
         }
@@ -187,9 +193,9 @@ class AppServices : Service(), UiUpdaterInterface {
 
         cancelPing()
         AppLog.logMessage("Sms Service stopped", this)
-//        CoroutineScope(IO).launch {
-//            rabbitmqClient.disconnect()
-//        }
+        val rabbitMqRunnable = user?.email?.let { RabbitMqRunnable( rabbitmqClient,this,
+            it, this,false) }
+        Thread(rabbitMqRunnable).start()
         toast("Service destroyed")
         CoroutineScope(IO).cancel()
     }

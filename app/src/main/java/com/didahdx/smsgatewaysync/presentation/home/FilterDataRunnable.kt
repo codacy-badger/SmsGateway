@@ -88,7 +88,6 @@ class FilterDataRunnable(
     }
 
     private fun setCount(count: Int) {
-        Timber.d("SetCount $count")
         val message = Message.obtain(null, PROGRESS_COUNT_INT)
         val bundle = Bundle()
         bundle.putInt(PROGRESS_COUNT_STRING, count)

@@ -14,34 +14,44 @@ import timber.log.Timber
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-class RabbitMqRunnable(context: Context, email: String, uiUpdaterInterface: UiUpdaterInterface) :
+class RabbitMqRunnable(private  val rabbitMqClient:RabbitmqClient,
+    private val context: Context, private val email: String,
+    private val uiUpdaterInterface: UiUpdaterInterface, private val connect: Boolean
+) :
     Runnable {
-    private val mContext = context
-    private val mEmail = email
-    private val updaterInterface = uiUpdaterInterface
 
     @AddTrace(name = "RabbitMqRunnable_run")
     override fun run() {
+
         Timber.d(" ${Thread.currentThread().name} ")
-        val isWifiOnly =
-            SpUtil.getPreferenceBoolean(mContext, mContext.getString(R.string.preference_wifi_only))
-        if (isWifiOnly) {
-            if (Connectivity.getConnectionType(mContext) == mContext.getString(R.string.Wifi)) {
-                setUpConnection()
+        when (connect) {
+            true -> {
+                val isWifiOnly =
+                    SpUtil.getPreferenceBoolean(
+                        context,
+                        context.getString(R.string.preference_wifi_only)
+                    )
+                if (isWifiOnly) {
+                    if (Connectivity.getConnectionType(context) == context.getString(R.string.Wifi)) {
+                        setUpConnection()
+                    }
+                } else {
+                    setUpConnection()
+                }
             }
-        } else {
-            setUpConnection()
+            false -> {
+                rabbitMqClient.disconnect()
+            }
         }
     }
 
     private fun setUpConnection() {
-        AppLog.logMessage("Sms Service started", mContext, true)
-        val rabbitMqClient = RabbitmqClient(updaterInterface, mEmail)
-        val urlEnabled = SpUtil.getPreferenceBoolean(mContext, PREF_HOST_URL_ENABLED)
-        val isServiceOn = SpUtil.getPreferenceBoolean(mContext, PREF_SERVICES_KEY)
+        AppLog.logMessage("Sms Service started", context, true)
+        val urlEnabled = SpUtil.getPreferenceBoolean(context, PREF_HOST_URL_ENABLED)
+        val isServiceOn = SpUtil.getPreferenceBoolean(context, PREF_SERVICES_KEY)
         if (isServiceOn && !urlEnabled) {
-            setServiceState(mContext, ServiceState.STARTING)
-            rabbitMqClient.connection(mContext)
+            setServiceState(context, ServiceState.STARTING)
+            rabbitMqClient.connection(context)
             Timber.d("The service has been created".toUpperCase(Locale.getDefault()))
         }
         cancelPing()
@@ -64,7 +74,7 @@ class RabbitMqRunnable(context: Context, email: String, uiUpdaterInterface: UiUp
 
         val data = Data.Builder()
             .putString(KEY_TASK_MESSAGE, Gson().toJson(logFormat))
-            .putString(KEY_EMAIL, mEmail)
+            .putString(KEY_EMAIL, email)
             .build()
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -75,9 +85,9 @@ class RabbitMqRunnable(context: Context, email: String, uiUpdaterInterface: UiUp
             .setInputData(data)
             .build()
         Timber.d("WorkManager: Periodic Work request for sync is scheduled")
-        val isServiceOn = SpUtil.getPreferenceBoolean(mContext, PREF_SERVICES_KEY)
+        val isServiceOn = SpUtil.getPreferenceBoolean(context, PREF_SERVICES_KEY)
         if (isServiceOn)
-            WorkManager.getInstance(mContext).enqueueUniquePeriodicWork(
+            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 SendRabbitMqWorker.PING_WORK_NAME,
                 ExistingPeriodicWorkPolicy.KEEP,
                 repeatingRequest
@@ -85,7 +95,7 @@ class RabbitMqRunnable(context: Context, email: String, uiUpdaterInterface: UiUp
     }
 
     private fun cancelPing() {
-        WorkManager.getInstance(mContext).cancelAllWorkByTag(SendRabbitMqWorker.PING_WORK_NAME)
+        WorkManager.getInstance(context).cancelAllWorkByTag(SendRabbitMqWorker.PING_WORK_NAME)
     }
 
 }
