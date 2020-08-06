@@ -117,8 +117,8 @@
     <string name="is_printer_connected">isPrinterConnected</string>
 
     <!-- Connection types -->
-    <string name="Wifi">Connected to WIFI</string>
-    <string name="mobile_data">Connected to MOBILE DATA</string>
+    <string name="Wifi">Connected to Wifi</string>
+    <string name="mobile_data">Connected to Mobile Data</string>
     <string name="connection_lost">No Connection</string>
 
 </resources>

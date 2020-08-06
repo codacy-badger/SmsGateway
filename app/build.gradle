@@ -21,7 +21,7 @@ android {
         minSdkVersion 24
         targetSdkVersion 30
         versionCode 1
-        versionName "1.0.9-alpha"
+        versionName "1.0.10-alpha"
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -46,6 +46,14 @@ android {
 
     // Customize your APK name here
     applicationVariants.all { variant ->
+        def appName
+        //Check if an applicationName property is supplied; if not use the name of the parent project.
+        if (project.hasProperty("applicationName")) {
+            appName = applicationName
+        } else {
+            appName = parent.name
+        }
+
         variant.outputs.all { output ->
 //            def appId = variant.applicationId// com.exampleFree.app OR com.examplePaid.app
 //            def formattedDate = new Date().format('yyyy-MM-dd-HH-mm')
@@ -60,8 +68,7 @@ android {
             ext.branch = getGitRevParseInfo("--abbrev-ref")
 
             //customize your app name by using variables
-            outputFileName = "app-${buildType}-${versionName}-${ext.revision}-${formattedDate}.apk"
-        }
+            outputFileName = "${appName}-${buildType}-${versionName}-${ext.branch}-${ext.revision}-${formattedDate}.apk"     }
     }
 
 //    lintOptions {

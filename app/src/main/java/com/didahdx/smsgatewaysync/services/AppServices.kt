@@ -193,9 +193,9 @@ class AppServices : Service(), UiUpdaterInterface {
 
         cancelPing()
         AppLog.logMessage("Sms Service stopped", this)
-        val rabbitMqRunnable = user?.email?.let { RabbitMqRunnable( rabbitmqClient,this,
-            it, this,false) }
-        Thread(rabbitMqRunnable).start()
+//        val rabbitMqRunnable = user?.email?.let { RabbitMqRunnable( rabbitmqClient,this,
+//            it, this,false) }
+//        Thread(rabbitMqRunnable).start()
         toast("Service destroyed")
         CoroutineScope(IO).cancel()
     }

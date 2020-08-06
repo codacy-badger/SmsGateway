@@ -170,7 +170,7 @@ class HomeFragment : Fragment() {
         val isServiceOn =
             context?.let { SpUtil.getPreferenceBoolean(it, PREF_SERVICES_KEY) } ?: true
 
-            binding.textViewConnectionType.text = context?.let { Connectivity.getConnectionType(it) }
+        binding.textViewConnectionType.text = context?.let { Connectivity.getConnectionType(it) }
 
         if (isServiceOn) {
             val color =

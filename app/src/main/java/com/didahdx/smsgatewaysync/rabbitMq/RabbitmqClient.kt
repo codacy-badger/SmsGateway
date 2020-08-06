@@ -20,7 +20,7 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
     ConfirmListener, RecoveryListener, ShutdownListener {
 
     @Volatile
-    private var connection: Connection? = null
+    private lateinit var connection: Connection
     @Volatile
     private lateinit var channel: Channel
     var count = 0
@@ -28,12 +28,12 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
     @AddTrace(name="RabbitmqClient_connection")
     fun connection(context: Context) {
         try {
-            connection = RabbitMqConnector.connection
+            connection = RabbitmqConnection.invoke()
             Timber.d("Connection called 1 ${connection?.closeReason}")
             if (null != connection && connection?.isOpen!!) {
                 Timber.d("Connection called 2 ${connection?.closeReason}")
 
-                channel = RabbitMqConnector.channel
+                channel = RabbitmqChannel.invoke()
                 (connection as RecoverableConnection).addRecoveryListener(this)
                 (channel as RecoverableChannel).addRecoveryListener(this)
 
@@ -158,13 +158,13 @@ class RabbitmqClient(private val uiUpdater: UiUpdaterInterface?, private val ema
     fun disconnect() {
         try {
             channel.close()
-            RabbitMqConnector.channel.close()
+            RabbitmqChannel.close()
         } catch (e: Exception) {
             Timber.d("$e ${e.localizedMessage}")
         }
         try {
-            connection?.close()
-            RabbitMqConnector.connection.close()
+            connection.close()
+            RabbitmqConnection.close()
             CoroutineScope(IO).cancel()
         } catch (e: Exception) {
             Timber.d("$e ${e.localizedMessage}")

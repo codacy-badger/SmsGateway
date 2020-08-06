@@ -20,15 +20,11 @@ object RabbitMqConnector {
 //        connectionFactory.requestedChannelMax=4
 //        connectionFactory.workPoolTimeout
     }
-    
-    val connection: Connection by lazy {
-        connectionFactory.newConnection()
-    }
 
+    var connection: Connection = connectionFactory.newConnection()
 
-    val channel: Channel by lazy {
-        connection.createChannel()
-    }
+    var channel: Channel = RabbitmqConnection.invoke().createChannel()
+
 
     val publishChannel: Channel by lazy {
         connection.createChannel()

@@ -2,11 +2,11 @@ package com.didahdx.smsgatewaysync.presentation.settings
 
 
 import android.app.Activity
-import android.content.ActivityNotFoundException
-import android.content.Intent
-import android.content.SharedPreferences
+import android.content.*
+import android.os.Build
 import android.os.Bundle
 import android.os.Debug
+import android.provider.Settings
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.preference.Preference
@@ -105,26 +105,18 @@ class SettingsFragment : PreferenceFragmentCompat(),
             resources.getString(R.string.preference_reply_message) -> {
                 val replyMessage: Preference? = findPreference<Preference>(key)
                 replyMessage?.summary = preferenceScreen.sharedPreferences
-                    .getString(
-                        resources.getString(R.string.preference_reply_message),
-                        ""
-                    )
+                    .getString(resources.getString(R.string.preference_reply_message), "")
             }
+//
+//            PREF_FEEDBACK -> {
+//                sendEmail()
+//            }
 
-            PREF_FEEDBACK -> {
-                sendEmail()
-            }
         }
     }
 
     override fun onPreferenceClick(preference: Preference?): Boolean {
-//        val feedBack = findPreference(PREF_FEEDBACK) as Preference?
-//        when (preference) {
-//            feedBack -> {
-//                sendEmail()
-//            }
-//        }
-        sendEmail()
+//        sendEmail()
         return true
     }
 
@@ -234,7 +226,6 @@ class SettingsFragment : PreferenceFragmentCompat(),
         } catch (ex: ActivityNotFoundException) {
             Timber.i("No Intent matcher found")
         }
-
     }
 
 }

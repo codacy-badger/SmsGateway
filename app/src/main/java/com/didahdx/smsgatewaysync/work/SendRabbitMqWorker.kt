@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.didahdx.smsgatewaysync.rabbitMq.RabbitMqConnector
+import com.didahdx.smsgatewaysync.rabbitMq.RabbitmqChannel
+import com.didahdx.smsgatewaysync.rabbitMq.RabbitmqConnection
 import com.didahdx.smsgatewaysync.util.*
 import com.didahdx.smsgatewaysync.util.AppLog.logMessage
 import com.google.firebase.perf.metrics.AddTrace
@@ -33,7 +35,7 @@ class SendRabbitMqWorker(appContext: Context, params: WorkerParameters) :
             val email = data.getString(KEY_EMAIL)
             val isServiceOn = SpUtil.getPreferenceBoolean(app, PREF_SERVICES_KEY)
             if (message != null && email != null) {
-                if (RabbitMqConnector.connection.isOpen && isServiceOn) {
+                if (RabbitmqConnection.invoke().isOpen && isServiceOn) {
                     publishMessage(message, email)
                 } else {
 //                    CoroutineScope(Main).launch {
@@ -66,7 +68,7 @@ class SendRabbitMqWorker(appContext: Context, params: WorkerParameters) :
 
     private fun publishMessage(message: String, email: String) {
         Timber.d("Thread name ${Thread.currentThread().name}")
-        val channel = RabbitMqConnector.channel
+        val channel = RabbitmqChannel.invoke()
         val props = AMQP.BasicProperties.Builder()
             .correlationId(email)
             .replyTo(email)

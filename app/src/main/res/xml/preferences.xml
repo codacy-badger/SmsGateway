@@ -9,14 +9,14 @@
         app:iconSpaceReserved="false">
         <SwitchPreferenceCompat
             android:key="services_key"
-            android:summary="Used to enable or disable the running services of the application"
-            android:title="Enable or Disable services"
+            android:summary="Used to enable or disable forwarding of sms and call services of the application"
+            android:title="Enable or Disable forwarding of sms and call services"
             app:defaultValue="true"
             app:iconSpaceReserved="false" />
 
         <CheckBoxPreference
             android:key="@string/preference_wifi_only"
-            android:summary="Use wifi only to connect to server"
+            android:summary="Use wifi only to forwarding sms and call to server"
             android:title="Use wifi only"
             app:defaultValue="false"
             app:iconSpaceReserved="false" />
@@ -167,14 +167,14 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory app:iconSpaceReserved="false">
-        <Preference
-            android:selectable="true"
-            android:title="Send feedback"
-            app:iconSpaceReserved="false"
-            app:key="feedback"
-            app:summary="Report technical issues or suggest new features" />
+<!--    <PreferenceCategory app:iconSpaceReserved="false">-->
+<!--        <Preference-->
+<!--            android:selectable="true"-->
+<!--            android:title="Send feedback"-->
+<!--            app:iconSpaceReserved="false"-->
+<!--            app:key="feedback"-->
+<!--            app:summary="Report technical issues or suggest new features" />-->
 
-    </PreferenceCategory>
+<!--    </PreferenceCategory>-->
 
 </PreferenceScreen>

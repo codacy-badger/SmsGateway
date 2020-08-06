@@ -11,28 +11,26 @@ object Connectivity {
     fun getConnectionType(context: Context): String {
         val connectionManager =
             context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        var connectionType = ""
+        var connectionType = context.getString(R.string.connection_lost)
         val isConnected = false
         var isWifiConn = false
         var isMobileConn = false
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            connectionManager.allNetworks.forEach { network ->
-                connectionManager.getNetworkInfo(network)?.apply {
-                    when (type) {
-                        ConnectivityManager.TYPE_WIFI -> {
-                            isWifiConn = isWifiConn or isConnected
-                            connectionType = context.getString(R.string.Wifi)
-                        }
+        connectionManager.allNetworks.forEach { network ->
+            connectionManager.getNetworkInfo(network)?.apply {
+                when (type) {
+                    ConnectivityManager.TYPE_WIFI -> {
+                        isWifiConn = isWifiConn or isConnected
+                        connectionType = context.getString(R.string.Wifi)
+                    }
 
-                        ConnectivityManager.TYPE_MOBILE -> {
-                            isMobileConn = isMobileConn or isConnected
-                            connectionType =context.getString(R.string.mobile_data)
-                        }
+                    ConnectivityManager.TYPE_MOBILE -> {
+                        isMobileConn = isMobileConn or isConnected
+                        connectionType =context.getString(R.string.mobile_data)
                     }
-                    val activeNetwork = connectionManager.activeNetworkInfo
-                    if (!(activeNetwork != null && activeNetwork.isConnectedOrConnecting)) {
-                        connectionType = context.getString(R.string.connection_lost)
-                    }
+                }
+                val activeNetwork = connectionManager.activeNetworkInfo
+                if (!(activeNetwork != null && activeNetwork.isConnectedOrConnecting)) {
+                    connectionType = context.getString(R.string.connection_lost)
                 }
             }
         }
