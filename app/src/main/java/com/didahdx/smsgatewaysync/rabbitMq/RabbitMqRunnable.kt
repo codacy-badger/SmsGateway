@@ -14,7 +14,7 @@ import timber.log.Timber
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-class RabbitMqRunnable(private  val rabbitMqClient:RabbitmqClient,
+class RabbitMqRunnable(private  var rabbitMqClient:RabbitmqClient,
     private val context: Context, private val email: String,
     private val uiUpdaterInterface: UiUpdaterInterface, private val connect: Boolean
 ) :
@@ -22,7 +22,6 @@ class RabbitMqRunnable(private  val rabbitMqClient:RabbitmqClient,
 
     @AddTrace(name = "RabbitMqRunnable_run")
     override fun run() {
-
         Timber.d(" ${Thread.currentThread().name} ")
         when (connect) {
             true -> {

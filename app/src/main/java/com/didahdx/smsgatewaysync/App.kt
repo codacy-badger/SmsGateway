@@ -11,21 +11,18 @@ import timber.log.Timber
 
 class App : MultiDexApplication() {
 
-
     override fun attachBaseContext(context: Context) {
         super.attachBaseContext(context)
         MultiDex.install(this)
     }
 
-
     override fun onCreate() {
         super.onCreate()
         instance = this
         createNotificationChannel()
-        if(BuildConfig.DEBUG){
+        if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
         }
-
     }
 
     companion object {

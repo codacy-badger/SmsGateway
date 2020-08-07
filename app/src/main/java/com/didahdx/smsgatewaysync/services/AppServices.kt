@@ -7,7 +7,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.net.ConnectivityManager
 import android.os.IBinder
-import android.os.PowerManager
 import androidx.core.content.ContextCompat
 import androidx.work.Data
 import androidx.work.WorkManager
@@ -46,8 +45,9 @@ class AppServices : Service(), UiUpdaterInterface {
 
         val notification = NotificationUtil.notificationStatus(this, "Service starting", false)
         startForeground(1, notification)
-//        val rabbitMqRunnable = user?.email?.let { RabbitMqRunnable(this, it, this,true) }
-//        Thread(rabbitMqRunnable).start()
+        val rabbitMqRunnable = user?.email?.let { RabbitMqRunnable( rabbitmqClient,
+            this, it, this,true) }
+        Thread(rabbitMqRunnable).start()
         registerReceiver(
             ConnectionReceiver(),
             IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
@@ -85,9 +85,7 @@ class AppServices : Service(), UiUpdaterInterface {
         val input = intent?.getStringExtra(INPUT_EXTRAS) ?:"Initializing service"
         setRestartServiceState(this, true)
         setServiceState(this, ServiceState.STARTING)
-        val rabbitMqRunnable = user?.email?.let { RabbitMqRunnable( rabbitmqClient,
-            this, it, this,true) }
-        Thread(rabbitMqRunnable).start()
+
         val notification = NotificationUtil.notificationStatus(this, input, false)
         startForeground(1, notification)
         toast("startForeground called")
