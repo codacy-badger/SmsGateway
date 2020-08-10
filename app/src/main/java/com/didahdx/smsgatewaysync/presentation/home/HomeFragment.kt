@@ -576,6 +576,10 @@ class HomeFragment : Fragment() {
                 }
             }
 
+            R.id.smsImport->{
+                mHomeViewModel.getAllDbSms()
+            }
+
         }
         return NavigationUI.onNavDestinationSelected(
             item,

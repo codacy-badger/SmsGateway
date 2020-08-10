@@ -85,10 +85,8 @@ class AppServices : Service(), UiUpdaterInterface {
         val input = intent?.getStringExtra(INPUT_EXTRAS) ?:"Initializing service"
         setRestartServiceState(this, true)
         setServiceState(this, ServiceState.STARTING)
-
-        val notification = NotificationUtil.notificationStatus(this, input, false)
-        startForeground(1, notification)
-        toast("startForeground called")
+//        val notification = NotificationUtil.notificationStatus(this, input, false)
+//        startForeground(1, notification)
     }
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -98,7 +96,7 @@ class AppServices : Service(), UiUpdaterInterface {
     override fun onTaskRemoved(rootIntent: Intent?) {
         val isServiceOn = SpUtil.getPreferenceBoolean(this, PREF_SERVICES_KEY)
         if (getRestartServiceState(this) && isServiceOn) {
-            toast("Restart service state ${getRestartServiceState(this)}")
+            toastDebug("Restart service state ${getRestartServiceState(this)}")
             setServiceState(this, ServiceState.STARTING)
             val status= SpUtil.getPreferenceString(this, PREF_STATUS_MESSAGE, ERROR_CONNECTING_TO_SERVER)
                 ?: ERROR_CONNECTING_TO_SERVER
@@ -115,6 +113,8 @@ class AppServices : Service(), UiUpdaterInterface {
     override fun onLowMemory() {
         //Send broadcast to the Activity to kill this service and restart it.
         super.onLowMemory()
+        toast("Phone has low memory")
+        AppLog.logMessage("Phone has low memory",this,true)
     }
 
 

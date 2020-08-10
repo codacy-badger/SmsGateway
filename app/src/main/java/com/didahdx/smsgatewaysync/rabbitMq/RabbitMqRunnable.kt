@@ -22,6 +22,7 @@ class RabbitMqRunnable(private  var rabbitMqClient:RabbitmqClient,
 
     @AddTrace(name = "RabbitMqRunnable_run")
     override fun run() {
+        try{
         Timber.d(" ${Thread.currentThread().name} ")
         when (connect) {
             true -> {
@@ -41,6 +42,8 @@ class RabbitMqRunnable(private  var rabbitMqClient:RabbitmqClient,
             false -> {
                 rabbitMqClient.disconnect()
             }
+        }}catch (e:Exception){
+            Timber.e("$e  ${e.localizedMessage}")
         }
     }
 

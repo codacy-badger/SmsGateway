@@ -21,13 +21,16 @@ object RabbitMqConnector {
 //        connectionFactory.workPoolTimeout
     }
 
-    var connection: Connection = connectionFactory.newConnection()
+    val connection: Connection by lazy {
+        connectionFactory.newConnection()
+    }
 
-    var channel: Channel = RabbitmqConnection.invoke().createChannel()
-
+    val channel: Channel by lazy {
+        RabbitmqConnection.invoke().createChannel()
+    }
 
     val publishChannel: Channel by lazy {
-        connection.createChannel()
+        RabbitmqConnection.invoke().createChannel()
     }
 
 }

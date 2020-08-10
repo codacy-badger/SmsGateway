@@ -13,6 +13,7 @@
     <string name="action_forward_sms">Forward sms</string>
     <string name="action_share_logs">Share Logs</string>
     <string name="action_save_phone_number">Save phone number</string>
+    <string name="action_import">Import all sms</string>
 
     <string name="menu_home">Home</string>
     <string name="menu_Uploaded">Uploaded Messages</string>
@@ -83,7 +84,7 @@
     <string name="bluetooth_devices">Bluetooth Devices</string>
     <string name="cancel">Cancel</string>
     <string name="connect_printer">Connect Printer</string>
-    <string name="action_import">Import all sms</string>
+
     <string name="preference_hang_up_reply">hang_up_reply</string>
     <string name="preference_reply_message">reply_message</string>
 
@@ -120,5 +121,7 @@
     <string name="Wifi">Connected to Wifi</string>
     <string name="mobile_data">Connected to Mobile Data</string>
     <string name="connection_lost">No Connection</string>
+
+    <string name="log_file_name">log.txt</string>
 
 </resources>

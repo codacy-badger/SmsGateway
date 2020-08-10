@@ -40,24 +40,6 @@ class PrinterFragment : Fragment(R.layout.fragment_printer), View.OnClickListene
             getString(SpUtil.getPreferenceInt(it, PREF_PRINTER_STATUS_MESSAGE, R.string.not_available))
         }
 
-//        printerConnected.text = when (context?.let { SpUtil.getPreferenceInt(it, PREF_PRINTER_STATUS, 0) }) {
-//            0 -> {
-//                " "
-//            }
-//            1 -> {
-//                "Waiting for incoming connections"
-//            }
-//            2 -> {
-//                "now initiating an outgoing connection"
-//            }
-//            3 -> {
-//                "now connected to a remote device"
-//            }
-//
-//            else -> {
-//               " "
-//            }
-//        }
         getCheckedPrinter()
     }
 
@@ -93,7 +75,7 @@ class PrinterFragment : Fragment(R.layout.fragment_printer), View.OnClickListene
 
     val mReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            val action = intent?.action
+            val action = intent.action
 
             if (BluetoothDevice.ACTION_FOUND == action) {
                 printerConnected?.text = "Printer Found"

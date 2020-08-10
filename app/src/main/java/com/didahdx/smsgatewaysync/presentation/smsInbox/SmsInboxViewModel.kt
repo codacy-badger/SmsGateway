@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModel
 import com.didahdx.smsgatewaysync.data.db.IncomingMessagesDao
 import com.didahdx.smsgatewaysync.domain.SmsInboxInfo
 import com.didahdx.smsgatewaysync.domain.SmsInfo
+import com.didahdx.smsgatewaysync.presentation.home.ImportAllDbMessageRunnable
 import com.didahdx.smsgatewaysync.util.NOT_AVAILABLE
 import com.google.firebase.perf.metrics.AddTrace
 import kotlinx.coroutines.CoroutineScope
@@ -99,7 +100,11 @@ class SmsInboxViewModel(dataSource: IncomingMessagesDao, application: Applicatio
     }
 
     fun getAllDbSms() {
-        val importAllMessage = ImportAllDbMessageRunnable(database, app)
+        val importAllMessage =
+            ImportAllDbMessageRunnable(
+                database,
+                app
+            )
 //        Thread(importAllMessage).start()
         val backgroundHandler = Handler(mHandlerThread.looper)
         backgroundHandler.post(importAllMessage)

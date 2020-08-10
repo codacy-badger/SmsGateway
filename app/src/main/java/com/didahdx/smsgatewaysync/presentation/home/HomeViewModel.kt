@@ -11,7 +11,6 @@ import androidx.lifecycle.ViewModel
 import com.didahdx.smsgatewaysync.data.db.IncomingMessagesDao
 import com.didahdx.smsgatewaysync.data.db.entities.MpesaMessageInfo
 import com.didahdx.smsgatewaysync.domain.SmsInfo
-import com.didahdx.smsgatewaysync.util.toast
 import com.google.firebase.perf.metrics.AddTrace
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
@@ -123,5 +122,14 @@ class HomeViewModel(
         return true
     }
 
-
+    fun getAllDbSms() {
+        val importAllMessage =
+            ImportAllDbMessageRunnable(
+                database,
+                app
+            )
+//        Thread(importAllMessage).start()
+        val backgroundHandler = Handler(mHandlerThread.looper)
+        backgroundHandler.post(importAllMessage)
+    }
 }

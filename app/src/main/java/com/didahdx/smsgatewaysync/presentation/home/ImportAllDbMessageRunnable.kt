@@ -1,4 +1,4 @@
-package com.didahdx.smsgatewaysync.presentation.smsInbox
+package com.didahdx.smsgatewaysync.presentation.home
 
 import android.app.Application
 import android.net.Uri

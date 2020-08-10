@@ -10,8 +10,8 @@
         />
 
     <item
-        android:id="@+id/smsInboxFragment"
-        android:title="@string/action_saved_sms" />
+        android:id="@+id/smsImport"
+        android:title="@string/action_import" />
 
     <item
         android:id="@+id/nav_logout"

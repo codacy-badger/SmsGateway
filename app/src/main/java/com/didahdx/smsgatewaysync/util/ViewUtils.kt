@@ -10,6 +10,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.navigation.NavController
 import androidx.navigation.NavOptions
 import androidx.navigation.Navigator
+import com.didahdx.smsgatewaysync.BuildConfig
 import com.didahdx.smsgatewaysync.R
 import com.google.android.material.snackbar.Snackbar
 
@@ -18,6 +19,10 @@ fun Context.toast(message: String) {
     Toast.makeText(this, message, Toast.LENGTH_LONG).show()
 }
 
+fun Context.toastDebug(message: String) {
+    if (BuildConfig.DEBUG)
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+}
 
 fun Context.toast(message: Int) {
     Toast.makeText(this, message, Toast.LENGTH_LONG).show()

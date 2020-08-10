@@ -1,7 +1,11 @@
 package com.didahdx.smsgatewaysync.presentation.log
 
+import android.content.Context
+import android.content.Context.MODE_PRIVATE
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.view.*
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
@@ -10,7 +14,12 @@ import androidx.lifecycle.ViewModelProvider
 import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.data.db.MessagesDatabase
 import com.didahdx.smsgatewaysync.databinding.FragmentLogBinding
+import com.didahdx.smsgatewaysync.util.IOExecutor
 import kotlinx.android.synthetic.main.fragment_log.*
+import java.io.File
+import java.io.FileNotFoundException
+import java.io.FileOutputStream
+import java.io.IOException
 
 class LogFragment : Fragment() {
     lateinit var logViewModel: LogViewModel
@@ -63,10 +72,40 @@ class LogFragment : Fragment() {
     }
 
     private fun shareLogs() {
-        val shareIntent = Intent()
-        shareIntent.action = Intent.ACTION_SEND
-        shareIntent.putExtra(Intent.EXTRA_TEXT, text_view_log?.text)
-        shareIntent.type = "text/plain"
-        startActivity(shareIntent)
+        context?.let { generateLogFile(text_view_log?.text.toString(), it) }
+
+        val file =
+            File("${context?.filesDir}/${context?.resources?.getString(R.string.log_file_name)}")
+        val sharingIntent = Intent(Intent.ACTION_SEND)
+        sharingIntent.type = "text/*"
+        sharingIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file))
+        startActivity(Intent.createChooser(sharingIntent, "share log file with"))
+
+    }
+
+
+    private fun generateLogFile(value:String, context:Context){
+        IOExecutor.instance?.execute {
+            var fileOutputStream: FileOutputStream? = null
+
+            try {
+                fileOutputStream = context.openFileOutput(
+                    context.resources.getString(R.string.log_file_name), MODE_PRIVATE
+                )
+                fileOutputStream.write(value.toByteArray())
+            } catch (e: OutOfMemoryError) {
+                e.printStackTrace()
+            } catch (e: FileNotFoundException) {
+                e.printStackTrace()
+            } catch (io: IOException) {
+                io.printStackTrace()
+            } finally {
+                try {
+                    fileOutputStream?.close()
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                }
+            }
+        }
     }
 }

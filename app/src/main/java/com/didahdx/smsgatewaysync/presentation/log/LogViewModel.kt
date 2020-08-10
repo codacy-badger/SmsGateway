@@ -1,6 +1,7 @@
 package com.didahdx.smsgatewaysync.presentation.log
 
 import android.app.Application
+import android.content.Context.MODE_PRIVATE
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Message
@@ -8,6 +9,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
+import com.didahdx.smsgatewaysync.R
 import com.didahdx.smsgatewaysync.data.db.LogInfoDao
 import com.didahdx.smsgatewaysync.util.IOExecutor
 import com.didahdx.smsgatewaysync.util.NOT_AVAILABLE
@@ -17,6 +19,9 @@ import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.io.FileNotFoundException
+import java.io.FileOutputStream
+import java.io.IOException
 
 
 class LogViewModel(application: Application, dbLogs: LogInfoDao) : ViewModel(), Handler.Callback {
