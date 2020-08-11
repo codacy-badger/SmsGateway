@@ -36,10 +36,6 @@ class PrinterFragment : Fragment(R.layout.fragment_printer), View.OnClickListene
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         connectPrinterButton.setOnClickListener(this)
-        printerConnected.text = context?.let {
-            getString(SpUtil.getPreferenceInt(it, PREF_PRINTER_STATUS_MESSAGE, R.string.not_available))
-        }
-
         getCheckedPrinter()
     }
 
@@ -53,7 +49,7 @@ class PrinterFragment : Fragment(R.layout.fragment_printer), View.OnClickListene
                     if (mBluetoothAdapter.isEnabled) {
                         if (saveSelectedPrinterBrand()) {
                             this.findNavController()
-                                .navigate(R.id.action_printerFragment_to_printerDetailFragment)
+                                .navigateSafe(R.id.action_printerFragment_to_printerDetailFragment)
                         }
                     } else {
                         context?.toast("Turn on bluetooth")
@@ -78,13 +74,11 @@ class PrinterFragment : Fragment(R.layout.fragment_printer), View.OnClickListene
             val action = intent.action
 
             if (BluetoothDevice.ACTION_FOUND == action) {
-                printerConnected?.text = "Printer Found"
                 context.toast("Printer found")
                 //Device found
             } else if (BluetoothDevice.ACTION_ACL_CONNECTED == action) {
                 context.toast("Printer connected")
                 //Device is now connected
-                printerConnected?.text = "Printer Connected"
             } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED == action) {
                 context.toast("Printer discovery finished")
                 //Done searching
@@ -94,7 +88,6 @@ class PrinterFragment : Fragment(R.layout.fragment_printer), View.OnClickListene
             } else if (BluetoothDevice.ACTION_ACL_DISCONNECTED == action) {
                 context.toast("Printer is disconnect")
                 //Device has disconnected
-                printerConnected?.text = "Printer is disconnect"
             }
         }
     }

@@ -30,9 +30,6 @@ class AboutFragment : Fragment() {
     ): View? {
         // Inflate the layout for this fragment
         val view: View = inflater.inflate(R.layout.fragment_about, container, false)
-
-        view.text_about_phone.text = "Battery"
-        view.text_network.text = "Network"
         return view
     }
 

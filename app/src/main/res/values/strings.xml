@@ -123,5 +123,6 @@
     <string name="connection_lost">No Connection</string>
 
     <string name="log_file_name">log.txt</string>
+    <string name="log_file_dir">logs</string>
 
 </resources>
